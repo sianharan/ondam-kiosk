@@ -1,13 +1,23 @@
 /**
  * ModeBanner — 학습 모드 페이지 상단의 안내 박스
  *
- * Phase 2-C 에서는 5개 모드의 차이를 "상단 레이블 + 한두 줄 안내" 로만 표시한다.
- * 음성·AI 도움 차별화는 Phase 3 이후.
+ * Phase 4-A 확장: 모드별 helpLevel(1~5) 도트 시각화 추가.
+ *   ●●●●●  최대 도움 (시연 모드)   ← Tutorial
+ *   ●●●●○  많은 도움 (코칭)         ← Practice
+ *   ●●●○○  점진 감소                 ← Challenge
+ *   ●●○○○  최소 도움                 ← Real Guided
+ *   ●○○○○  자율 (학습자 주도)       ← Real Free
+ *
+ * Collins 4차원의 Method 흐름(도움 → 자율)을 학습자에게 한눈에 보여준다.
+ * 음성 사용자는 도트 자체보다 옆의 한국어 라벨을 듣는다 (aria-label 통합).
  */
 
 import * as React from "react";
 
+import { HELP_LEVEL_LABELS } from "@/lib/learning/modeConfigs";
 import { cn } from "@/lib/utils";
+
+export type HelpLevel = 1 | 2 | 3 | 4 | 5;
 
 export interface ModeBannerProps {
   /** 모드명을 작은 글씨로 (예: "Modeling 단계") */
@@ -18,6 +28,8 @@ export interface ModeBannerProps {
   detail?: string;
   /** Tailwind 배경 — accent/10 (기본) 또는 primary/10 */
   tone?: "accent" | "primary";
+  /** Phase 4-A — 도움 수준 1~5. 생략하면 도트 미표시 (이전 호환) */
+  helpLevel?: HelpLevel;
 }
 
 export function ModeBanner({
@@ -25,11 +37,20 @@ export function ModeBanner({
   headline,
   detail,
   tone = "accent",
+  helpLevel,
 }: ModeBannerProps) {
+  const ariaSummary = [
+    `학습 모드 안내: ${headline}`,
+    detail,
+    helpLevel ? `도움 수준 ${helpLevel} / 5 — ${HELP_LEVEL_LABELS[helpLevel]}` : null,
+  ]
+    .filter(Boolean)
+    .join(". ");
+
   return (
     <aside
       role="note"
-      aria-label={`학습 모드 안내: ${headline}${detail ? `. ${detail}` : ""}`}
+      aria-label={ariaSummary}
       className={cn(
         "mb-6 flex flex-col gap-2 rounded-2xl p-5 ring-1 md:p-6",
         tone === "accent"
@@ -46,6 +67,32 @@ export function ModeBanner({
       {detail && (
         <p className="text-lg text-foreground/75 md:text-xl">{detail}</p>
       )}
+      {helpLevel && <HelpLevelMeter helpLevel={helpLevel} />}
     </aside>
+  );
+}
+
+function HelpLevelMeter({ helpLevel }: { helpLevel: HelpLevel }) {
+  return (
+    <div
+      className="mt-1 flex items-center gap-2"
+      // 시각 정보의 텍스트 대체는 aria-label 에 이미 포함되어 있으므로 여기서는 숨김
+      aria-hidden="true"
+    >
+      <div className="flex gap-1">
+        {[1, 2, 3, 4, 5].map((dot) => (
+          <span
+            key={dot}
+            className={cn(
+              "h-2.5 w-2.5 rounded-full",
+              dot <= helpLevel ? "bg-accent" : "bg-foreground/20",
+            )}
+          />
+        ))}
+      </div>
+      <span className="text-sm text-foreground/60 md:text-base">
+        {HELP_LEVEL_LABELS[helpLevel]}
+      </span>
+    </div>
   );
 }

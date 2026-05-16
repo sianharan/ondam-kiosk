@@ -12,7 +12,6 @@ import { useRouter } from "next/navigation";
 import { KioskFrame } from "@/components/kiosk/KioskFrame";
 import { ModeBanner } from "@/components/kiosk/ModeBanner";
 import { OrderFlow } from "@/components/kiosk/OrderFlow";
-import { VoiceCoach } from "@/components/voice/VoiceCoach";
 import { useRequireLearningSession } from "@/lib/interaction/useRequireLearningSession";
 import { VOICE_SCRIPTS } from "@/lib/tts/voiceScripts";
 import { useLearningStore } from "@/stores/learningStore";
@@ -42,16 +41,13 @@ export default function RealFreePage() {
         detail="이번 주문은 학습자분이 메뉴부터 결제 수단까지 자유롭게 정하실 수 있어요."
         tone="primary"
       />
-      <VoiceCoach
-        message={[
-          VOICE_SCRIPTS.realFree.intro,
-          VOICE_SCRIPTS.realFree.invitation,
-        ]}
-        sequenceGapMs={800}
-      />
       <OrderFlow
         mode="realFree"
         nextLabel="Articulation"
+        modeIntro={[
+          VOICE_SCRIPTS.realFree.intro,
+          VOICE_SCRIPTS.realFree.invitation,
+        ]}
         onAdvance={() => router.push("/articulation")}
       />
     </KioskFrame>
