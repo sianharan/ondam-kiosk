@@ -174,6 +174,7 @@ function RecoverNotice({ onRestart }: { onRestart: () => void }) {
       <button
         type="button"
         onClick={onRestart}
+        aria-label="처음으로. 카테고리 선택 화면으로 돌아갑니다"
         className="self-start rounded-xl bg-primary px-6 py-3 text-lg font-medium text-primary-foreground hover:bg-primary/90 focus-visible:ring-4 focus-visible:ring-accent focus-visible:outline-none"
       >
         처음으로
