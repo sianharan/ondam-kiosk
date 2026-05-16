@@ -36,12 +36,22 @@ import {
   detectIntent,
   getIntentResponse,
 } from "@/lib/llm/intentDetection";
+import {
+  isWebSpeechSupported,
+  recognizeWithWebSpeech,
+} from "@/lib/stt/webSpeechFallback";
 import { whisperService } from "@/lib/stt/whisperService";
 import { ttsManager } from "@/lib/tts/fallbackTTS";
 import { cn } from "@/lib/utils";
 import { VOLUME_TO_AUDIO, useVoiceStore } from "@/stores/voiceStore";
 
 const MAX_RECORDING_MS = 10_000;
+/** VAD: 평균 진폭(0~255 정규화) 이 이 값 이하면 무음으로 간주. */
+const VAD_SILENCE_THRESHOLD = 8;
+/** 무음이 이 시간 이상 이어지면 자동 종료. */
+const VAD_SILENCE_DURATION_MS = 2_000;
+/** 녹음 직후 첫 N ms 는 무음이라도 종료하지 않는다 (학습자가 말을 시작할 여유). */
+const VAD_GRACE_MS = 1_500;
 
 type Status = "idle" | "recording" | "processing";
 
@@ -69,7 +79,9 @@ export function MicButton({
   const autoStopTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(
     null,
   );
-  // status 를 최신값으로 보는 ref — setTimeout 콜백의 stale closure 방지
+  // VAD: 매 프레임 평균 진폭을 측정해 SILENCE_DURATION_MS 이상 조용하면 종료.
+  const vadRafRef = React.useRef<number | null>(null);
+  // status 를 최신값으로 보는 ref — setTimeout/RAF 콜백의 stale closure 방지
   const statusRef = React.useRef<Status>("idle");
   React.useEffect(() => {
     statusRef.current = status;
@@ -84,11 +96,15 @@ export function MicButton({
       .catch(() => setMicGranted(false));
   }, []);
 
-  // 언마운트 시 진행 중 녹음 정리
+  // 언마운트 시 진행 중 녹음·VAD 루프 정리
   React.useEffect(() => {
     return () => {
       if (autoStopTimerRef.current) {
         clearTimeout(autoStopTimerRef.current);
+      }
+      if (vadRafRef.current !== null) {
+        cancelAnimationFrame(vadRafRef.current);
+        vadRafRef.current = null;
       }
       if (statusRef.current === "recording") {
         whisperService.cancelRecording();
@@ -120,18 +136,32 @@ export function MicButton({
       clearTimeout(autoStopTimerRef.current);
       autoStopTimerRef.current = null;
     }
+    if (vadRafRef.current !== null) {
+      cancelAnimationFrame(vadRafRef.current);
+      vadRafRef.current = null;
+    }
 
     setStatus("processing");
 
     let text = "";
+    let whisperFailed = false;
     try {
       const blob = await whisperService.stopRecording();
       text = await whisperService.transcribe(blob);
     } catch (err) {
-      console.error("[MicButton] 전사 실패:", err);
-      await speak("잘 못 들었어요. 다시 한 번 말씀해주세요.");
-      setStatus("idle");
-      return;
+      console.warn("[MicButton] Whisper 전사 실패, Web Speech 폴백 시도:", err);
+      whisperFailed = true;
+    }
+
+    // 폴백: Whisper 가 실패했거나 빈 결과면 Web Speech 로 1회 재인식 시도.
+    // Web Speech 는 새 마이크 세션이 필요하므로 학습자에게 짧게 안내한 뒤 호출.
+    if ((!text || whisperFailed) && isWebSpeechSupported()) {
+      try {
+        await speak("한 번 더 짧게 말씀해주세요.");
+        text = await recognizeWithWebSpeech({ timeoutMs: 6_000 });
+      } catch (err) {
+        console.error("[MicButton] Web Speech 폴백도 실패:", err);
+      }
     }
 
     if (!text) {
@@ -182,8 +212,10 @@ export function MicButton({
     // 진행 중 안내 음성을 끊어야 녹음이 자기 자신을 녹음하지 않는다.
     ttsManager.stop();
 
+    let analyser: AnalyserNode | null = null;
     try {
-      await whisperService.startRecording();
+      const handles = await whisperService.startRecording();
+      analyser = handles.analyser;
     } catch (err) {
       console.error("[MicButton] 녹음 시작 실패:", err);
       setMicGranted(false);
@@ -195,9 +227,45 @@ export function MicButton({
 
     setStatus("recording");
 
+    // 최대 시간 안전망 — VAD 가 동작 안 해도 결국 종료.
     autoStopTimerRef.current = setTimeout(() => {
       void finishRecording();
     }, MAX_RECORDING_MS);
+
+    // VAD 루프 — analyser 가 없으면 생략 (최대 시간 종료만 의존).
+    if (analyser) {
+      const startedAt = performance.now();
+      let lastSoundAt = startedAt;
+      const bufferLength = analyser.frequencyBinCount;
+      const buffer = new Uint8Array(bufferLength);
+
+      const tick = () => {
+        if (statusRef.current !== "recording") {
+          vadRafRef.current = null;
+          return;
+        }
+        analyser.getByteFrequencyData(buffer);
+        let sum = 0;
+        for (let i = 0; i < bufferLength; i += 1) sum += buffer[i];
+        const avg = sum / bufferLength;
+
+        const now = performance.now();
+        if (avg > VAD_SILENCE_THRESHOLD) {
+          lastSoundAt = now;
+        }
+
+        const elapsed = now - startedAt;
+        const silentFor = now - lastSoundAt;
+        if (elapsed >= VAD_GRACE_MS && silentFor >= VAD_SILENCE_DURATION_MS) {
+          vadRafRef.current = null;
+          void finishRecording();
+          return;
+        }
+
+        vadRafRef.current = requestAnimationFrame(tick);
+      };
+      vadRafRef.current = requestAnimationFrame(tick);
+    }
   }, [finishRecording, micGranted, speak]);
 
   // ── 단일 탭 / 더블 탭 분리 ────────────────────────────────────

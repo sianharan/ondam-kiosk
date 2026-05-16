@@ -21,6 +21,7 @@ import { useRouter } from "next/navigation";
 import { KioskFrame } from "@/components/kiosk/KioskFrame";
 import { ModeBanner } from "@/components/kiosk/ModeBanner";
 import { OrderFlow } from "@/components/kiosk/OrderFlow";
+import { MicButton } from "@/components/voice/MicButton";
 import { useRequireLearningSession } from "@/lib/interaction/useRequireLearningSession";
 import { getModeConfig } from "@/lib/learning/modeConfigs";
 import { useLearningStore } from "@/stores/learningStore";
@@ -48,20 +49,24 @@ export default function RealFreePage() {
   if (!ready) return null;
 
   return (
-    <KioskFrame currentStep={config.step} title={config.title}>
-      <ModeBanner
-        eyebrow={`${config.philosophy} 단계`}
-        headline="오늘은 어떤 음료를 드시고 싶으세요? 직접 골라보세요."
-        detail="이번 주문은 학습자분이 메뉴부터 결제 수단까지 자유롭게 정하실 수 있어요."
-        tone="primary"
-        helpLevel={config.helpLevel}
-      />
-      <OrderFlow
-        mode="realFree"
-        nextLabel="Articulation"
-        modeIntro={REAL_FREE_INTRO}
-        onAdvance={() => router.push("/articulation")}
-      />
-    </KioskFrame>
+    <>
+      <KioskFrame currentStep={config.step} title={config.title}>
+        <ModeBanner
+          eyebrow={`${config.philosophy} 단계`}
+          headline="오늘은 어떤 음료를 드시고 싶으세요? 직접 골라보세요."
+          detail="이번 주문은 학습자분이 메뉴부터 결제 수단까지 자유롭게 정하실 수 있어요."
+          tone="primary"
+          helpLevel={config.helpLevel}
+        />
+        <OrderFlow
+          mode="realFree"
+          nextLabel="Articulation"
+          modeIntro={REAL_FREE_INTRO}
+          onAdvance={() => router.push("/articulation")}
+        />
+      </KioskFrame>
+      {/* Exploration 단계 — 자동 안내는 없지만 학습자가 자유롭게 도담과 대화할 수 있다. */}
+      <MicButton context="real-free" position="floating" />
+    </>
   );
 }

@@ -16,6 +16,7 @@ import { useRouter } from "next/navigation";
 import { KioskFrame } from "@/components/kiosk/KioskFrame";
 import { ModeBanner } from "@/components/kiosk/ModeBanner";
 import { OrderFlow } from "@/components/kiosk/OrderFlow";
+import { MicButton } from "@/components/voice/MicButton";
 import { TimeoutWarning } from "@/components/voice/TimeoutWarning";
 import { MODE_TIMEOUTS, useTimeout } from "@/lib/interaction/timeoutManager";
 import { useRequireLearningSession } from "@/lib/interaction/useRequireLearningSession";
@@ -179,6 +180,7 @@ export default function PracticePage() {
         onProceed={advance}
         onClose={() => setWarningOpen(false)}
       />
+      <MicButton context="practice" position="floating" />
     </>
   );
 }

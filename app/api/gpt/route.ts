@@ -45,6 +45,33 @@ const SYSTEM_PROMPT = `당신은 '도담'입니다. 시각장애인 학습자에
 
 학습자의 질문이나 요청에 도담의 톤으로 응답하세요.`;
 
+/**
+ * 학습 단계별 시스템 힌트.
+ * Collins 6단계 교수법에 따라 도담이 현재 단계의 역할(시연/코칭/스캐폴딩/페이딩/탐색)에
+ * 맞춰 톤과 도움 깊이를 자동 조절하도록 한다.
+ *
+ *   - tutorial      : Modeling — 학습자는 듣기만, 도담이 시연 중
+ *   - practice      : Coaching — 학습자가 직접 시도, 도담이 자주 코칭
+ *   - challenge     : Scaffolding — 도움이 줄어들고 학습자 자율성 증가
+ *   - real-guided   : Fading — 거의 자율 수행, 도담은 호출 시에만 응답
+ *   - real-free     : Exploration — 학습자 주도, 자유 주문
+ *   - mode-select   : 디스플레이 모드(세로/가로) 선택 화면
+ */
+const CONTEXT_HINTS: Record<string, string> = {
+  "mode-select":
+    "학습자는 디스플레이 모드(세로형/가로형) 선택 화면. 모드 차이와 선택 방법 안내.",
+  tutorial:
+    "학습자는 Tutorial 단계 (Modeling). 도담이 아메리카노 주문을 시연 중. 학습자는 흐름을 듣기만 함.",
+  practice:
+    "학습자는 Practice 단계 (Coaching). 직접 주문을 시도 중. 격려와 부드러운 안내를 적극 제공.",
+  challenge:
+    "학습자는 Challenge 단계 (Scaffolding). 도담의 자동 안내가 줄어든 자율적 수행 중. 막혔을 때만 핵심 힌트 1개 제공.",
+  "real-guided":
+    "학습자는 Real Guided 단계 (Fading). 카페 소음 환경에서 거의 자율 수행. 도담은 호출 시에만 짧게 응답.",
+  "real-free":
+    "학습자는 Real Free 단계 (Exploration). 자유 주문 중. 도담은 호출 시에만 응답하되, 학습자 선택을 존중하고 격려.",
+};
+
 const FALLBACK_RESPONSE = "지금은 답하기가 어려워요. 잠시 후 다시 말씀해주세요.";
 
 interface GPTRequest {
@@ -85,11 +112,11 @@ export async function POST(request: NextRequest) {
   const messages: Array<{ role: "system" | "user"; content: string }> = [
     { role: "system", content: SYSTEM_PROMPT },
   ];
-  if (body.context && body.context.trim()) {
-    messages.push({
-      role: "system",
-      content: `현재 학습 단계: ${body.context.trim()}`,
-    });
+  const contextKey = body.context?.trim();
+  if (contextKey) {
+    // 알려진 단계면 Collins 6단계 힌트를, 모르는 단계면 키 그대로라도 전달.
+    const hint = CONTEXT_HINTS[contextKey] ?? `현재 학습 단계: ${contextKey}`;
+    messages.push({ role: "system", content: hint });
   }
   messages.push({ role: "user", content: userInput });
 

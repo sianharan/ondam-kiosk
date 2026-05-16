@@ -35,11 +35,27 @@ function pickSupportedMimeType(): string | undefined {
   return undefined;
 }
 
+/**
+ * 녹음 세션이 살아 있는 동안 외부(MicButton)에서 무음 감지를 돌릴 수 있도록
+ * AnalyserNode 를 노출한다. Phase 4-AI-B 의 VAD(음성 활동 감지)에 사용.
+ *
+ * analyser 가 null 인 경우(=AudioContext 생성 실패)에도 녹음 자체는 진행되며,
+ * 호출 측은 최대 녹음 시간(10초) 자동 종료만으로 폴백한다.
+ */
+export interface RecordingHandles {
+  analyser: AnalyserNode | null;
+}
+
 class WhisperService {
   private mediaRecorder: MediaRecorder | null = null;
   private audioChunks: Blob[] = [];
   private activeStream: MediaStream | null = null;
   private activeMimeType: string | undefined;
+
+  // ── VAD 자원 (녹음 세션마다 새로 만들고 stop 시 close) ────────
+  private audioContext: AudioContext | null = null;
+  private analyserNode: AnalyserNode | null = null;
+  private sourceNode: MediaStreamAudioSourceNode | null = null;
 
   /** 마이크 권한이 이미 부여되었는지 사전 확인. 권한만 확인하고 즉시 트랙을 정리. */
   async requestMicAccess(): Promise<boolean> {
@@ -60,10 +76,17 @@ class WhisperService {
     return this.mediaRecorder?.state === "recording";
   }
 
-  async startRecording(): Promise<void> {
+  /**
+   * 녹음 시작. VAD 용 AnalyserNode 를 반환하여 호출 측이 무음 감지를 돌릴 수 있다.
+   * 반환 객체는 stopRecording / cancelRecording 시 자동으로 무효화된다.
+   */
+  async startRecording(): Promise<RecordingHandles> {
     if (this.isRecording()) {
-      // 이미 녹음 중이면 무시 — UI 가 중복 호출하지 못하도록 상태 관리하지만 방어적으로.
-      return;
+      // 이미 녹음 중이면 기존 analyser 를 그대로 돌려준다 (재호출 방어).
+      if (this.analyserNode) {
+        return { analyser: this.analyserNode };
+      }
+      throw new Error("녹음이 이미 진행 중이지만 분석기가 없어요.");
     }
     if (typeof navigator === "undefined" || !navigator.mediaDevices) {
       throw new Error("이 환경에서는 마이크를 사용할 수 없어요.");
@@ -81,6 +104,31 @@ class WhisperService {
     this.activeMimeType = recorder.mimeType || mimeType;
     this.mediaRecorder = recorder;
 
+    // VAD 용 분석기 셋업 — 256 FFT 면 0.5kHz 해상도, 평균 진폭 계산용으론 충분.
+    try {
+      const Ctor =
+        window.AudioContext ??
+        (window as unknown as { webkitAudioContext?: typeof AudioContext })
+          .webkitAudioContext;
+      if (Ctor) {
+        const ctx = new Ctor();
+        const source = ctx.createMediaStreamSource(stream);
+        const analyser = ctx.createAnalyser();
+        analyser.fftSize = 256;
+        analyser.smoothingTimeConstant = 0.8;
+        source.connect(analyser);
+        this.audioContext = ctx;
+        this.sourceNode = source;
+        this.analyserNode = analyser;
+      }
+    } catch (err) {
+      // 분석기 생성 실패해도 녹음 자체는 계속 — VAD 만 비활성.
+      console.warn("[Whisper] AnalyserNode 생성 실패, VAD 비활성:", err);
+      this.audioContext = null;
+      this.sourceNode = null;
+      this.analyserNode = null;
+    }
+
     recorder.ondataavailable = (event) => {
       if (event.data && event.data.size > 0) {
         this.audioChunks.push(event.data);
@@ -88,6 +136,8 @@ class WhisperService {
     };
 
     recorder.start();
+
+    return { analyser: this.analyserNode };
   }
 
   async stopRecording(): Promise<Blob> {
@@ -101,14 +151,12 @@ class WhisperService {
       const finalize = () => {
         const type = this.activeMimeType || "audio/webm";
         const blob = new Blob(this.audioChunks, { type });
-
-        // 스트림 + 레코더 정리. 마이크 LED 가 즉시 꺼지도록.
+        this.teardownAudioGraph();
         this.activeStream?.getTracks().forEach((t) => t.stop());
         this.activeStream = null;
         this.mediaRecorder = null;
         this.audioChunks = [];
         this.activeMimeType = undefined;
-
         resolve(blob);
       };
 
@@ -116,6 +164,7 @@ class WhisperService {
       recorder.onstop = () => finalize();
       recorder.onerror = (event) => {
         // 에러여도 스트림은 정리해야 마이크가 잠기지 않는다.
+        this.teardownAudioGraph();
         this.activeStream?.getTracks().forEach((t) => t.stop());
         this.activeStream = null;
         this.mediaRecorder = null;
@@ -148,11 +197,33 @@ class WhisperService {
     } catch {
       /* ignore */
     }
+    this.teardownAudioGraph();
     this.activeStream?.getTracks().forEach((t) => t.stop());
     this.activeStream = null;
     this.mediaRecorder = null;
     this.audioChunks = [];
     this.activeMimeType = undefined;
+  }
+
+  private teardownAudioGraph(): void {
+    try {
+      this.sourceNode?.disconnect();
+    } catch {
+      /* ignore */
+    }
+    try {
+      this.analyserNode?.disconnect();
+    } catch {
+      /* ignore */
+    }
+    if (this.audioContext && this.audioContext.state !== "closed") {
+      void this.audioContext.close().catch(() => {
+        /* ignore close errors */
+      });
+    }
+    this.sourceNode = null;
+    this.analyserNode = null;
+    this.audioContext = null;
   }
 
   async transcribe(audioBlob: Blob): Promise<string> {

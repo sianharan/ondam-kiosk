@@ -18,6 +18,7 @@ import { AutoDemo } from "@/components/kiosk/AutoDemo";
 import { KioskFrame } from "@/components/kiosk/KioskFrame";
 import { ModeBanner } from "@/components/kiosk/ModeBanner";
 import { OrderFlow } from "@/components/kiosk/OrderFlow";
+import { MicButton } from "@/components/voice/MicButton";
 import { useRequireLearningSession } from "@/lib/interaction/useRequireLearningSession";
 import { getModeConfig } from "@/lib/learning/modeConfigs";
 import { VOICE_SCRIPTS } from "@/lib/tts/voiceScripts";
@@ -47,23 +48,30 @@ export default function TutorialPage() {
   if (!ready) return null;
 
   return (
-    <KioskFrame currentStep={config.step} title={config.title}>
-      <ModeBanner
-        eyebrow={`${config.philosophy} 단계`}
-        headline="도담이 먼저 아메리카노 주문 과정을 보여드릴게요."
-        detail="지금은 도담이 시연해드릴게요. 천천히 들으면서 흐름을 익혀봐요."
-        helpLevel={config.helpLevel}
-      />
-      {config.enableAutoDemo ? (
-        <AutoDemo onComplete={goPractice} onSkip={goPractice} />
-      ) : (
-        <OrderFlow
-          mode="tutorial"
-          nextLabel="Practice"
-          modeIntro={VOICE_SCRIPTS.tutorial.intro}
-          onAdvance={goPractice}
+    <>
+      <KioskFrame currentStep={config.step} title={config.title}>
+        <ModeBanner
+          eyebrow={`${config.philosophy} 단계`}
+          headline="도담이 먼저 아메리카노 주문 과정을 보여드릴게요."
+          detail="지금은 도담이 시연해드릴게요. 천천히 들으면서 흐름을 익혀봐요."
+          helpLevel={config.helpLevel}
         />
+        {config.enableAutoDemo ? (
+          <AutoDemo onComplete={goPractice} onSkip={goPractice} />
+        ) : (
+          <OrderFlow
+            mode="tutorial"
+            nextLabel="Practice"
+            modeIntro={VOICE_SCRIPTS.tutorial.intro}
+            onAdvance={goPractice}
+          />
+        )}
+      </KioskFrame>
+      {/* AutoDemo(시연 자동 재생) 중에는 학습 흐름 중단 방지를 위해 마이크 비노출.
+          시연이 끝나 OrderFlow 로 진입했거나, 시연이 비활성화된 변형 모드에서만 노출. */}
+      {!config.enableAutoDemo && (
+        <MicButton context="tutorial" position="floating" />
       )}
-    </KioskFrame>
+    </>
   );
 }

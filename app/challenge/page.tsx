@@ -21,6 +21,7 @@ import {
   OrderFlow,
   type OrderFlowStage,
 } from "@/components/kiosk/OrderFlow";
+import { MicButton } from "@/components/voice/MicButton";
 import { TimeoutWarning } from "@/components/voice/TimeoutWarning";
 import { MODE_TIMEOUTS, useTimeout } from "@/lib/interaction/timeoutManager";
 import { useRequireLearningSession } from "@/lib/interaction/useRequireLearningSession";
@@ -107,6 +108,9 @@ export default function ChallengePage() {
         onProceed={advance}
         onClose={() => setWarningOpen(false)}
       />
+      {/* HintButton(inline) 과 별개로 음성 호출 채널을 항상 열어둔다 —
+          학습자가 시각·청각 두 방식을 자유롭게 선택. */}
+      <MicButton context="challenge" position="floating" />
     </>
   );
 }

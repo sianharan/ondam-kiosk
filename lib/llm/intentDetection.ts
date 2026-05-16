@@ -80,12 +80,14 @@ export function detectIntent(text: string): Intent {
 }
 
 /**
- * 의도별 정적 응답.
- *   - null 반환 → 호출 측이 /api/gpt 로 위임
- *   - 단순 의도는 GPT 호출 없이 즉시 응답 (지연 최소화)
+ * 의도별 정적 응답 — 단순 의도는 GPT 호출 없이 즉시 답한다 (지연·비용 최소화).
  *
- * context 는 현재 학습 단계 (예: "mode-select"). 현재는 인사 응답에만 가볍게 반영하고,
- * Phase 4-AI-B 에서 단계별 맞춤 응답으로 확장한다.
+ *   - null 반환 → 호출 측이 /api/gpt 로 위임
+ *   - context 는 학습 단계 식별자 (mode-select / tutorial / practice / challenge
+ *     / real-guided / real-free). 인사 응답에 맞춤 멘트를 부여하여 학습자가
+ *     자신의 현재 단계를 청각적으로 재확인하도록 한다.
+ *
+ * 단계별 인사 멘트는 Collins 6단계 교수법의 학습자 위치 단서를 반영.
  */
 export function getIntentResponse(
   intent: Intent,
@@ -97,10 +99,25 @@ export function getIntentResponse(
     case "negative":
       return "괜찮아요. 다른 걸 해볼까요?";
     case "greeting":
-      return context === "mode-select"
-        ? "안녕하세요! 어떤 키오스크로 연습할지 골라볼까요?"
-        : "안녕하세요! 무엇을 도와드릴까요?";
+      return GREETING_BY_CONTEXT[context ?? ""] ?? GREETING_DEFAULT;
     default:
       return null;
   }
 }
+
+const GREETING_DEFAULT = "안녕하세요! 무엇을 도와드릴까요?";
+
+const GREETING_BY_CONTEXT: Record<string, string> = {
+  "mode-select":
+    "안녕하세요! 어떤 키오스크로 연습할지 골라볼까요?",
+  tutorial:
+    "안녕하세요! 따라보기 단계예요. 도담이 먼저 시연해드릴게요.",
+  practice:
+    "안녕하세요! 이번엔 직접 해보는 단계예요. 천천히 골라도 괜찮아요.",
+  challenge:
+    "안녕하세요! 도움이 줄어든 단계예요. 막히면 힌트 버튼을 눌러주세요.",
+  "real-guided":
+    "안녕하세요! 실전 같은 단계예요. 도담은 호출하실 때만 답할게요.",
+  "real-free":
+    "안녕하세요! 자유롭게 주문하는 단계예요. 원하시는 메뉴를 골라보세요.",
+};

@@ -19,6 +19,7 @@ import { useRouter } from "next/navigation";
 import { KioskFrame } from "@/components/kiosk/KioskFrame";
 import { ModeBanner } from "@/components/kiosk/ModeBanner";
 import { OrderFlow } from "@/components/kiosk/OrderFlow";
+import { MicButton } from "@/components/voice/MicButton";
 import { TimeoutWarning } from "@/components/voice/TimeoutWarning";
 import { MODE_TIMEOUTS, useTimeout } from "@/lib/interaction/timeoutManager";
 import { useRequireLearningSession } from "@/lib/interaction/useRequireLearningSession";
@@ -81,6 +82,8 @@ export default function RealGuidedPage() {
         onProceed={advance}
         onClose={() => setWarningOpen(false)}
       />
+      {/* Fading 단계 — 도담의 자동 안내는 줄이되, 학습자 호출 채널은 항상 열어둔다. */}
+      <MicButton context="real-guided" position="floating" />
     </>
   );
 }
