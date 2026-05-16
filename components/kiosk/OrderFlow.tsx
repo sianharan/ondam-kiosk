@@ -57,7 +57,7 @@ export function OrderFlow({ mode, nextLabel, onAdvance }: OrderFlowProps) {
   }, [resetOrder]);
 
   return (
-    <div className="animate-in fade-in duration-500">
+    <div>
       {stage === "category" && (
         <CategoryGrid onSelect={() => setStage("menu")} />
       )}

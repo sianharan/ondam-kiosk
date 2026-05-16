@@ -13,6 +13,7 @@ import { useRouter } from "next/navigation";
 
 import { KioskFrame } from "@/components/kiosk/KioskFrame";
 import { ModeBanner } from "@/components/kiosk/ModeBanner";
+import { useRequireLearningSession } from "@/lib/interaction/useRequireLearningSession";
 import { useLearningStore } from "@/stores/learningStore";
 
 const QUESTIONS: string[] = [
@@ -32,11 +33,15 @@ const RECALL_HINTS: string[] = [
 export default function ArticulationPage() {
   const router = useRouter();
   const setStep = useLearningStore((s) => s.setStep);
+  const { ready } = useRequireLearningSession();
   const [index, setIndex] = React.useState(0);
 
   React.useEffect(() => {
     setStep(8);
   }, [setStep]);
+
+  // 직접 접근 시 useRequireLearningSession 이 홈으로 보내는 동안 빈 화면
+  if (!ready) return null;
 
   const isLast = index === QUESTIONS.length - 1;
 

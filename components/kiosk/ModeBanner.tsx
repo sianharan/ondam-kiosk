@@ -31,7 +31,7 @@ export function ModeBanner({
       role="note"
       aria-label={`학습 모드 안내: ${headline}${detail ? `. ${detail}` : ""}`}
       className={cn(
-        "mb-6 flex flex-col gap-2 rounded-2xl p-5 ring-1 animate-in fade-in duration-500 md:p-6",
+        "mb-6 flex flex-col gap-2 rounded-2xl p-5 ring-1 md:p-6",
         tone === "accent"
           ? "bg-accent/10 ring-accent/30"
           : "bg-primary/5 ring-primary/20",

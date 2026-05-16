@@ -46,7 +46,7 @@ export default function SpatialMapPage() {
   return (
     <KioskFrame currentStep={2} title="공간 지도">
       <section className="flex flex-col gap-7">
-        <header className="animate-in fade-in duration-500">
+        <header>
           <h2 className="text-3xl font-bold text-foreground md:text-4xl">
             온담 카페 키오스크 안내
           </h2>
@@ -189,7 +189,7 @@ function KioskDiagram() {
           <text x="124" y="296" textAnchor="end">카드 투입구 →</text>
         </g>
       </svg>
-      <figcaption className="text-sm text-foreground/60 md:text-base">
+      <figcaption className="text-base text-foreground/60 md:text-lg">
         키오스크 구조 미리보기
       </figcaption>
     </figure>

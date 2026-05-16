@@ -15,6 +15,7 @@ import { useRouter } from "next/navigation";
 
 import { KioskFrame } from "@/components/kiosk/KioskFrame";
 import { ModeBanner } from "@/components/kiosk/ModeBanner";
+import { useRequireLearningSession } from "@/lib/interaction/useRequireLearningSession";
 import { cn } from "@/lib/utils";
 import { useLearningStore } from "@/stores/learningStore";
 
@@ -49,12 +50,14 @@ function formatMinSec(totalSec: number): string {
 export default function ReflectionPage() {
   const router = useRouter();
   const setStep = useLearningStore((s) => s.setStep);
+  const { ready } = useRequireLearningSession();
 
   React.useEffect(() => {
     setStep(9);
   }, [setStep]);
 
   // 가장 시간 차이 큰 단계 = "어려웠어요!" 표시
+  // useMemo 는 Hook 이므로 ready 가드 위에서 호출 (Hook 순서 일관성)
   const hardest = React.useMemo(
     () =>
       ROWS.reduce((a, b) =>
@@ -62,6 +65,8 @@ export default function ReflectionPage() {
       ),
     [],
   );
+
+  if (!ready) return null;
 
   return (
     <KioskFrame currentStep={9} title="Reflection — 분석 결과">
@@ -72,7 +77,7 @@ export default function ReflectionPage() {
         tone="primary"
       />
 
-      <section className="flex flex-col gap-6 animate-in fade-in duration-500">
+      <section className="flex flex-col gap-6">
         {/* ── 총 시간 요약 ─────────────────────────── */}
         <div
           className="grid gap-3 rounded-2xl border border-foreground/15 bg-background p-6 md:grid-cols-2"

@@ -79,7 +79,7 @@ export function KioskFrame({
 
         {/* ── 본문: 모든 화면이 이 안에 렌더링됨 ───────────────── */}
         <main
-          className="flex-1 px-6 py-8 text-[1.5rem] leading-relaxed text-foreground md:px-10 md:py-10"
+          className="flex-1 px-6 py-8 text-[1.5rem] leading-relaxed text-foreground animate-in fade-in slide-in-from-bottom-2 duration-300 md:px-10 md:py-10"
           style={{ fontSize: "max(1.5rem, 24px)" }}
         >
           {children}

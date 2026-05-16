@@ -11,6 +11,7 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 
 import { KioskFrame } from "@/components/kiosk/KioskFrame";
+import { useRequireLearningSession } from "@/lib/interaction/useRequireLearningSession";
 import { useLearningStore } from "@/stores/learningStore";
 import { useOrderStore } from "@/stores/orderStore";
 
@@ -19,10 +20,13 @@ export default function CompletePage() {
   const setStep = useLearningStore((s) => s.setStep);
   const resetSession = useLearningStore((s) => s.resetSession);
   const resetOrder = useOrderStore((s) => s.resetOrder);
+  const { ready } = useRequireLearningSession();
 
   React.useEffect(() => {
     setStep(10);
   }, [setStep]);
+
+  if (!ready) return null;
 
   const handleRestart = () => {
     resetOrder();
@@ -40,7 +44,7 @@ export default function CompletePage() {
   return (
     <KioskFrame currentStep={10} title="완료">
       <section
-        className="flex flex-col items-center gap-7 py-4 text-center animate-in fade-in duration-700"
+        className="flex flex-col items-center gap-7 py-4 text-center"
         aria-live="polite"
       >
         <span aria-hidden="true" className="text-6xl md:text-7xl">
