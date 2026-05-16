@@ -58,14 +58,17 @@ export function PaymentDialog({
   const [chosen, setChosen] = React.useState<PaymentMethod | null>(null);
   const [progress, setProgress] = React.useState(0); // 0~100
 
-  // open 이 닫혔다가 다시 열리면 처음부터
-  React.useEffect(() => {
+  // open 이 닫혔다가 다시 열리면 처음부터 — React 공식 "Adjusting state on prop
+  // change" 패턴 (https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes).
+  const [prevOpen, setPrevOpen] = React.useState(open);
+  if (open !== prevOpen) {
+    setPrevOpen(open);
     if (open) {
       setStage("select");
       setChosen(null);
       setProgress(0);
     }
-  }, [open]);
+  }
 
   // ── processing 진입 시 3초 타이머 + 100ms 단위 프로그레스 ──
   React.useEffect(() => {

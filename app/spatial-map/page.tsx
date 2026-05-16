@@ -3,15 +3,18 @@
 /**
  * /spatial-map — 공간 지도 (2/10) ⭐ 시각장애인 핵심
  *
- * PROJECT_DESIGN.md 5.2 #2 + 4.3 (전역 → 국소 원칙) 기반.
- * 키오스크 전체 구조를 먼저 음성/텍스트로 안내한 뒤 세부 조작 학습으로 진입.
- *
- * Phase 2-C 에서는 정적 텍스트 + 단순 SVG 다이어그램만. 음성 안내는 Phase 3.
+ * PROJECT_DESIGN.md 5.2 #2 + 4.3 (전역 → 국소 원칙).
+ * Phase 3-A: VoiceCoach 로 intro → layout → physical → next 를 1초 간격 순차 발화.
+ * 이해했어요 버튼은 VoiceButton (단일=안내, 더블=실행).
  */
 
 import { useRouter } from "next/navigation";
 
 import { KioskFrame } from "@/components/kiosk/KioskFrame";
+import { VoiceCoach } from "@/components/voice/VoiceCoach";
+import { VoiceButton } from "@/components/voice/VoiceButton";
+import { VoiceSettingsPanel } from "@/components/voice/VoiceSettingsPanel";
+import { VOICE_SCRIPTS } from "@/lib/tts/voiceScripts";
 
 const STRUCTURE_ITEMS: { area: string; description: string }[] = [
   {
@@ -20,7 +23,8 @@ const STRUCTURE_ITEMS: { area: string; description: string }[] = [
   },
   {
     area: "화면 위쪽",
-    description: "메뉴 카테고리 네 개(커피·에이드·티·디저트)가 가로로 놓여 있어요.",
+    description:
+      "메뉴 카테고리 네 개(커피·에이드·티·디저트)가 가로로 놓여 있어요.",
   },
   {
     area: "화면 가운데",
@@ -40,56 +44,67 @@ const STRUCTURE_ITEMS: { area: string; description: string }[] = [
   },
 ];
 
+const SPATIAL_SEQUENCE = [
+  VOICE_SCRIPTS.spatialMap.intro,
+  VOICE_SCRIPTS.spatialMap.layout,
+  VOICE_SCRIPTS.spatialMap.physical,
+  VOICE_SCRIPTS.spatialMap.next,
+] as const;
+
 export default function SpatialMapPage() {
   const router = useRouter();
 
   return (
-    <KioskFrame currentStep={2} title="공간 지도">
-      <section className="flex flex-col gap-7">
-        <header>
-          <h2 className="text-3xl font-bold text-foreground md:text-4xl">
-            온담 카페 키오스크 안내
-          </h2>
-          <p className="mt-2 text-xl text-foreground/70 md:text-2xl">
-            먼저 키오스크의 구조부터 익혀볼게요. 어디에 무엇이 있는지
-            함께 살펴봐요.
-          </p>
-        </header>
+    <>
+      <VoiceSettingsPanel />
+      <KioskFrame currentStep={2} title="공간 지도">
+        <section className="flex flex-col gap-7">
+          <header>
+            <h2 className="text-3xl font-bold text-foreground md:text-4xl">
+              온담 카페 키오스크 안내
+            </h2>
+            <p className="mt-2 text-xl text-foreground/70 md:text-2xl">
+              먼저 키오스크의 구조부터 익혀볼게요. 어디에 무엇이 있는지 함께
+              살펴봐요.
+            </p>
+          </header>
 
-        <div className="grid gap-6 md:grid-cols-[1fr_auto] md:items-start">
-          {/* ── 텍스트 안내 ─────────────────────────── */}
-          <ul className="flex flex-col gap-4">
-            {STRUCTURE_ITEMS.map((item) => (
-              <li
-                key={item.area}
-                className="flex flex-col gap-1 rounded-2xl border border-foreground/15 bg-background p-5"
-              >
-                <span className="text-lg font-bold text-accent md:text-xl">
-                  {item.area}
-                </span>
-                <span className="text-xl text-foreground md:text-2xl">
-                  {item.description}
-                </span>
-              </li>
-            ))}
-          </ul>
+          {/* VoiceCoach — 마운트 시 4단 순차 발화 (1초 간격) */}
+          <VoiceCoach message={SPATIAL_SEQUENCE} sequenceGapMs={1000} />
 
-          {/* ── SVG 다이어그램 ──────────────────────── */}
-          <KioskDiagram />
-        </div>
+          <div className="grid gap-6 md:grid-cols-[1fr_auto] md:items-start">
+            {/* ── 텍스트 안내 ─────────────────────────── */}
+            <ul className="flex flex-col gap-4">
+              {STRUCTURE_ITEMS.map((item) => (
+                <li
+                  key={item.area}
+                  className="flex flex-col gap-1 rounded-2xl border border-foreground/15 bg-background p-5"
+                >
+                  <span className="text-lg font-bold text-accent md:text-xl">
+                    {item.area}
+                  </span>
+                  <span className="text-xl text-foreground md:text-2xl">
+                    {item.description}
+                  </span>
+                </li>
+              ))}
+            </ul>
 
-        <footer className="flex justify-end pt-2">
-          <button
-            type="button"
-            onClick={() => router.push("/tutorial")}
-            aria-label="이해했어요. 다음 단계 튜토리얼로 이동합니다"
-            className="rounded-2xl bg-accent px-10 py-5 text-2xl font-bold text-accent-foreground shadow-md transition-all hover:-translate-y-0.5 hover:shadow-lg focus-visible:ring-4 focus-visible:ring-primary focus-visible:outline-none"
-          >
-            이해했어요, 다음으로
-          </button>
-        </footer>
-      </section>
-    </KioskFrame>
+            {/* ── SVG 다이어그램 ──────────────────────── */}
+            <KioskDiagram />
+          </div>
+
+          <footer className="flex justify-end pt-2">
+            <VoiceButton
+              voiceLabel={VOICE_SCRIPTS.spatialMap.next}
+              onActivate={() => router.push("/tutorial")}
+            >
+              이해했어요, 다음으로
+            </VoiceButton>
+          </footer>
+        </section>
+      </KioskFrame>
+    </>
   );
 }
 
