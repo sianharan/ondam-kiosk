@@ -17,7 +17,6 @@ import { useRouter } from "next/navigation";
 import { KioskFrame } from "@/components/kiosk/KioskFrame";
 import { VoiceCoach } from "@/components/voice/VoiceCoach";
 import { VoiceButton } from "@/components/voice/VoiceButton";
-import { VoiceSettingsPanel } from "@/components/voice/VoiceSettingsPanel";
 import { VOICE_SCRIPTS } from "@/lib/tts/voiceScripts";
 
 export default function Home() {
@@ -25,7 +24,6 @@ export default function Home() {
 
   return (
     <>
-      <VoiceSettingsPanel />
       <KioskFrame currentStep={1} title="환영">
         <section
           className="flex flex-col items-center gap-6 py-4 text-center"

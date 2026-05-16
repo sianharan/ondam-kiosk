@@ -3,24 +3,27 @@
 /**
  * VoiceCoach — "도담" 자동 발화 + 시각적 표시 컴포넌트
  *
- * PROJECT_DESIGN.md 5.2.2 d) 청각적 대체 콘텐츠 의무를 화면 진입 시점에 자동 충족.
- * 실제 발화는 ttsManager (OpenAI nova 우선, 실패 시 Web Speech 폴백).
- *
  * 동작
- *  - 마운트 시 message 를 ttsManager 큐에 넣어 발화
- *  - voiceStore.isEnabled 가 false 이면 발화하지 않음 (UI 표시도 비활성)
+ *  - 마운트 시 message 를 ttsManager 큐에 넣어 순차 발화
+ *  - 발화 시작 시 voiceStore.lastSequence 에 시퀀스를 저장 → ReplayButton 사용
+ *  - voiceStore.isEnabled 가 false 이면 발화하지 않음
  *  - voiceStore.voice / speed / volume 을 매 호출 직전에 매니저에 적용
  *  - 언마운트 시 자동 stop — 페이지 이동 시 중복 발화 방지
  *
- * 추가 기능
- *  - 6.3.6 다시 듣기 / 6.3.7 읽기 종료 버튼 내장
- *  - 발화 중 도담 아이콘에 가벼운 펄스 애니메이션 (3Hz 미만)
+ * KS X 9211:2025
+ *   - 5.2.2 d) 청각 대체     — 마운트 자동 발화 + 시각 상태 표시
+ *   - 6.3.6   다시 듣기      — 내부 [다시 듣기] 버튼 + 헤더 ReplayButton 도 lastSequence 사용
+ *   - 6.3.7   읽기 종료      — 내부 [멈추기] + 글로벌 StopSpeakingButton
+ *   - 6.3.3   음량 조절      — volume 5단계 → VOLUME_TO_AUDIO 매핑 (청력 보호)
  */
 
 import * as React from "react";
 
 import { ttsManager } from "@/lib/tts/fallbackTTS";
-import { useVoiceStore } from "@/stores/voiceStore";
+import {
+  VOLUME_TO_AUDIO,
+  useVoiceStore,
+} from "@/stores/voiceStore";
 import { cn } from "@/lib/utils";
 
 export interface VoiceCoachProps {
@@ -32,7 +35,7 @@ export interface VoiceCoachProps {
   sequenceGapMs?: number;
   /** 전체 발화 종료 시 호출 */
   onComplete?: () => void;
-  /** 시각적 표시 위치 (기본 bottom). 화면 상단에 두고 싶으면 "top" */
+  /** 시각적 표시 위치 (기본 bottom) */
   position?: "top" | "bottom";
   className?: string;
 }
@@ -52,11 +55,12 @@ export function VoiceCoach({
   const isSpeaking = useVoiceStore((s) => s.isSpeaking);
   const setSpeaking = useVoiceStore((s) => s.setSpeaking);
   const setCurrentText = useVoiceStore((s) => s.setCurrentText);
+  const setLastSequence = useVoiceStore((s) => s.setLastSequence);
 
-  // 마지막에 발화한 시퀀스 — "다시 듣기" 용
-  const lastSequenceRef = React.useRef<string[]>([]);
-  // 진행 중인 발화 세대(generation). 새 발화나 stop 시 증가시켜 이전 루프를 무력화.
   const generationRef = React.useRef(0);
+  // 마지막 시퀀스는 store 에도 저장하지만 컴포넌트 내부에서도 재참조한다
+  // (다시 듣기 후 새로 useEffect 가 도는 동안 store 의 lastSequence 가 비워질 수도 있으므로).
+  const lastSequenceRef = React.useRef<string[]>([]);
 
   const lines = React.useMemo<string[]>(
     () => (Array.isArray(message) ? [...message] : [message as string]),
@@ -67,13 +71,14 @@ export function VoiceCoach({
     async (seq: string[]) => {
       if (!seq.length) return;
       lastSequenceRef.current = seq;
+      setLastSequence(seq);
 
       generationRef.current += 1;
       const myGeneration = generationRef.current;
 
       ttsManager.setVoice(voice);
       ttsManager.setSpeed(speed);
-      ttsManager.setVolume(volume);
+      ttsManager.setVolume(VOLUME_TO_AUDIO[volume]);
       setSpeaking(true);
 
       try {
@@ -100,6 +105,7 @@ export function VoiceCoach({
       onComplete,
       sequenceGapMs,
       setCurrentText,
+      setLastSequence,
       setSpeaking,
       speed,
       voice,
@@ -120,8 +126,6 @@ export function VoiceCoach({
       setSpeaking(false);
       setCurrentText(null);
     };
-    // playSequence 는 매번 재생성될 수 있으므로 의존성에서 제외하고,
-    // 메시지/활성화 토글만 트리거로 사용한다.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lines, autoStart, isEnabled]);
 

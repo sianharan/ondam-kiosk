@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
 
+import { GlobalVoiceControls } from "@/components/voice/GlobalVoiceControls";
+
 export const metadata: Metadata = {
   title: "온담 카페 — 시각장애인 키오스크 학습 환경",
   description:
@@ -29,6 +31,7 @@ export default function RootLayout({
         }}
       >
         {children}
+        <GlobalVoiceControls />
       </body>
     </html>
   );

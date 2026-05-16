@@ -16,7 +16,7 @@ import * as React from "react";
 
 import { useDoubleTap } from "@/lib/interaction/doubleTap";
 import { ttsManager } from "@/lib/tts/fallbackTTS";
-import { useVoiceStore } from "@/stores/voiceStore";
+import { VOLUME_TO_AUDIO, useVoiceStore } from "@/stores/voiceStore";
 import { cn } from "@/lib/utils";
 
 type Variant = "primary" | "secondary" | "ghost";
@@ -65,7 +65,7 @@ export function VoiceButton({
     if (!isEnabled) return;
     ttsManager.setVoice(voice);
     ttsManager.setSpeed(speed);
-    ttsManager.setVolume(volume);
+    ttsManager.setVolume(VOLUME_TO_AUDIO[volume]);
     void ttsManager.speak(voiceLabel, { interrupt: true });
   }, [isEnabled, voice, speed, volume, voiceLabel]);
 

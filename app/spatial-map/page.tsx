@@ -13,7 +13,6 @@ import { useRouter } from "next/navigation";
 import { KioskFrame } from "@/components/kiosk/KioskFrame";
 import { VoiceCoach } from "@/components/voice/VoiceCoach";
 import { VoiceButton } from "@/components/voice/VoiceButton";
-import { VoiceSettingsPanel } from "@/components/voice/VoiceSettingsPanel";
 import { VOICE_SCRIPTS } from "@/lib/tts/voiceScripts";
 
 const STRUCTURE_ITEMS: { area: string; description: string }[] = [
@@ -56,7 +55,6 @@ export default function SpatialMapPage() {
 
   return (
     <>
-      <VoiceSettingsPanel />
       <KioskFrame currentStep={2} title="공간 지도">
         <section className="flex flex-col gap-7">
           <header>

@@ -3,34 +3,37 @@
 /**
  * CategoryGrid — 4개 카테고리 선택 화면
  *
- * PROJECT_DESIGN.md 5.2 #3 / 3.3 (카테고리별 색상 블록) 기반.
- * radiogroup 패턴으로 키보드 화살표 탐색 가능 (KS X 9211:2025 청각 대체 + 키보드).
- *
- * 클릭/Enter/Space 시 onSelect(category) → 부모가 다음 화면으로 전환.
+ * Phase 3-B 음성 통합
+ *   - 진입 시 VoiceCoach 가 카테고리 4개 위치를 자동 안내 (5.2.2 d / 4.3 전역→국소)
+ *   - 각 카드: 단일 탭 = voiceLabel 안내, 더블 탭 = 선택 (7.6.6)
  */
 
 import * as React from "react";
 
+import { VoiceCoach } from "@/components/voice/VoiceCoach";
+import { useDoubleTap } from "@/lib/interaction/doubleTap";
+import { ttsManager } from "@/lib/tts/fallbackTTS";
+import { VOICE_SCRIPTS } from "@/lib/tts/voiceScripts";
+import { VOLUME_TO_AUDIO, useVoiceStore } from "@/stores/voiceStore";
 import { cn } from "@/lib/utils";
-import {
-  CATEGORY_LABEL,
-  type Category,
-} from "@/lib/kiosk-data/menu";
+import { CATEGORY_LABEL, type Category } from "@/lib/kiosk-data/menu";
 import { useOrderStore } from "@/stores/orderStore";
 
 interface CategoryDef {
   id: Category;
-  /** 음성/접근성 설명 */
+  /** 단일 탭 시 발화할 안내 (이름 + 들어있는 메뉴 + 더블탭 안내) */
+  voiceLabel: string;
+  /** 음성/접근성 한 줄 설명 */
   voiceDesc: string;
-  /** Tailwind 배경 클래스 — globals.css 의 category-* 변수 사용 */
   bgClass: string;
-  /** 카드 위에 얹는 단순 SVG 아이콘 (currentColor 사용) */
   icon: React.ReactNode;
 }
 
 const CATEGORIES: CategoryDef[] = [
   {
     id: "coffee",
+    voiceLabel:
+      "왼쪽 위, 커피 카테고리예요. 아메리카노, 카페라떼, 카푸치노가 있어요. 두 번 두드리면 선택돼요.",
     voiceDesc: "아메리카노, 카페라떼, 카푸치노 등 원두 음료",
     bgClass: "bg-category-coffee",
     icon: (
@@ -56,6 +59,8 @@ const CATEGORIES: CategoryDef[] = [
   },
   {
     id: "ade",
+    voiceLabel:
+      "오른쪽 위, 에이드 카테고리예요. 레몬에이드, 자몽에이드가 있어요. 두 번 두드리면 선택돼요.",
     voiceDesc: "레몬에이드, 자몽에이드 등 상큼한 탄산 음료",
     bgClass: "bg-category-ade",
     icon: (
@@ -82,6 +87,8 @@ const CATEGORIES: CategoryDef[] = [
   },
   {
     id: "tea",
+    voiceLabel:
+      "왼쪽 아래, 티 카테고리예요. 캐모마일, 페퍼민트 차가 있어요. 두 번 두드리면 선택돼요.",
     voiceDesc: "캐모마일, 페퍼민트 등 따뜻한 허브차",
     bgClass: "bg-category-tea",
     icon: (
@@ -107,6 +114,8 @@ const CATEGORIES: CategoryDef[] = [
   },
   {
     id: "dessert",
+    voiceLabel:
+      "오른쪽 아래, 디저트 카테고리예요. 크로와상이 있어요. 두 번 두드리면 선택돼요.",
     voiceDesc: "크로와상 등 빵·디저트류",
     bgClass: "bg-category-dessert",
     icon: (
@@ -132,6 +141,12 @@ const CATEGORIES: CategoryDef[] = [
   },
 ];
 
+const ENTRY_SEQUENCE = [
+  VOICE_SCRIPTS.category.intro,
+  ...VOICE_SCRIPTS.category.items,
+  VOICE_SCRIPTS.category.instruction,
+] as const;
+
 export interface CategoryGridProps {
   onSelect: (category: Category) => void;
 }
@@ -139,11 +154,6 @@ export interface CategoryGridProps {
 export function CategoryGrid({ onSelect }: CategoryGridProps) {
   const selectedCategory = useOrderStore((s) => s.selectedCategory);
   const setCategory = useOrderStore((s) => s.setCategory);
-
-  const handleSelect = (category: Category) => {
-    setCategory(category);
-    onSelect(category);
-  };
 
   return (
     <section className="flex flex-col gap-6">
@@ -159,40 +169,83 @@ export function CategoryGrid({ onSelect }: CategoryGridProps) {
         </p>
       </header>
 
+      <VoiceCoach message={ENTRY_SEQUENCE} sequenceGapMs={400} />
+
       <div
         role="radiogroup"
         aria-labelledby="category-grid-heading"
         className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6"
       >
-        {CATEGORIES.map((c) => {
-          const isSelected = selectedCategory === c.id;
-          const label = CATEGORY_LABEL[c.id];
-
-          return (
-            <button
-              key={c.id}
-              type="button"
-              role="radio"
-              aria-checked={isSelected}
-              aria-label={`${label}. ${c.voiceDesc}`}
-              onClick={() => handleSelect(c.id)}
-              className={cn(
-                "group/category relative flex aspect-[5/3] flex-col items-center justify-center gap-3 overflow-hidden rounded-2xl text-white shadow-lg transition-transform",
-                "ring-1 ring-foreground/10",
-                "hover:-translate-y-1 hover:shadow-xl",
-                "focus-visible:ring-4 focus-visible:ring-accent focus-visible:outline-none",
-                c.bgClass,
-                isSelected && "ring-4 ring-accent",
-                // 디저트(베이지)는 흰 글자 대비가 낮으므로 진한 글자 색 강제
-                c.id === "dessert" && "text-[#3D2F1B]",
-              )}
-            >
-              <span aria-hidden="true">{c.icon}</span>
-              <span className="text-3xl font-bold md:text-4xl">{label}</span>
-            </button>
-          );
-        })}
+        {CATEGORIES.map((c) => (
+          <CategoryCard
+            key={c.id}
+            def={c}
+            isSelected={selectedCategory === c.id}
+            onActivate={() => {
+              setCategory(c.id);
+              onSelect(c.id);
+            }}
+          />
+        ))}
       </div>
     </section>
+  );
+}
+
+// ── 단일 카테고리 카드 — 단일/더블 탭 분리 ─────────────────
+interface CategoryCardProps {
+  def: CategoryDef;
+  isSelected: boolean;
+  onActivate: () => void;
+}
+
+function CategoryCard({ def, isSelected, onActivate }: CategoryCardProps) {
+  const isEnabled = useVoiceStore((s) => s.isEnabled);
+  const voice = useVoiceStore((s) => s.voice);
+  const speed = useVoiceStore((s) => s.speed);
+  const volume = useVoiceStore((s) => s.volume);
+
+  const handleSingle = React.useCallback(() => {
+    if (!isEnabled) return;
+    ttsManager.setVoice(voice);
+    ttsManager.setSpeed(speed);
+    ttsManager.setVolume(VOLUME_TO_AUDIO[volume]);
+    void ttsManager.speak(def.voiceLabel, { interrupt: true });
+  }, [def.voiceLabel, isEnabled, voice, speed, volume]);
+
+  const handleDouble = React.useCallback(() => {
+    ttsManager.stop();
+    onActivate();
+  }, [onActivate]);
+
+  const { onClick, onKeyDown } = useDoubleTap({
+    onSingleTap: handleSingle,
+    onDoubleTap: handleDouble,
+  });
+
+  const label = CATEGORY_LABEL[def.id];
+
+  return (
+    <button
+      type="button"
+      role="radio"
+      aria-checked={isSelected}
+      aria-label={`${label}. ${def.voiceDesc}. 한 번 두드리면 안내, 두 번 두드리면 선택.`}
+      data-voice-label={def.voiceLabel}
+      onClick={onClick}
+      onKeyDown={onKeyDown}
+      className={cn(
+        "group/category relative flex aspect-[5/3] flex-col items-center justify-center gap-3 overflow-hidden rounded-2xl text-white shadow-lg transition-transform",
+        "ring-1 ring-foreground/10",
+        "hover:-translate-y-1 hover:shadow-xl",
+        "focus-visible:ring-4 focus-visible:ring-accent focus-visible:outline-none",
+        def.bgClass,
+        isSelected && "ring-4 ring-accent",
+        def.id === "dessert" && "text-[#3D2F1B]",
+      )}
+    >
+      <span aria-hidden="true">{def.icon}</span>
+      <span className="text-3xl font-bold md:text-4xl">{label}</span>
+    </button>
   );
 }

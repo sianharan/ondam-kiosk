@@ -3,9 +3,7 @@
 /**
  * /tutorial (3/10) — Modeling 모드
  *
- * PROJECT_DESIGN.md 5.2 #3 / 4.2 Tutorial(Modeling).
- * Phase 2-C 에서는 도담의 사고 외현화 음성이 아직 없으므로
- * 학습자가 직접 클릭으로 흐름을 따라가게 한다.
+ * Phase 3-B: VoiceCoach 진입 안내 (도담의 따라하기 멘트). 시간 제한은 무제한.
  */
 
 import * as React from "react";
@@ -14,6 +12,8 @@ import { useRouter } from "next/navigation";
 import { KioskFrame } from "@/components/kiosk/KioskFrame";
 import { ModeBanner } from "@/components/kiosk/ModeBanner";
 import { OrderFlow } from "@/components/kiosk/OrderFlow";
+import { VoiceCoach } from "@/components/voice/VoiceCoach";
+import { VOICE_SCRIPTS } from "@/lib/tts/voiceScripts";
 import { useLearningStore } from "@/stores/learningStore";
 import { useOrderStore } from "@/stores/orderStore";
 
@@ -36,6 +36,7 @@ export default function TutorialPage() {
         headline="도담이 먼저 아메리카노 주문 과정을 보여드릴게요."
         detail="지금은 따라보기 단계예요. 천천히 한 번 클릭으로 흐름을 익혀봐요."
       />
+      <VoiceCoach message={VOICE_SCRIPTS.tutorial.intro} />
       <OrderFlow
         mode="tutorial"
         nextLabel="Practice"

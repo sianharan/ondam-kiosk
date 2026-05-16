@@ -3,9 +3,10 @@
 /**
  * VoiceSettingsPanel — 화면 우측 상단 음성 설정
  *
- * KS X 9211:2025 충족
- *   - 8.3.2 충분한 시간 제공: 학습자가 속도(0.8 ~ 1.5)를 선택
- *   - 5.2.2 d): 음성 안내 켜기/끄기 + 음성 종류 선택
+ * KS X 9211:2025
+ *   - 5.2.2 d) 청각 대체     — 모든 설정 변경 즉시 안내 발화
+ *   - 6.3.3   음량 조절       — 5단계 (50/75/100/125/150%)
+ *   - 8.3.2   충분한 시간 제공 — 4단계 속도 (0.8 ~ 1.5)
  *
  * 음성: nova / shimmer / echo (OpenAI TTS). 폴백은 Web Speech.
  */
@@ -18,9 +19,12 @@ import {
   VOICE_DESCRIPTIONS,
   VOICE_NAMES,
   VOICE_SPEED_OPTIONS,
+  VOICE_VOLUME_OPTIONS,
+  VOLUME_TO_AUDIO,
   useVoiceStore,
   type VoiceName,
   type VoiceSpeed,
+  type VoiceVolume,
 } from "@/stores/voiceStore";
 import { cn } from "@/lib/utils";
 
@@ -28,15 +32,28 @@ export interface VoiceSettingsPanelProps {
   className?: string;
 }
 
+function volumePercentLabel(v: VoiceVolume): string {
+  return `${Math.round(v * 100)}%`;
+}
+
 export function VoiceSettingsPanel({ className }: VoiceSettingsPanelProps) {
   const isEnabled = useVoiceStore((s) => s.isEnabled);
   const voice = useVoiceStore((s) => s.voice);
   const speed = useVoiceStore((s) => s.speed);
+  const volume = useVoiceStore((s) => s.volume);
   const toggle = useVoiceStore((s) => s.toggle);
   const setVoice = useVoiceStore((s) => s.setVoice);
   const setSpeed = useVoiceStore((s) => s.setSpeed);
+  const setVolume = useVoiceStore((s) => s.setVolume);
 
   const [open, setOpen] = React.useState(false);
+
+  // 매니저에 현재 설정을 시작 시점부터 반영 (페이지 마운트 시 한 번)
+  React.useEffect(() => {
+    ttsManager.setVoice(voice);
+    ttsManager.setSpeed(speed);
+    ttsManager.setVolume(VOLUME_TO_AUDIO[volume]);
+  }, [voice, speed, volume]);
 
   const handleVoiceChange = (next: VoiceName) => {
     setVoice(next);
@@ -53,6 +70,15 @@ export function VoiceSettingsPanel({ className }: VoiceSettingsPanelProps) {
     ttsManager.setSpeed(next);
     ttsManager.stop();
     void ttsManager.speak(VOICE_SCRIPTS.system.rateChanged(next), {
+      interrupt: true,
+    });
+  };
+
+  const handleVolumeChange = (next: VoiceVolume) => {
+    setVolume(next);
+    ttsManager.setVolume(VOLUME_TO_AUDIO[next]);
+    ttsManager.stop();
+    void ttsManager.speak(`음량을 ${volumePercentLabel(next)}로 바꿨어요.`, {
       interrupt: true,
     });
   };
@@ -82,7 +108,7 @@ export function VoiceSettingsPanel({ className }: VoiceSettingsPanelProps) {
         aria-label={open ? "음성 설정 닫기" : "음성 설정 열기"}
         className="rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-md focus-visible:ring-4 focus-visible:ring-primary focus-visible:outline-none"
       >
-        {open ? "설정 닫기" : "음성 설정"}
+        {open ? "설정 닫기" : "🔊 음성 설정"}
       </button>
 
       {open && (
@@ -183,6 +209,36 @@ export function VoiceSettingsPanel({ className }: VoiceSettingsPanelProps) {
                     )}
                   >
                     {opt}×
+                  </button>
+                );
+              })}
+            </div>
+          </fieldset>
+
+          {/* ── 음량 ────────────────────────────────────── */}
+          <fieldset className="flex flex-col gap-2">
+            <legend className="text-base font-semibold text-foreground">
+              🔊 음량
+            </legend>
+            <div className="grid grid-cols-5 gap-1">
+              {VOICE_VOLUME_OPTIONS.map((opt) => {
+                const selected = volume === opt;
+                return (
+                  <button
+                    key={opt}
+                    type="button"
+                    onClick={() => handleVolumeChange(opt)}
+                    aria-pressed={selected}
+                    aria-label={`음량 ${volumePercentLabel(opt)}`}
+                    disabled={!isEnabled}
+                    className={cn(
+                      "rounded-lg px-1 py-2 text-xs font-semibold transition-colors focus-visible:ring-4 focus-visible:ring-primary focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40",
+                      selected
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-foreground/10 text-foreground hover:bg-foreground/15",
+                    )}
+                  >
+                    {volumePercentLabel(opt)}
                   </button>
                 );
               })}

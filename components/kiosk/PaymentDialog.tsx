@@ -1,20 +1,15 @@
 "use client";
 
 /**
- * PaymentDialog — 결제 시뮬레이션 다이얼로그 (shadcn/Base UI Dialog)
+ * PaymentDialog — 결제 시뮬레이션 다이얼로그
  *
- * PROJECT_DESIGN.md 5.2 #3 결제 단계 + 7.2 PAYMENT_OPTIONS 기반.
+ * Phase 3-B 음성 통합
+ *   - select      : "결제 수단을 선택해주세요" 자동 발화 + 각 수단 VoiceButton
+ *   - instruction : 수단별 안내 자동 발화 + "결제 시작" VoiceButton
+ *   - processing  : "결제를 처리하고 있어요" 1회 발화
+ *   - complete    : "결제 완료. 주문번호 47번" 자동 발화 + "확인" VoiceButton
  *
- * 4단계 흐름:
- *   1) select      — 결제 수단 선택 (availablePayments 만 노출)
- *   2) instruction — 수단별 안내 메시지 표시
- *   3) processing  — "결제 중..." (3초, 프로그레스 바)
- *   4) complete    — "결제 완료. 주문번호 47번" → onClose
- *
- * 모드별 결제 수단 제한은 PROJECT_DESIGN 7.2 PAYMENT_BY_MODE 를 통해
- * 부모(페이지)에서 availablePayments 로 주입한다.
- *
- * ⚠️ 본 다이얼로그는 시뮬레이션 전용. 실제 결제 시스템 연동 금지.
+ * ⚠️ 시뮬레이션 전용. 실제 결제 시스템 연동 금지.
  */
 
 import * as React from "react";
@@ -25,6 +20,9 @@ import {
   DialogDescription,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { VoiceButton } from "@/components/voice/VoiceButton";
+import { VoiceCoach } from "@/components/voice/VoiceCoach";
+import { VOICE_SCRIPTS } from "@/lib/tts/voiceScripts";
 import {
   PAYMENT_OPTIONS,
   type PaymentMethod,
@@ -39,7 +37,6 @@ const FAKE_ORDER_NUMBER = 47;
 
 export interface PaymentDialogProps {
   open: boolean;
-  /** 다이얼로그 종료 (외부 닫기 + 완료 자동 닫기 공용) */
   onClose: () => void;
   availablePayments: PaymentMethod[];
 }
@@ -56,10 +53,8 @@ export function PaymentDialog({
 
   const [stage, setStage] = React.useState<Stage>("select");
   const [chosen, setChosen] = React.useState<PaymentMethod | null>(null);
-  const [progress, setProgress] = React.useState(0); // 0~100
+  const [progress, setProgress] = React.useState(0);
 
-  // open 이 닫혔다가 다시 열리면 처음부터 — React 공식 "Adjusting state on prop
-  // change" 패턴 (https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes).
   const [prevOpen, setPrevOpen] = React.useState(open);
   if (open !== prevOpen) {
     setPrevOpen(open);
@@ -70,7 +65,6 @@ export function PaymentDialog({
     }
   }
 
-  // ── processing 진입 시 3초 타이머 + 100ms 단위 프로그레스 ──
   React.useEffect(() => {
     if (stage !== "processing") return;
 
@@ -118,10 +112,9 @@ export function PaymentDialog({
     onClose();
   };
 
-  // 외부에서 닫기 시도: processing 중에는 막고, 나머지는 허용
   const handleOpenChange = (next: boolean) => {
-    if (next) return; // 이미 열려있음
-    if (stage === "processing") return; // 진행 중에는 닫기 금지
+    if (next) return;
+    if (stage === "processing") return;
     onClose();
   };
 
@@ -179,32 +172,29 @@ function SelectStage({ visiblePayments, onPick }: SelectStageProps) {
         </DialogDescription>
       </div>
 
+      <VoiceCoach message={VOICE_SCRIPTS.payment.selectMethod} />
+
       <div
         role="radiogroup"
         aria-label="결제 수단 선택"
         className="flex flex-col gap-3"
       >
         {visiblePayments.map((opt) => (
-          <button
+          <VoiceButton
             key={opt.id}
-            type="button"
-            role="radio"
-            aria-checked={false}
-            aria-label={`${opt.voiceLabel}. ${opt.voiceInstruction}`}
-            onClick={() => onPick(opt.id)}
-            className={cn(
-              "flex items-center justify-between gap-3 rounded-2xl border-2 border-foreground/15 bg-background p-5 text-left transition-all",
-              "hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md",
-              "focus-visible:ring-4 focus-visible:ring-accent focus-visible:outline-none",
-            )}
+            voiceLabel={`${opt.voiceLabel} 결제 버튼이에요. ${opt.voiceInstruction} 두 번 두드리면 이 결제 수단을 골라요.`}
+            onActivate={() => onPick(opt.id)}
+            variant="ghost"
+            className="!px-5 !py-5 text-left !text-2xl md:!text-[1.75rem]"
+            ariaLabel={`${opt.voiceLabel}. ${opt.voiceInstruction}`}
           >
-            <span className="text-2xl font-bold text-foreground md:text-[1.75rem]">
-              {opt.label}
+            <span className="flex w-full items-center justify-between gap-3">
+              <span className="font-bold text-foreground">{opt.label}</span>
+              <span aria-hidden="true" className="text-2xl text-primary">
+                →
+              </span>
             </span>
-            <span aria-hidden="true" className="text-2xl text-primary">
-              →
-            </span>
-          </button>
+          </VoiceButton>
         ))}
       </div>
     </div>
@@ -218,7 +208,11 @@ interface InstructionStageProps {
   onBack: () => void;
 }
 
-function InstructionStage({ option, onStart, onBack }: InstructionStageProps) {
+function InstructionStage({
+  option,
+  onStart,
+  onBack,
+}: InstructionStageProps) {
   return (
     <div className="flex flex-col gap-5 p-2">
       <div>
@@ -229,6 +223,8 @@ function InstructionStage({ option, onStart, onBack }: InstructionStageProps) {
           {option.voiceInstruction}
         </DialogDescription>
       </div>
+
+      <VoiceCoach message={option.voiceInstruction} />
 
       <div
         role="status"
@@ -241,26 +237,21 @@ function InstructionStage({ option, onStart, onBack }: InstructionStageProps) {
       </div>
 
       <div className="flex flex-col gap-3 md:flex-row md:justify-end">
-        <button
-          type="button"
-          onClick={onBack}
-          aria-label="결제 수단 다시 선택하기"
-          className="rounded-xl bg-muted px-5 py-3 text-lg font-medium text-foreground/80 ring-1 ring-foreground/10 hover:bg-muted/80 focus-visible:ring-4 focus-visible:ring-accent focus-visible:outline-none"
+        <VoiceButton
+          voiceLabel="결제 수단을 다시 고르고 싶을 때 누르는 버튼이에요. 두 번 두드리면 결제 수단 선택 화면으로 돌아가요."
+          onActivate={onBack}
+          variant="ghost"
+          className="!px-5 !py-3 !text-lg"
         >
           다시 선택
-        </button>
-        <button
-          type="button"
-          onClick={onStart}
-          aria-label="결제 시작. 결제가 진행됩니다"
-          className={cn(
-            "rounded-2xl bg-accent px-8 py-4 text-2xl font-bold text-accent-foreground shadow-md transition-all",
-            "hover:-translate-y-0.5 hover:shadow-lg",
-            "focus-visible:ring-4 focus-visible:ring-primary focus-visible:outline-none",
-          )}
+        </VoiceButton>
+        <VoiceButton
+          voiceLabel="결제 시작 버튼이에요. 두 번 두드리면 결제를 진행해요."
+          onActivate={onStart}
+          className="!px-8 !py-4"
         >
           결제 시작
-        </button>
+        </VoiceButton>
       </div>
     </div>
   );
@@ -281,6 +272,8 @@ function ProcessingStage({ progress, isProcessing }: ProcessingStageProps) {
       <DialogDescription className="sr-only">
         결제를 처리하고 있어요. 잠시만 기다려주세요.
       </DialogDescription>
+
+      <VoiceCoach message={VOICE_SCRIPTS.payment.processing} />
 
       <p
         className="text-xl text-foreground/80 md:text-2xl"
@@ -324,10 +317,14 @@ function CompleteStage({ orderNumber, onDone }: CompleteStageProps) {
         결제가 완료되었어요. 주문번호 {orderNumber} 번입니다.
       </DialogDescription>
 
+      <VoiceCoach message={VOICE_SCRIPTS.payment.complete(orderNumber)} />
+
       <div
         role="status"
         aria-live="assertive"
-        className="rounded-2xl bg-accent/15 px-8 py-6 ring-1 ring-accent/30"
+        className={cn(
+          "rounded-2xl bg-accent/15 px-8 py-6 ring-1 ring-accent/30",
+        )}
       >
         <p className="text-xl text-foreground/80 md:text-2xl">주문번호</p>
         <p className="text-5xl font-bold text-primary md:text-6xl">
@@ -339,18 +336,14 @@ function CompleteStage({ orderNumber, onDone }: CompleteStageProps) {
         음료가 준비되면 알려드릴게요.
       </p>
 
-      <button
-        type="button"
-        onClick={onDone}
-        aria-label="확인하고 다이얼로그 닫기"
-        className={cn(
-          "mt-2 rounded-2xl bg-primary px-8 py-4 text-2xl font-bold text-primary-foreground shadow-md transition-all",
-          "hover:-translate-y-0.5 hover:shadow-lg",
-          "focus-visible:ring-4 focus-visible:ring-accent focus-visible:outline-none",
-        )}
+      <VoiceButton
+        voiceLabel="확인 버튼이에요. 두 번 두드리면 결제 화면이 닫혀요."
+        onActivate={onDone}
+        variant="secondary"
+        className="mt-2 !px-8 !py-4"
       >
         확인
-      </button>
+      </VoiceButton>
     </div>
   );
 }

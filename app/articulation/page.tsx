@@ -3,9 +3,10 @@
 /**
  * /articulation (8/10) — 명료화 (Bronze)
  *
- * PROJECT_DESIGN.md 5.2 #8 / 2.3 Articulation.
- * 4개 질문을 순차로 제시. 학습자 답변은 받지 않는다 — 회상 자체가 학습.
- * (음성 녹음 + Whisper/Gemini 분석은 Phase 6.)
+ * Phase 3-B 음성 통합
+ *   - 진입 시 articulation.intro 자동 발화
+ *   - 질문 인덱스 변경 시 해당 질문 + 회상 안내 자동 발화
+ *   - [다음 질문] / [분석 보러 가기] VoiceButton (단일=안내, 더블=실행)
  */
 
 import * as React from "react";
@@ -13,6 +14,9 @@ import { useRouter } from "next/navigation";
 
 import { KioskFrame } from "@/components/kiosk/KioskFrame";
 import { ModeBanner } from "@/components/kiosk/ModeBanner";
+import { VoiceButton } from "@/components/voice/VoiceButton";
+import { VoiceCoach } from "@/components/voice/VoiceCoach";
+import { VOICE_SCRIPTS } from "@/lib/tts/voiceScripts";
 import { useRequireLearningSession } from "@/lib/interaction/useRequireLearningSession";
 import { useLearningStore } from "@/stores/learningStore";
 
@@ -30,17 +34,24 @@ const RECALL_HINTS: string[] = [
   "기분이나 어려웠던 점을 솔직하게 떠올려 보세요.",
 ];
 
+const QUESTION_VOICE: string[] = [
+  VOICE_SCRIPTS.articulation.q1,
+  VOICE_SCRIPTS.articulation.q2,
+  VOICE_SCRIPTS.articulation.q3,
+  VOICE_SCRIPTS.articulation.q4,
+];
+
 export default function ArticulationPage() {
   const router = useRouter();
   const setStep = useLearningStore((s) => s.setStep);
   const { ready } = useRequireLearningSession();
   const [index, setIndex] = React.useState(0);
+  const [isFirst, setIsFirst] = React.useState(true);
 
   React.useEffect(() => {
     setStep(8);
   }, [setStep]);
 
-  // 직접 접근 시 useRequireLearningSession 이 홈으로 보내는 동안 빈 화면
   if (!ready) return null;
 
   const isLast = index === QUESTIONS.length - 1;
@@ -49,9 +60,15 @@ export default function ArticulationPage() {
     if (isLast) {
       router.push("/reflection");
     } else {
+      setIsFirst(false);
       setIndex((i) => i + 1);
     }
   };
+
+  // 처음 진입: intro + q1 / 그 외: 해당 질문만
+  const sequence = isFirst
+    ? [VOICE_SCRIPTS.articulation.intro, QUESTION_VOICE[index], "잠시 생각해보세요."]
+    : [QUESTION_VOICE[index], "잠시 생각해보세요."];
 
   return (
     <KioskFrame currentStep={8} title="Articulation — 돌아보기">
@@ -75,17 +92,16 @@ export default function ArticulationPage() {
           Q{index + 1}. {QUESTIONS[index]}
         </h2>
 
+        {/* 질문이 바뀔 때마다 새 VoiceCoach 가 마운트되어 발화 */}
+        <VoiceCoach message={sequence} sequenceGapMs={1500} />
+
         <div className="rounded-2xl border border-accent/30 bg-accent/10 p-6">
           <p className="text-xl text-foreground md:text-2xl">
             💭 {RECALL_HINTS[index]}
           </p>
         </div>
 
-        {/* 진행 표시 (점) */}
-        <ol
-          aria-label="질문 진행 상태"
-          className="flex items-center gap-2"
-        >
+        <ol aria-label="질문 진행 상태" className="flex items-center gap-2">
           {QUESTIONS.map((_, i) => (
             <li
               key={i}
@@ -102,18 +118,16 @@ export default function ArticulationPage() {
         </ol>
 
         <footer className="flex justify-end pt-2">
-          <button
-            type="button"
-            onClick={handleNext}
-            aria-label={
+          <VoiceButton
+            voiceLabel={
               isLast
-                ? "마지막 질문이 끝났어요. 분석 결과 화면으로 이동합니다"
-                : `다음 질문으로 이동`
+                ? "분석 보러 가기 버튼이에요. 두 번 두드리면 결과 화면으로 가요."
+                : "다음 질문 버튼이에요. 두 번 두드리면 다음 질문으로 넘어가요."
             }
-            className="rounded-2xl bg-accent px-10 py-5 text-2xl font-bold text-accent-foreground shadow-md transition-all hover:-translate-y-0.5 hover:shadow-lg focus-visible:ring-4 focus-visible:ring-primary focus-visible:outline-none"
+            onActivate={handleNext}
           >
             {isLast ? "분석 보러 가기" : "다음 질문"}
-          </button>
+          </VoiceButton>
         </footer>
       </section>
     </KioskFrame>

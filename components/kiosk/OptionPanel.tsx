@@ -3,18 +3,23 @@
 /**
  * OptionPanel — 온도/사이즈/추가 옵션 선택 패널
  *
- * PROJECT_DESIGN.md 5.2 #3 옵션 단계 + 7.1 SIZE_OPTIONS/EXTRA_OPTIONS 기반.
- *
- * 선택된 메뉴의 options 에 따라 표시할 옵션이 달라진다:
- *  - temperature: 'both' 일 때만 RadioGroup (hot/iced)
- *  - size: true 일 때만 RadioGroup (tall/grande)
- *  - extras: true 일 때만 Checkbox (shot, syrup)
+ * Phase 3-B 음성 통합
+ *   - 진입 시 표시되는 옵션 종류에 맞춰 자동 발화 (5.2.2 d)
+ *   - 라디오/체크박스는 Radix UI 의 키보드 패턴을 그대로 유지 (단발 선택은
+ *     중간 단계이고 다음 단계 진입에 더블탭 게이트가 따로 있음)
+ *   - 라디오 옵션 변경 시 "따뜻하게 선택했어요" 짧은 안내
+ *   - 최종 "이대로 주문" 버튼은 VoiceButton (단일/더블 분리)
  */
 
 import * as React from "react";
 
+import { VoiceButton } from "@/components/voice/VoiceButton";
+import { VoiceCoach } from "@/components/voice/VoiceCoach";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { ttsManager } from "@/lib/tts/fallbackTTS";
+import { VOICE_SCRIPTS } from "@/lib/tts/voiceScripts";
+import { VOLUME_TO_AUDIO, useVoiceStore } from "@/stores/voiceStore";
 import {
   EXTRA_OPTIONS,
   SIZE_OPTIONS,
@@ -43,6 +48,22 @@ export function OptionPanel({ onComplete }: OptionPanelProps) {
   const toggleExtra = useOrderStore((s) => s.toggleExtra);
   const getTotalPrice = useOrderStore((s) => s.getTotalPrice);
 
+  const isVoiceEnabled = useVoiceStore((s) => s.isEnabled);
+  const voice = useVoiceStore((s) => s.voice);
+  const speed = useVoiceStore((s) => s.speed);
+  const volume = useVoiceStore((s) => s.volume);
+
+  const speakShort = React.useCallback(
+    (text: string) => {
+      if (!isVoiceEnabled) return;
+      ttsManager.setVoice(voice);
+      ttsManager.setSpeed(speed);
+      ttsManager.setVolume(VOLUME_TO_AUDIO[volume]);
+      void ttsManager.speak(text, { interrupt: true });
+    },
+    [isVoiceEnabled, voice, speed, volume],
+  );
+
   if (!selectedItem) {
     return (
       <p className="text-xl text-foreground/70" role="status">
@@ -56,8 +77,20 @@ export function OptionPanel({ onComplete }: OptionPanelProps) {
   const showExtras = Boolean(selectedItem.options.extras);
   const hasAnyOption = showTemperature || showSize || showExtras;
 
-  // 온도가 'both' 인데 아직 선택 안 했으면 다음 단계 잠금
-  const temperatureSatisfied = showTemperature ? selectedTemperature !== null : true;
+  const temperatureSatisfied = showTemperature
+    ? selectedTemperature !== null
+    : true;
+
+  // 진입 안내 — 표시되는 옵션 종류에 맞춰
+  const entrySequence: string[] = [
+    `${selectedItem.voiceLabel} 옵션을 골라주세요.`,
+    ...(showTemperature ? [VOICE_SCRIPTS.options.temperature] : []),
+    ...(showSize ? [VOICE_SCRIPTS.options.size] : []),
+    ...(showExtras ? [VOICE_SCRIPTS.options.extras] : []),
+    ...(!hasAnyOption
+      ? ["이 메뉴는 추가 옵션이 없어요. 바로 주문하실 수 있어요."]
+      : []),
+  ];
 
   return (
     <section className="flex flex-col gap-7">
@@ -69,6 +102,8 @@ export function OptionPanel({ onComplete }: OptionPanelProps) {
           원하시는 옵션을 골라주세요.
         </p>
       </header>
+
+      <VoiceCoach message={entrySequence} sequenceGapMs={500} />
 
       {!hasAnyOption && (
         <p className="text-xl text-foreground/80">
@@ -84,7 +119,13 @@ export function OptionPanel({ onComplete }: OptionPanelProps) {
           </legend>
           <RadioGroup
             value={selectedTemperature ?? ""}
-            onValueChange={(v) => setTemperature(v as Temperature)}
+            onValueChange={(v) => {
+              const t = v as Temperature;
+              setTemperature(t);
+              speakShort(
+                t === "hot" ? "따뜻하게 골랐어요." : "차갑게 골랐어요.",
+              );
+            }}
             className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2"
           >
             <OptionTile
@@ -111,13 +152,19 @@ export function OptionPanel({ onComplete }: OptionPanelProps) {
           </legend>
           <RadioGroup
             value={selectedSize}
-            onValueChange={(v) => setSize(v as SizeKey)}
+            onValueChange={(v) => {
+              const s = v as SizeKey;
+              setSize(s);
+              speakShort(`${SIZE_OPTIONS[s].voiceLabel}로 골랐어요.`);
+            }}
             className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2"
           >
             {(Object.keys(SIZE_OPTIONS) as SizeKey[]).map((key) => {
               const opt = SIZE_OPTIONS[key];
               const priceText =
-                opt.priceAdd > 0 ? `+${formatPrice(opt.priceAdd)}` : "기본 가격";
+                opt.priceAdd > 0
+                  ? `+${formatPrice(opt.priceAdd)}`
+                  : "기본 가격";
               return (
                 <OptionTile
                   key={key}
@@ -157,7 +204,14 @@ export function OptionPanel({ onComplete }: OptionPanelProps) {
                 >
                   <Checkbox
                     checked={isChecked}
-                    onCheckedChange={() => toggleExtra(key)}
+                    onCheckedChange={() => {
+                      toggleExtra(key);
+                      speakShort(
+                        isChecked
+                          ? `${opt.voiceLabel} 뺐어요.`
+                          : `${opt.voiceLabel} 더했어요.`,
+                      );
+                    }}
                     aria-label={`${opt.voiceLabel}, ${priceText}`}
                     className="size-6"
                   />
@@ -187,26 +241,19 @@ export function OptionPanel({ onComplete }: OptionPanelProps) {
             {formatPrice(getTotalPrice())}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={onComplete}
+        <VoiceButton
+          voiceLabel={`이대로 주문 버튼이에요. 총 가격 ${formatPrice(getTotalPrice())}. 두 번 두드리면 장바구니 화면으로 가요.`}
+          onActivate={onComplete}
           disabled={!temperatureSatisfied}
-          aria-label="이대로 주문하기. 장바구니 화면으로 이동합니다"
-          className={cn(
-            "rounded-2xl bg-accent px-8 py-5 text-2xl font-bold text-accent-foreground shadow-md transition-all",
-            "hover:-translate-y-0.5 hover:shadow-lg",
-            "focus-visible:ring-4 focus-visible:ring-primary focus-visible:outline-none",
-            "disabled:cursor-not-allowed disabled:bg-muted disabled:text-foreground/40 disabled:shadow-none disabled:hover:translate-y-0",
-          )}
+          className="md:text-2xl"
         >
           이대로 주문
-        </button>
+        </VoiceButton>
       </div>
     </section>
   );
 }
 
-// ── 내부 헬퍼: RadioGroup 의 한 칸 ──────────────────────────
 interface OptionTileProps {
   value: string;
   checked: boolean;

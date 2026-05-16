@@ -11,6 +11,7 @@
 
 import * as React from "react";
 
+import { ReplayButton } from "@/components/voice/ReplayButton";
 import { cn } from "@/lib/utils";
 
 export interface KioskFrameProps {
@@ -46,8 +47,8 @@ export function KioskFrame({
         )}
       >
         {/* ── 헤더: 카페 카운터 상판 느낌의 진남색 띠 ───────────── */}
-        <header className="flex items-center justify-between bg-primary px-6 py-5 text-primary-foreground md:px-8 md:py-6">
-          <div className="flex items-baseline gap-3">
+        <header className="flex items-center justify-between gap-3 bg-primary px-6 py-5 text-primary-foreground md:px-8 md:py-6">
+          <div className="flex items-center gap-3">
             <span
               className="text-2xl font-bold tracking-tight md:text-3xl"
               aria-label="온담 카페 로고"
@@ -57,6 +58,8 @@ export function KioskFrame({
             <span className="hidden text-base text-primary-foreground/70 md:inline">
               溫談
             </span>
+            {/* 헤더 좌측 다시 듣기 — KS X 9211 6.3.6 */}
+            <ReplayButton position="header" className="ml-2" />
           </div>
 
           {(showStep || title) && (

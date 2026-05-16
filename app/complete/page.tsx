@@ -3,23 +3,30 @@
 /**
  * /complete (10/10) — 학습 완료
  *
- * PROJECT_DESIGN.md 5.2 #10.
- * 학습 로그 localStorage 저장은 Phase 6 에서. 여기서는 정적 인사 + 통계만.
+ * Phase 3-B 음성 통합
+ *   - 진입 시 도담의 따뜻한 인사 자동 발화
+ *   - [다시 학습하기] / [학습 종료] 모두 VoiceButton
+ *   - 학습 종료 시 음성 store transient 정리 (KS X 9211 6.3.3 정신)
  */
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
 
 import { KioskFrame } from "@/components/kiosk/KioskFrame";
+import { VoiceButton } from "@/components/voice/VoiceButton";
+import { VoiceCoach } from "@/components/voice/VoiceCoach";
+import { VOICE_SCRIPTS } from "@/lib/tts/voiceScripts";
 import { useRequireLearningSession } from "@/lib/interaction/useRequireLearningSession";
 import { useLearningStore } from "@/stores/learningStore";
 import { useOrderStore } from "@/stores/orderStore";
+import { useVoiceStore } from "@/stores/voiceStore";
 
 export default function CompletePage() {
   const router = useRouter();
   const setStep = useLearningStore((s) => s.setStep);
   const resetSession = useLearningStore((s) => s.resetSession);
   const resetOrder = useOrderStore((s) => s.resetOrder);
+  const clearTransient = useVoiceStore((s) => s.clearTransient);
   const { ready } = useRequireLearningSession();
 
   React.useEffect(() => {
@@ -31,13 +38,14 @@ export default function CompletePage() {
   const handleRestart = () => {
     resetOrder();
     resetSession();
+    clearTransient();
     router.push("/");
   };
 
   const handleFinish = () => {
-    // 학습 종료: 상태 초기화 후 환영 화면으로
     resetOrder();
     resetSession();
+    clearTransient();
     router.push("/");
   };
 
@@ -60,7 +68,15 @@ export default function CompletePage() {
           쌓아오신 경험이 다음 카페에서도 큰 힘이 될 거예요.
         </p>
 
-        {/* ── 더미 통계 카드 ─────────────────────────── */}
+        <VoiceCoach
+          message={[
+            VOICE_SCRIPTS.complete.intro,
+            VOICE_SCRIPTS.complete.save,
+            VOICE_SCRIPTS.complete.next,
+          ]}
+          sequenceGapMs={800}
+        />
+
         <dl
           aria-label="학습 통계 요약"
           className="grid w-full max-w-xl grid-cols-1 gap-4 sm:grid-cols-2"
@@ -84,22 +100,19 @@ export default function CompletePage() {
         </dl>
 
         <div className="flex w-full flex-col items-stretch gap-3 pt-4 sm:flex-row sm:justify-center">
-          <button
-            type="button"
-            onClick={handleRestart}
-            aria-label="다시 학습하기. 처음 환영 화면으로 이동합니다"
-            className="rounded-2xl bg-accent px-10 py-5 text-2xl font-bold text-accent-foreground shadow-md transition-all hover:-translate-y-0.5 hover:shadow-lg focus-visible:ring-4 focus-visible:ring-primary focus-visible:outline-none"
+          <VoiceButton
+            voiceLabel="다시 학습하기 버튼이에요. 두 번 두드리면 처음 환영 화면으로 돌아가요."
+            onActivate={handleRestart}
           >
             다시 학습하기
-          </button>
-          <button
-            type="button"
-            onClick={handleFinish}
-            aria-label="학습 종료. 환영 화면으로 돌아갑니다"
-            className="rounded-2xl bg-muted px-10 py-5 text-2xl font-medium text-foreground/80 ring-1 ring-foreground/15 transition-colors hover:bg-muted/80 focus-visible:ring-4 focus-visible:ring-accent focus-visible:outline-none"
+          </VoiceButton>
+          <VoiceButton
+            voiceLabel="학습 종료 버튼이에요. 두 번 두드리면 학습을 마치고 환영 화면으로 돌아가요."
+            onActivate={handleFinish}
+            variant="ghost"
           >
             학습 종료
-          </button>
+          </VoiceButton>
         </div>
       </section>
     </KioskFrame>
