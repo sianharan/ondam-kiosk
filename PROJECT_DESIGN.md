@@ -4,7 +4,9 @@
 > **연구 토대**: 상황학습이론(Lave & Wenger, 1991) + 인지적 도제이론(Collins, 2006)
 > **표준 기반**: KS X 9211:2025 무인정보단말기 접근성 지침
 > **개발 기간**: 2주 (학기 과제)
-> **버전**: 2.2 (디스플레이 다양성 — 세로/가로형 키오스크 학습)
+> **버전**: 2.3 (양방향 음성 인터페이스 — Whisper STT 전면 도입)
+>
+> **v2.3 변경 사유** — 본 시뮬레이터의 청각 모달리티를 **단방향(도담 → 학습자)에서 양방향(도담 ↔ 학습자)으로 확장**한다. v2.2까지의 단방향 TTS 안내(nova 발화)에 더해, OpenAI Whisper STT를 5개 학습 모드 전 구간에 통합하여 학습자가 도담을 음성으로 호출하고 자연어로 도움을 요청할 수 있도록 한다. Whisper 적용 범위를 v2.2의 Articulation 단계 한정에서 전체 학습 흐름으로 확장한 것이며, KS X 9211:2025 §5.2.2 d) "청각적 대체 콘텐츠"의 양방향 구현이라는 학술적 의의를 갖는다. Collins(2006) 인지적 도제의 **개별화된 스캐폴딩(individualized scaffolding)** 을 학습자 주도 호출 채널까지 확장한 본 연구의 네 번째 차별점이다. (자세한 설계는 1.3절 네 번째 차별점, 3.6절 양방향 음성 인터페이스, 15장 AI 통합 참조.)
 >
 > **v2.2 변경 사유** — 한국 매장의 실제 키오스크 형태 다양성(세로형 카페 카운터 vs. 가로형 매장 입구·푸드코트)을 한 시뮬레이터 안에서 학습할 수 있도록 디스플레이 모드 선택을 도입했다. 학습자가 어떤 매장 환경에 가도 적응 가능한 **학습 전이(transfer)** 효과를 극대화하고, KS X 9211:2025의 **다양성 원칙**을 충실히 구현하기 위한 조치이다.
 
@@ -12,21 +14,22 @@
 
 ## 목차
 
-1. 프로젝트 개요
+1. 프로젝트 개요 *(1.3 네 번째 차별점 — 양방향 음성 인터페이스 — v2.3 신규)*
 2. 학술적 토대
-3. 시뮬레이터 정체성과 설계 원칙 *(3.5 디스플레이 모드 다양성 — v2.2 신규)*
+3. 시뮬레이터 정체성과 설계 원칙 *(3.5 디스플레이 모드 다양성 — v2.2 / 3.6 양방향 음성 인터페이스 — v2.3 신규)*
 4. 교수설계 — Collins 4차원
 5. 화면 흐름 — 10단계 *(5.2 #1 환영 + 모드 선택 — v2.2 확장)*
-6. KS X 9211:2025 충족 매트릭스
+6. KS X 9211:2025 충족 매트릭스 *(§5.2.2 d) 양방향 확장 — v2.3 보강)*
 7. 데이터 모델 *(7.0 학습 세션 상태 + `displayMode` — v2.2 확장)*
-8. 기술 스택과 아키텍처
+8. 기술 스택과 아키텍처 *(Whisper STT · Web Speech 폴백 · VAD — v2.3 추가)*
 9. 폴더 구조
-10. Phase별 개발 계획 (2주) *(Phase 3-C — v2.2 신규)*
+10. Phase별 개발 계획 (2주) *(Phase 3-C — v2.2 / Phase 4-AI-A·4-AI-B — v2.3 신규)*
 11. Claude Code 워크플로우 프롬프트
 12. KS X 9211:2025 체크리스트
 13. 검토자·참고문헌
-14. 한계와 후속 연구 *(14.1 제한된 시연 환경 — v2.2 보강)*
-**15. AI API 통합 — GPT × Gemini 역할 분담** ⭐
+14. 한계와 후속 연구 *(14.3 음성 인터페이스 한계 — v2.3 신규)*
+**15. AI API 통합 — GPT × Gemini × Whisper 역할 분담** ⭐ *(Whisper 적용 범위 전면 확장 — v2.3)*
+부록 A. 변경 이력 *(v2.3 신규)*
 
 ---
 
@@ -54,7 +57,7 @@
 
 > **"본 연구는 Collins(2006)가 제시한 컴퓨터 기반 인지적 도제의 사회심리적 강점인 낙인 효과 해소(Without criticism)를 시각장애인 키오스크 교육에 적용하여, 시각장애인이 사회적 압박 없이 안전한 가상 환경에서 디지털 시민으로서의 정체성을 회복할 수 있는 학습 환경을 구현하였다."**
 
-본 연구의 학술적 차별점은 다음 세 가지로 정리된다.
+본 연구의 학술적 차별점은 다음 네 가지로 정리된다.
 
 **첫 번째 차별점 — 낙인 효과 해소(Without criticism)**
 Collins(2006)의 컴퓨터 기반 인지적 도제 강점 중 사회심리적 차원을 시각장애인 키오스크 교육에 직접 적용한다. AI 코치 도담은 비판 없이 무한 반복을 허용하며, 뒷사람 시선이 없는 안전한 가상 공간에서 디지털 시민 정체성을 회복하게 한다.
@@ -62,8 +65,11 @@ Collins(2006)의 컴퓨터 기반 인지적 도제 강점 중 사회심리적 �
 **두 번째 차별점 — Collins 4차원 + 6단계 학습 흐름의 완전 구현**
 Content / Method / Sequencing / Sociology 의 네 차원을 모두 충족하면서, Modeling → Coaching → Scaffolding → Fading → Exploration → Articulation → Reflection 의 6+1 단계 흐름을 한 학습 환경 안에서 실제로 작동시킨다. 단순 시나리오 학습이 아닌 메타 전략 체화를 목표로 한다.
 
-**세 번째 차별점 — 디스플레이 다양성 지원** ⭐ v2.2 신규
+**세 번째 차별점 — 디스플레이 다양성 지원** ⭐ v2.2
 한 시뮬레이터에서 **세로형(800px, 카페 카운터)** 과 **가로형(1400px, 매장 입구·푸드코트)** 두 키오스크 형태를 모두 학습할 수 있도록 설계하여, 학습자의 실제 매장 환경 적응력을 향상시킨다. 단일 형태로만 훈련된 학습자가 새로운 형태의 키오스크 앞에서 학습한 메타 전략을 적용하지 못하는 *학습 전이 실패(Lave & Wenger, 1991)* 를 사전에 차단한다. 자세한 설계는 3.5절을 참조.
+
+**네 번째 차별점 — 양방향 음성 인터페이스** ⭐ v2.3 신규
+도담의 단방향 TTS 발화(nova)에 더해, 학습자가 음성으로 도담을 호출하고 자연어로 도움을 요청할 수 있는 **양방향 청각 채널**을 5개 학습 모드 전 구간에 도입한다. OpenAI Whisper(주) + Web Speech(폴백)의 이중 STT 아키텍처와 VAD(음성 활동 감지) 기반 자동 종료, 의도 분류(정규식 7종) + GPT-4o-mini 위임의 하이브리드 응답 파이프라인을 통해 학습자 발화에 단계별 맞춤 응답을 제공한다. 이는 (가) KS X 9211:2025 §5.2.2 d) "청각적 대체 콘텐츠" 의무를 양방향으로 확장한 구현이고, (나) Collins(2006)의 **개별화된 스캐폴딩(individualized scaffolding)** 을 학습자 주도 호출 채널까지 확장한 본 연구 고유 기여이며, (다) 시각장애인의 키오스크 환경에서 자주 발생하는 *시각 정보 차단으로 인한 학습 정체* 를 자연어 호출로 해소하는 실용적 가치를 동반한다. 자세한 설계는 3.6절과 15장을 참조.
 
 ---
 
@@ -211,6 +217,59 @@ Collins가 직접 강조한 가치:
 | **학습 전이(Lave & Wenger, 1991)** | 한 형태에서만 학습된 메타 전략이 다른 형태로 전이되지 않는 *전이 실패* 를 사전에 차단 |
 | **실제 매장 환경 적응력** | 학습자가 카페·매장·푸드코트 어느 곳에 가도 동일한 메타 전략으로 적응 |
 | **학습자 자율성 강화** | 환영 단계에서 형태를 직접 선택하게 함으로써, 학습 시나리오 정의권의 부분 이양 (Collins Sociology 차원의 자기 결정성) |
+
+### 3.6 양방향 음성 인터페이스 ⭐ v2.3 신규
+
+본 시뮬레이터는 v2.3에서 도담의 **단방향 TTS 발화(nova)** 에 더해 **학습자 음성 호출 채널**을 5개 학습 모드 전 구간(Tutorial / Practice / Challenge / Real Guided / Real Free)과 환영 페이지의 모드 선택 화면에 통합한다. 학습자는 화면 우측 하단의 마이크 버튼(`MicButton`)을 더블탭하여 도담에게 자연어로 질문하거나 도움을 요청할 수 있다.
+
+#### 3.6.1 동작 흐름
+
+```
+[더블탭]
+  → ① 청각 신호 "네, 듣고 있어요"  (preparing 상태)
+  → ② Whisper 녹음 시작 (마이크 빨간 점 깜빡임)
+  → ③ 학습자 발화 (예: "도담아 안녕", "도와줘", "카테고리 뭐 있어")
+  → ④ VAD 무음 2초 자동 종료  또는  단일/더블탭 수동 종료  또는  10초 자동 종료
+  → ⑤ 청각 신호 "잘 들었어요. 잠시만요"
+  → ⑥ Whisper(주) → Web Speech(폴백) 전사
+       (2초 이상 지연 시 추가 신호 "도담이 생각하고 있어요")
+  → ⑦ 의도 분류 (정규식 7종: greeting / affirmative / negative / help_request /
+                     ask_categories / ask_explanation / request_restart)
+       ├─ 단순 의도 → 단계별 정적 응답 (GPT 호출 없음)
+       └─ 그 외     → /api/gpt 호출 (CONTEXT_HINTS 주입)
+  → ⑧ 응답 발화 (nova)
+```
+
+#### 3.6.2 핵심 설계 결정
+
+| 결정 | 내용 | 학술적·실용적 근거 |
+|------|------|-------------------|
+| **이중 STT 아키텍처** | Whisper(주) + Web Speech(폴백) | 한국어 정확도 우선(Whisper) + 네트워크/한도 장애 시 무중단 운영(Web Speech) |
+| **VAD 무음 2초 자동 종료** | AnalyserNode(FFT 256) 평균 진폭 기반, Grace 1.5초 | 시각장애인 학습자가 "녹음 종료" 시점을 시각적으로 판단하기 어려운 점을 보완 |
+| **청각 피드백 3단계** | "네, 듣고 있어요" → "잘 들었어요. 잠시만요" → "도담이 생각하고 있어요" | 시각 인디케이터(빨간 점) 의존 없이 청각만으로 모든 상태 인지 가능 |
+| **하이브리드 응답** | 단순 의도(인사·긍정·부정)는 정적 응답 / 그 외는 GPT 위임 | 응답 지연 최소화(정적) + 자연어 다양성 확보(GPT)의 균형 |
+| **context-aware 응답** | 5개 모드 × 환영 단계별 GPT 시스템 프롬프트 힌트 + 정적 인사 분기 | 도담이 현재 단계의 Collins 역할(Modeling/Coaching/Scaffolding/Fading/Exploration)을 인식한 응답 |
+| **선택/실행 분리 유지** | 단일 탭=안내 음성 / 더블 탭=녹음 시작 | KS X 9211:2025 §7.6.6 준수 — 기존 인터랙션 패턴과 일관 |
+| **AutoDemo 보호** | Tutorial AutoDemo 진행 중에는 마이크 버튼 비노출 | 시연 흐름 보호 — 자동 시연이 학습자 음성 응답으로 중단되지 않음 |
+| **자기 음성 자가-녹음 방지** | `stopRecording()` → 청각 신호 발화 → `transcribe()` 순서 | 도담의 안내 음성이 Whisper 입력에 섞이는 것을 방지 |
+
+#### 3.6.3 학술적 정당성
+
+| 근거 | 적용 |
+|------|------|
+| **KS X 9211:2025 §5.2.2 d) 청각적 대체** | 단방향(시각 → 청각) 의무를 **양방향(시각 ↔ 학습자 음성)** 으로 확장 |
+| **Collins(2006) 개별화된 스캐폴딩** | "도담 호출"을 학습자가 결정하므로 스캐폴딩 시점·내용이 학습자 주도로 개별화됨 |
+| **Collins(2006) Sociology — 학습자 자율성** | 도움 요청 시점을 학습자가 결정하는 권리 부여 (Real Free·Real Guided 단계의 핵심) |
+| **Lave & Wenger(1991) 상황 학습** | 실제 카페 환경에서 점원에게 도움을 요청하는 사회적 행위를 가상 환경에서 미리 연습 |
+| **시각장애인 학습 정체 해소** | 시각 정보 차단으로 진행이 막혔을 때 음성 한 마디로 단계 복귀 가능 |
+
+#### 3.6.4 폴백 (3중 안전망)
+
+1. **1차** — OpenAI Whisper(`whisper-1`, ko)
+2. **2차** — Web Speech API(`webkitSpeechRecognition`, ko-KR, 6초 타임아웃)
+3. **3차** — 폴백 발화 "잘 못 들었어요. 다시 한 번 말씀해주세요" + 학습자 재시도 유도
+
+OpenAI 키 누락·네트워크 장애·브라우저 미지원 어떤 경우에도 학습 흐름은 멈추지 않는다.
 
 ---
 
@@ -411,16 +470,27 @@ Q4. 오늘 주문, 어떠셨나요?
 | 조항 | 내용 | 본 구현 |
 |------|------|---------|
 | 5.2.3 | 텍스트 크기 7.25mm 이상 | 화면 24px 이상 |
-| 5.2.2 d) | 청각적 대체 콘텐츠 의무 | 모든 시각 정보 음성화 |
+| 5.2.2 d) | 청각적 대체 콘텐츠 의무 | **단방향**: 모든 시각 정보 음성화 (nova TTS) / **양방향** ⭐ v2.3: 학습자도 음성 호출 가능 (Whisper + Web Speech 폴백, 5개 모드 전 구간) |
 | 명도 대비 | 4.5:1 이상 | WCAG AAA (7:1) 기본 |
 | 6.3.3 | 사용 후 음량 65dBA 이하 자동 초기화 | 세션 종료 시 리셋 |
-| 6.3.6 | 다시 듣기 기능 | 모든 음성에 다시 듣기 버튼 |
+| 6.3.6 | 다시 듣기 기능 | 모든 음성에 다시 듣기 버튼 + 음성 호출로 재안내 요청 가능 ⭐ v2.3 |
 | 6.3.7 | 읽기 종료 기능 | ESC / 더블탭 종료 |
 | 6.5.2 | 키패드 음성 안내 | 결제 입력 시 키 위치 음성 |
-| 7.6.6 | 선택과 실행 분리 (단일 터치 ≠ 더블탭) | 모든 인터랙션 더블탭 |
+| 7.6.6 | 선택과 실행 분리 (단일 터치 ≠ 더블탭) | 모든 인터랙션 더블탭 (마이크 버튼도 동일 — 단일=안내 / 더블=녹음 시작 ⭐ v2.3) |
 | 8.2.2 | 시간 제한 + 연장 기능 | 20초 전 알림 + 연장 |
 | 광과민성 | 3Hz 미만 깜빡임 | CSS 애니메이션 검증 |
-| 8.3.2 | 충분한 시간 제공 | 학습자 음성 속도 조절 |
+| 8.3.2 | 충분한 시간 제공 | 학습자 음성 속도 조절 + VAD 무음 2초 자동 종료(Grace 1.5초)로 학습자 발화 페이스 보호 ⭐ v2.3 |
+
+#### 6.1 §5.2.2 d) 양방향 확장 ⭐ v2.3
+
+v2.2까지 본 시뮬레이터는 §5.2.2 d) "청각적 대체 콘텐츠" 의무를 **시각 → 청각 단방향**으로 충족했다 (모든 voiceLabel · ModeBanner · ScreenRouter 안내가 nova로 자동 발화). v2.3에서는 이 의무를 **학습자 → 도담 방향까지 확장**한다.
+
+| 방향 | 구현 | 적용 범위 |
+|------|------|---------|
+| **시각 → 청각 (단방향)** | OpenAI TTS(nova) + Web Speech 폴백 | 모든 인터랙티브 요소 voiceLabel, ModeBanner, VoiceCoach |
+| **학습자 → 도담 (역방향)** ⭐ v2.3 | OpenAI Whisper(주) + Web Speech(폴백) | 5개 학습 모드 + 환영 모드 선택 화면 |
+
+학술적 의의: §5.2.2 d) 의 조문이 "청각적 대체 콘텐츠"를 명시하나, 본 연구는 **학습자가 청각 채널을 통해 시스템에 입력할 권리** 까지 청각 대체의 일부로 해석하여, 시각 의존 없이도 학습자가 능동적으로 학습을 주도할 수 있는 환경을 구현했다.
 
 ---
 
@@ -571,26 +641,37 @@ export const STANDARD_BASELINE = {
 
 ```
 Frontend:
-  · Next.js 14 (App Router)
-  · TypeScript
-  · Tailwind CSS
-  · shadcn/ui (Radix UI 기반, 접근성 자동)
+  · Next.js 16 (App Router, Turbopack)
+  · React 19
+  · TypeScript (strict)
+  · Tailwind CSS v4
+  · shadcn/ui + Base UI (Radix 계열, 접근성 자동)
 
 State:
-  · Zustand (주문 상태, 학습 진행도)
+  · Zustand v5 (주문·학습·음성 store)
 
-Audio:
-  · Web Speech API (TTS)
+Audio (출력 — 도담 → 학습자):
+  · OpenAI TTS (nova, 주)
+  · Web Speech API (폴백)
+  · TTSManager 싱글톤 (자동 폴백 라우팅, 연속 실패 N회 후 세션 고정)
   · Howler.js (카페 BGM)
 
+Audio (입력 — 학습자 → 도담) ⭐ v2.3 신규:
+  · OpenAI Whisper-1 (한국어 우선, /api/whisper 프록시)
+  · Web Speech (webkitSpeechRecognition, ko-KR 폴백)
+  · VAD: AudioContext + AnalyserNode(FFT 256), 무음 2초 자동 종료
+  · MicButton 4상태 머신 (idle / preparing / recording / processing)
+  · 의도 분류기 (정규식 7종) — GPT 위임 전 경량 필터
+
 AI / LLM (15장 상세):
-  · OpenAI GPT-4o-mini (대사 생성)
-  · Whisper API (음성 → 텍스트)
-  · Google Gemini 2.5 Flash (분석)
-  · 키 관리: Next.js API Route (서버사이드)
+  · OpenAI GPT-4o-mini (대사 생성, 5개 모드 + 환영 단계 CONTEXT_HINTS)
+  · OpenAI Whisper-1 (음성 → 텍스트, 전체 학습 흐름 ⭐ v2.3 확장)
+  · Google Gemini 2.5 Flash (Articulation/Reflection 분석)
+  · 키 관리: Next.js API Route (서버사이드 only, OPENAI_API_KEY · GEMINI_API_KEY)
 
 Storage:
   · localStorage (학습 로그)
+  · 마이크 권한: 브라우저 Permissions API (사전 확인)
 
 Deploy:
   · Vercel (환경변수로 API 키 관리)
@@ -608,7 +689,7 @@ Deploy:
 │ │                                        │ │
 │ └────────────────────────────────────────┘ │
 │                                            │
-│ ┌─ VoiceCoach (도담) ─────────────────────┐ │
+│ ┌─ VoiceCoach (도담, 단방향 출력) ─────────┐ │
 │ │  - 화면 진입 음성 안내                    │ │
 │ │  - 더블탭 시 voiceLabel 발화              │ │
 │ │  - "다시 듣기" / "도움" 호출 대응         │ │
@@ -619,6 +700,32 @@ Deploy:
 │ └────────────────────────────────────────┘ │
 │                                            │
 └────────────────────────────────────────────┘
+
+  ┌─ MicButton (양방향 입력) ⭐ v2.3 ─────────┐
+  │  floating · 5개 모드 + 환영 모드 선택      │
+  │  - 단일 탭 → "마이크 버튼이에요..." 안내    │
+  │  - 더블 탭 → "네, 듣고 있어요" → 녹음      │
+  │  - VAD 무음 2초 / 최대 10초 자동 종료      │
+  │  - Whisper → Web Speech 폴백 → 정적 안내   │
+  │  - 의도 분류 → 정적 응답 or /api/gpt       │
+  └────────────────────────────────────────────┘
+
+  데이터 흐름 (v2.3 양방향)
+
+    [학습자 발화]                    [도담 응답]
+         │                              ▲
+         ▼                              │
+    ┌────────┐  Blob   ┌─────────┐ text │
+    │MicButton│───────▶│Whisper  │──────┘
+    │ (UI 상태)│        │ /api/.. │      ▲ (TTSManager)
+    └────────┘         └─────────┘      │
+         │                              │ text
+         │ intentDetection (정규식)      │
+         ▼                              │
+    ┌─────────┐  단순의도 → 정적 응답 ───┤
+    │ Intent  │                         │
+    │ Router  │  그 외 → GPT-4o-mini ───┘
+    └─────────┘     (CONTEXT_HINTS 주입)
 ```
 
 ---
@@ -640,10 +747,11 @@ ondam-kiosk/
 │   ├── complete/page.tsx
 │   │
 │   └── api/                      # ⭐ 서버사이드 API (키 보호)
-│       ├── coach-line/route.ts   # GPT 대사 생성
-│       ├── transcribe/route.ts   # Whisper 음성 전사
-│       ├── analyze/route.ts      # Gemini 답변 분석
-│       └── reflect/route.ts      # Gemini + GPT 종합 피드백
+│       ├── tts/route.ts          # OpenAI TTS(nova) 프록시
+│       ├── gpt/route.ts          # GPT-4o-mini 동적 대사 ⭐ v2.3 (Real Free + 전체 호출)
+│       ├── whisper/route.ts      # Whisper-1 음성 전사 ⭐ v2.3 (전체 학습 흐름)
+│       ├── analyze/route.ts      # Gemini 답변 분석 (Articulation, 계획)
+│       └── reflect/route.ts      # Gemini + GPT 종합 피드백 (Reflection, 계획)
 │
 ├── components/
 │   ├── kiosk/
@@ -652,13 +760,18 @@ ondam-kiosk/
 │   │   ├── MenuGrid.tsx          # 메뉴 그리드
 │   │   ├── OptionPanel.tsx       # 온도/사이즈/추가
 │   │   ├── CartSidebar.tsx       # 장바구니
-│   │   └── PaymentDialog.tsx     # 결제
+│   │   ├── PaymentDialog.tsx     # 결제
+│   │   ├── HintButton.tsx        # 힌트 (Challenge)
+│   │   └── AutoDemo.tsx          # Tutorial 자동 시연
 │   │
 │   ├── voice/
-│   │   ├── VoiceCoach.tsx        # 도담
+│   │   ├── VoiceCoach.tsx        # 도담 발화 큐
 │   │   ├── VoiceButton.tsx       # voiceLabel 자동 부착
 │   │   ├── ReplayButton.tsx      # 다시 듣기
-│   │   └── VoiceRecorder.tsx     # ⭐ Articulation 녹음
+│   │   ├── StopSpeakingButton.tsx# 발화 중지
+│   │   ├── VoiceSettingsPanel.tsx# 음성 설정 (음량 5단 등)
+│   │   ├── TimeoutWarning.tsx    # 시간 제한 경고
+│   │   └── MicButton.tsx         # ⭐ v2.3 양방향 음성 진입점 (4상태 머신)
 │   │
 │   ├── ambient/
 │   │   └── AmbientSound.tsx
@@ -672,22 +785,33 @@ ondam-kiosk/
 │   │   └── scenarios.ts
 │   │
 │   ├── tts/
+│   │   ├── fallbackTTS.ts        # OpenAI nova → Web Speech 자동 폴백 매니저
+│   │   ├── openaiTTS.ts          # OpenAI TTS 호출 + LRU 캐시
 │   │   ├── webSpeech.ts          # Web Speech API 추상화
-│   │   └── voiceScripts.ts       # 모드별 음성 대본 (폴백)
+│   │   └── voiceScripts.ts       # 모드별 음성 대본 (정적 폴백)
+│   │
+│   ├── stt/                      # ⭐ v2.3 신규: STT 입력 채널
+│   │   ├── whisperService.ts     # MediaRecorder + Whisper 전사 + AnalyserNode 노출
+│   │   └── webSpeechFallback.ts  # webkitSpeechRecognition 1회성 인식
 │   │
 │   ├── llm/                      # ⭐ LLM 통합
-│   │   ├── openai.ts             # GPT 클라이언트
-│   │   ├── gemini.ts             # Gemini 클라이언트
-│   │   ├── prompts.ts            # 프롬프트 템플릿
-│   │   └── fallback.ts           # API 실패 시 폴백 스크립트
+│   │   ├── intentDetection.ts    # ⭐ v2.3 정규식 7분류 + context-aware 정적 응답
+│   │   ├── openai.ts             # (계획) GPT 클라이언트 추상화
+│   │   ├── gemini.ts             # (계획) Gemini 클라이언트
+│   │   ├── prompts.ts            # (계획) 프롬프트 템플릿
+│   │   └── fallback.ts           # (계획) API 실패 시 폴백 스크립트
 │   │
 │   ├── learning/
-│   │   ├── logTypes.ts
-│   │   ├── reflectionEngine.ts   # 7개 피드백 템플릿 (폴백)
-│   │   └── baseline.ts
+│   │   ├── feedbackEngine.ts     # 모드별 즉시 피드백 (Coaching)
+│   │   ├── modeConfigs.ts        # 5개 모드 설정 (helpLevel, voiceVerbosity 등)
+│   │   ├── logTypes.ts           # (계획)
+│   │   ├── reflectionEngine.ts   # (계획) 7개 피드백 템플릿 (폴백)
+│   │   └── baseline.ts           # (계획)
 │   │
 │   └── interaction/
-│       └── doubleTap.ts          # 단일/더블탭 분리
+│       ├── doubleTap.ts          # 단일/더블탭 분리 훅
+│       ├── timeoutManager.ts     # 모드별 시간 제한 + 20초 전 경고
+│       └── useRequireLearningSession.ts # 직접 URL 진입 가드
 │
 ├── stores/
 │   ├── orderStore.ts
@@ -714,22 +838,62 @@ ondam-kiosk/
 
 ## 10. Phase별 개발 계획 (2주)
 
-| Week | 일 | Phase | 작업 |
-|------|---|-------|------|
-| **W1** | 1~2 | Phase 1 | Next.js 세팅, Vercel 연결, 디자인 토큰, shadcn/ui 초기화 |
-| | 3~4 | Phase 2 | 키오스크 외관 + 정적 화면 10단계 (음성 X) |
-| | 5~6 | Phase 3a | OpenAI TTS(nova) + Web Speech 폴백, 더블탭 분리, voiceLabel 부착 |
-| | 7 | Phase 3b | KS X 9211:2025 조항 적용 (시간 제한, 다시 듣기, 음량 5단 등) |
-| | 7.5 | **Phase 3c** ⭐ v2.2 | **가로/세로 키오스크 선택 (50분)** — 아래 상세 참고 |
-| **W2** | 8 | Phase 4 | 5개 학습 모드 차별화 + 스캐폴딩 (기본 스크립트) |
-| | 9 | Phase 4-AI | ⭐ GPT API 연동 (Real Free 동적 대사 + 폴백) |
-| | 10 | Phase 5 | 카페 소음 레이어 (Howler.js), 모드별 BGM 전환 |
-| | 11 | Phase 6 | Articulation (Whisper + Gemini 분석) + Reflection (Gemini + GPT) |
-| | 12 | Phase 7 | 결제 시뮬레이션 3종 + 통합 테스트 |
-| | 13 | Phase 8 | 버그 수정, axe-core 접근성 검증, **API 폴백 시연 검증** |
-| | 14 | Phase 9 | 보고서 마무리, Vercel 환경변수 설정 + 최종 배포 |
+| Week | 일 | Phase | 작업 | 상태 |
+|------|---|-------|------|------|
+| **W1** | 1~2 | Phase 1 | Next.js 세팅, Vercel 연결, 디자인 토큰, shadcn/ui 초기화 | ✅ 완료 |
+| | 3~4 | Phase 2 | 키오스크 외관 + 정적 화면 10단계 (음성 X) | ✅ 완료 |
+| | 5~6 | Phase 3a | OpenAI TTS(nova) + Web Speech 폴백, 더블탭 분리, voiceLabel 부착 | ✅ 완료 |
+| | 7 | Phase 3b | KS X 9211:2025 조항 적용 (시간 제한, 다시 듣기, 음량 5단 등) | ✅ 완료 |
+| | 7.5 | **Phase 3c** ⭐ v2.2 | **가로/세로 키오스크 선택 (50분)** | ✅ 완료 |
+| **W2** | 8 | Phase 4-A | 5개 학습 모드 차별화 + 스캐폴딩 (기본 스크립트) | ✅ 완료 |
+| | | Phase 4-B | Tutorial/Practice/Real-Free 모드 + 피드백/스캐폴딩 엔진 | ✅ 완료 |
+| | 9 | **Phase 4-AI-A** ⭐ v2.3 | **GPT 동적 대사 + Whisper 음성 입력 (마이크 버튼)** — 아래 상세 | ✅ 완료 |
+| | | **Phase 4-AI-B** ⭐ v2.3 | **5개 모드 통합 + Web Speech 폴백 + VAD + 청각 피드백** — 아래 상세 | ✅ 완료 |
+| | 10 | Phase 5 | 카페 소음 레이어 (Howler.js), 모드별 BGM 전환 | 계획 |
+| | 11 | Phase 6 | Articulation (Whisper + Gemini 분석) + Reflection (Gemini + GPT) | 계획 |
+| | 12 | Phase 7 | 결제 시뮬레이션 3종 + 통합 테스트 | 계획 |
+| | 13 | Phase 8 | 버그 수정, axe-core 접근성 검증, **API 폴백 시연 검증** | 계획 |
+| | 14 | Phase 9 | 보고서 마무리, Vercel 환경변수 설정 + 최종 배포 | 계획 |
 
 ⭐ **여유 1일** 확보 (LLM 통합 부담으로 v2.0보다 여유 줄어듦, 폴백 스크립트 우선 구축으로 위험 분산)
+
+#### Phase 4-AI-A — GPT 동적 대사 + Whisper 음성 입력 ⭐ v2.3 신규
+
+본 연구의 네 번째 차별점(양방향 음성 인터페이스)의 첫 절반. 환영 모드 선택 화면에 마이크 버튼 도입.
+
+| 단계 | 작업 | 산출물 |
+|------|------|--------|
+| 1 | `app/api/whisper/route.ts` — Whisper-1 한국어 전사 프록시 (`OPENAI_API_KEY`, multipart `audio` 입력) | 신규 |
+| 2 | `app/api/gpt/route.ts` — GPT-4o-mini 도담 페르소나 응답 (`userInput` + `context`, 폴백 응답 항상 포함) | 신규 |
+| 3 | `lib/stt/whisperService.ts` — MediaRecorder 녹음 + Whisper 전사 클라이언트 (싱글톤) | 신규 |
+| 4 | `lib/llm/intentDetection.ts` — 정규식 7분류 + 단순 의도 정적 응답 | 신규 |
+| 5 | `components/voice/MicButton.tsx` — idle/recording/processing 3상태 (4-AI-B에서 preparing 추가) | 신규 |
+| 6 | `app/page.tsx` 환영 모드 선택 화면에 MicButton 통합 | 수정 |
+| 검증 | 타입체크 + lint + `next build` + 마이크 권한·전사·GPT 응답 경로 점검 | — |
+
+#### Phase 4-AI-B — 5개 모드 통합 + Web Speech 폴백 + VAD + 청각 피드백 ⭐ v2.3 신규
+
+| 단계 | 작업 | 산출물 |
+|------|------|--------|
+| 1 | `lib/llm/intentDetection.ts` 확장 — 6개 단계(mode-select·tutorial·practice·challenge·real-guided·real-free) 별 인사 응답 | 수정 |
+| 2 | `app/api/gpt/route.ts` 에 `CONTEXT_HINTS` 주입 — Collins 6단계 역할을 시스템 메시지로 전달 | 수정 |
+| 3 | VAD 구현 — `whisperService` 에 AnalyserNode 노출(FFT 256), `MicButton` 에서 RAF 루프 + 무음 2초 + Grace 1.5초 | 수정 |
+| 4 | Web Speech 폴백 — `lib/stt/webSpeechFallback.ts` 신설, Whisper 실패 시 1회 재인식 (ko-KR, 6초) | 신규 |
+| 5 | 5개 모드 페이지에 MicButton 통합 — tutorial(AutoDemo 비활성 시만), practice, challenge, real-guided, real-free | 수정 |
+| 6 | **청각 피드백 3단계 디버깅** — `preparing` 상태 추가, "네 듣고 있어요" / "잘 들었어요. 잠시만요" / "도담이 생각하고 있어요" 발화 | 수정 |
+| 7 | 자기-녹음 방지 — `stopRecording()` → 청각 신호 발화 → `transcribe()` 순서 정렬 | 수정 |
+| 검증 | 타입체크 + lint + `next build` + 5개 모드 마이크 호출 + Web Speech 폴백 + VAD 종료 + 청각 시퀀스 점검 | — |
+
+**산출물 검증 체크 (4-AI-A + 4-AI-B 종합)**
+- [ ] 5개 학습 모드 + 환영 모드 선택 화면에서 마이크 버튼 더블탭 작동
+- [ ] Tutorial AutoDemo 진행 중에는 마이크 버튼 비노출 (시연 흐름 보호)
+- [ ] "도담아 안녕" 발화 → 단계별 맞춤 정적 응답 (GPT 호출 없음)
+- [ ] "도와줘" 발화 → GPT-4o-mini 호출, 단계별 톤의 응답
+- [ ] 짧은 발화 후 무음 2초 → VAD 자동 종료
+- [ ] Whisper 실패 유도(네트워크 차단) → "한 번 더 짧게 말씀해주세요" → Web Speech 재인식
+- [ ] 청각 시퀀스: "네 듣고 있어요" → 발화 → "잘 들었어요. 잠시만요" → (2초 지연 시) "도담이 생각하고 있어요" → 응답
+- [ ] 세로형/가로형 두 디스플레이 모드에서 동일하게 작동
+- [ ] KS X 9211:2025 §7.6.6 선택/실행 분리 유지 (단일=안내 / 더블=녹음)
 
 #### Phase 3-C — 가로/세로 키오스크 선택 (50분) ⭐ v2.2 신규
 
@@ -993,24 +1157,45 @@ docs/KS_X_9211_2025_체크리스트.md 작성:
 - **세 번째·네 번째 디스플레이 형태**: 벽걸이 가로 슬림형(1920×400), 테이블탑 매립형 등 (v2.2 의 `DisplayMode` 타입을 확장 가능하게 설계)
 - **다국어 지원**: 영어, 중국어 (KS 10.2.1)
 - **수어 안내 추가**: 청각장애인 대상 확장
-- **AI 음성 인식 고도화**: 자연어 주문 ("따뜻한 아메리카노 한 잔이요")
+- **AI 음성 인식 고도화**: 자연어 주문 직결 ("따뜻한 아메리카노 한 잔이요" → 주문 상태 자동 채움) — v2.3 음성 인터페이스를 의도 분류에서 슬롯 채우기로 확장
+- **Wake-word 항상 듣기**: 더블탭 없이도 "도담아"로 호출 (Tutorial AutoDemo 중에도 응답 가능). 현재는 학습 흐름 보호를 위해 비활성
+- **VAD 적응형 임계값**: 카페 소음 BGM 진폭의 EWMA 기반 동적 임계값 (현재는 하드코딩 `8`)
 - **학습 분석 대시보드**: 시각장애인 디지털 역량 패턴 연구 데이터 축적
 - **Articulation Silver/Gold**: 학습자 음성 녹음 및 분석
 - **Reflection Gold**: 동료 학습자 수행과의 비교
 
+### 14.3 음성 인터페이스 한계 ⭐ v2.3 신규
+
+v2.3 양방향 음성 인터페이스는 학술적·기능적 의의에도 불구하고 본 학기 과제 범위 내에서 다음 한계를 갖는다.
+
+| # | 한계 | 영향 | 후속 연구 방향 |
+|---|------|------|---------------|
+| 1 | **Whisper 한국어 정확도 환경 의존성** | 마이크 품질·주변 소음·발화 명료도에 따라 전사 오류 발생 가능 | Wake-word + 발화자 분리(Speaker Diarization) 도입, 도메인 특화 모델 fine-tuning |
+| 2 | **Web Speech 폴백 브라우저 제약** | Chrome/Edge/Safari 일부만 지원, Firefox 미지원 → 폴백 미작동 환경 존재 | 오픈소스 STT(Vosk/Whisper.cpp)를 클라이언트 사이드로 통합한 3차 폴백 |
+| 3 | **VAD 임계값 하드코딩** | 카페 소음 BGM(`real-guided` / `real-free`)에서 무음 판정 부정확 가능 | 환경 적응형 임계값(EWMA) 또는 ML 기반 발화 시작/종료 검출 |
+| 4 | **OpenAI 호출 비용·지연** | Whisper $0.006/min + GPT-4o-mini 호출당 토큰 비용 + 네트워크 왕복 ~1–3초 | 자주 발생하는 단순 호출은 클라이언트 캐시(LRU) 또는 엣지 STT로 이전 |
+| 5 | **마이크 권한 거부 학습자** | 마이크 권한 거부 시 양방향 채널 완전 비활성 — 단방향만 사용 가능 | 학습자 동의 화면(15.7) 시점에 권한 거부 시나리오를 명시적으로 안내 |
+| 6 | **자가 음성 자가-녹음 위험 잔존** | "잘 들었어요. 잠시만요" 멘트는 마이크 종료 후 발화하나, 1단 안내("네, 듣고 있어요")는 학습자가 빠르게 말하기 시작하면 첫 단어 일부가 안내 음성과 겹칠 가능성 | Wake-word 분리, 또는 학습자 발화 시작 감지 시 안내 음성 즉시 cut-off |
+| 7 | **Articulation 영역과의 통합 미완** | 본 v2.3은 음성 호출 채널만 도입. Articulation(Whisper + Gemini 분석)은 Phase 6에서 별도 통합 예정 | Phase 6에서 동일한 STT 인프라(`lib/stt/`)를 재사용하여 일관성 확보 |
+| 8 | **시연 시 OPENAI_API_KEY 노출 위험 없음 검증** | 모든 호출이 `/api/*` 서버사이드 라우트 경유 — 클라이언트 번들 검사로 키 노출 없음 확인 필요 | Phase 8 보안 점검에서 `npm run build` 산출물의 키 부재 자동 검증 추가 |
+
+위 한계는 모두 **시뮬레이터의 학습 효과를 본질적으로 훼손하지 않는** 수준이다. 핵심 학습 가치(Collins 6단계 + KS X 9211 + 낙인 효과 해소 + 디스플레이 다양성 + 양방향 음성)는 본 한계 안에서도 정상적으로 작동한다.
+
 ---
 
-## 15. AI API 통합 — GPT × Gemini 역할 분담 ⭐
+## 15. AI API 통합 — GPT × Gemini × Whisper 역할 분담 ⭐
 
 ### 15.1 통합 개요
 
-본 시뮬레이터는 **단일 LLM 의존이 아닌 멀티 모델 아키텍처**를 채택한다. OpenAI GPT와 Google Gemini를 역할 분담하여 통합 활용함으로써 (1) 응답 안정성, (2) 분석 정확도, (3) 비용 효율성을 동시에 확보한다.
+본 시뮬레이터는 **단일 LLM 의존이 아닌 멀티 모델 아키텍처**를 채택한다. OpenAI GPT·Whisper와 Google Gemini를 역할 분담하여 통합 활용함으로써 (1) 응답 안정성, (2) 분석 정확도, (3) 비용 효율성, (4) **양방향 음성 인터페이스**(v2.3)를 동시에 확보한다.
 
 ```
 ┌─────────────────────────────────────────────────────────┐
 │  GPT (대사 생성 담당) — "예술적 표현"                     │
 │  ───────────────────────────────────────                │
 │  · 학습자가 직접 듣는 모든 "도담의 말"                    │
+│  · ⭐ v2.3: 5개 학습 모드 + 환영 단계 음성 호출 응답      │
+│       (CONTEXT_HINTS 로 Collins 6단계 역할 주입)         │
 │  · Real Free 동적 음성 안내                              │
 │  · Articulation 후속 코칭 (따뜻한 대화)                  │
 │  · Reflection 맞춤 피드백 대사                           │
@@ -1030,10 +1215,16 @@ docs/KS_X_9211_2025_체크리스트.md 작성:
 │                                                        │
 │  ═══════════════════════════════════════════════         │
 │                                                        │
-│  Whisper (음성 인식 담당)                                │
+│  Whisper (음성 인식 담당) ⭐ v2.3 범위 확장              │
 │  ───────────────────────────────────────                │
-│  · 학습자 Articulation 답변을 텍스트로 전사               │
-│  · 모델: GPT-4o-mini Transcribe ($0.003/min)            │
+│  · v2.2까지: Articulation 단계 한정 (학습자 회상 답변)    │
+│  · v2.3 이후: **전체 학습 흐름**                         │
+│      - 5개 학습 모드 음성 호출                            │
+│      - 환영 모드 선택 화면 음성 호출                       │
+│      - Articulation 답변 (Phase 6 계획)                  │
+│  · 모델: whisper-1 ($0.006/min) — 한국어 우선             │
+│  · 폴백: Web Speech API (webkitSpeechRecognition, ko-KR) │
+│  · 학술적 정당화: §5.2.2 d) 양방향 청각 대체 확장          │
 │                                                        │
 └─────────────────────────────────────────────────────────┘
 ```
@@ -1048,7 +1239,57 @@ docs/KS_X_9211_2025_체크리스트.md 작성:
 | **분석 정확도** | 좋음 | 매우 좋음 (1M 컨텍스트) |
 | **본 연구 담당** | **학습자 대면 대사** | **백그라운드 분석** |
 
-### 15.3 구현 지점 (3개 학습 단계)
+### 15.3 구현 지점 (전체 학습 흐름 + 3개 분석 단계)
+
+> v2.3 변경 — v2.2까지는 GPT/Whisper의 구현 지점이 Real Free / Articulation / Reflection 3개 단계에 한정되었다. v2.3에서는 **양방향 음성 인터페이스(0번)** 가 5개 모드 + 환영 화면의 모든 단계에 추가되어, GPT 호출이 학습자 주도 음성 호출에 의해서도 발생한다.
+
+#### ⓪ 전체 학습 흐름 — Whisper + GPT 협업 (양방향 음성 호출) ⭐ v2.3 신규
+
+학습자가 마이크 버튼을 더블탭하여 음성 호출 → Whisper 전사 → 의도 분류 → 정적 응답 또는 GPT 위임.
+
+```typescript
+// components/voice/MicButton.tsx (요약)
+//
+// 1) Whisper 전사
+const blob = await whisperService.stopRecording();
+let text = await whisperService.transcribe(blob);   // /api/whisper
+
+// 2) Web Speech 폴백 (Whisper 실패 또는 빈 결과)
+if (!text && isWebSpeechSupported()) {
+  text = await recognizeWithWebSpeech({ timeoutMs: 6_000 });
+}
+
+// 3) 의도 분류 (정규식 7종)
+const intent = detectIntent(text);
+const staticReply = getIntentResponse(intent, context);   // 단순 의도면 즉시 반환
+
+// 4) 단순 의도 외 → GPT 위임
+if (!staticReply) {
+  const res = await fetch("/api/gpt", {
+    method: "POST",
+    body: JSON.stringify({ userInput: text, context }),
+  });
+  const { response } = await res.json();
+  await ttsManager.speak(response);
+}
+```
+
+GPT 라우트는 `CONTEXT_HINTS` 를 시스템 메시지로 주입하여 도담이 현재 단계(Modeling/Coaching/Scaffolding/Fading/Exploration)에 맞춰 톤과 도움 깊이를 조절한다.
+
+```typescript
+// app/api/gpt/route.ts (요약)
+const CONTEXT_HINTS: Record<string, string> = {
+  tutorial:   "학습자는 Tutorial 단계 (Modeling). 도담이 아메리카노 주문을 시연 중...",
+  practice:   "학습자는 Practice 단계 (Coaching). 직접 주문을 시도 중...",
+  challenge:  "학습자는 Challenge 단계 (Scaffolding). 자율적 수행 중...",
+  // ...
+};
+const messages = [
+  { role: "system", content: SYSTEM_PROMPT },
+  { role: "system", content: CONTEXT_HINTS[contextKey] },
+  { role: "user",   content: userInput },
+];
+```
 
 #### ① Real Free 단계 — GPT 단독 (대사 생성)
 
@@ -1256,21 +1497,24 @@ GPT-4o-mini (대사 생성):
 - Articulation 코칭: 4회 × 300토큰 = 1,200토큰
 - Reflection 피드백: 1회 × 500토큰 = 500토큰
 - 도움 호출: 5회 × 200토큰 = 1,000토큰
-계: 4,700토큰 (입력/출력 평균)
-비용: 약 $0.003 (4원)
+- 양방향 음성 호출 ⭐ v2.3: 8회 × 250토큰 = 2,000토큰
+   (정적 응답이 단순 의도를 흡수해 GPT 호출 절반 감소 효과)
+계: 6,700토큰 (입력/출력 평균)
+비용: 약 $0.004 (약 5원)
 
-Whisper Transcribe (gpt-4o-mini-transcribe):
+Whisper Transcribe (whisper-1):
 - Articulation 음성 4회 × 평균 30초 = 2분
-비용: 2분 × $0.003 = $0.006 (8원)
+- 양방향 음성 호출 ⭐ v2.3: 8회 × 평균 4초 = 0.5분 (대부분 VAD 무음 2초로 짧게 종료)
+계: 2.5분 × $0.006 = $0.015 (20원)
 
 Gemini 2.5 Flash:
 - Articulation 분석 4회 + Reflection 1회 = 5회
 - 무료 한도 (500 RPD) 내 → $0
 ─────────────────────────────────────────
-세션당 합계: 약 $0.009 (약 12원)
+세션당 합계: 약 $0.019 (약 25원)
 
 [학기 100세션 가정]
-약 1,200원
+약 2,500원
 
 [발표 시연 안전 마진]
 $10 (약 13,000원)로 충분
@@ -1282,22 +1526,31 @@ $10 (약 13,000원)로 충분
 
 본 시뮬레이터는 학습자 음성을 OpenAI/Google API 서버로 전송함. 보고서에 명시 필요:
 
-> *"본 시뮬레이터는 학습자의 Articulation 답변 음성을 OpenAI Whisper API와 Google Gemini API로 전송하여 분석한다. 원본 음성은 저장되지 않으며, 분석 결과 텍스트만 학습 로그에 기록된다. 학습자에게는 사전 동의를 구한다."*
+> *"본 시뮬레이터는 학습자의 (1) **5개 학습 모드 전 구간의 음성 호출** (도담 호출·도움 요청), 그리고 (2) **Articulation 회상 답변** 음성을 OpenAI Whisper API로 전송하여 텍스트로 전사한다. 추가로 Articulation/Reflection 분석에는 Google Gemini API를 사용한다. **원본 음성은 저장되지 않으며**, 전사 결과 텍스트만 일시적으로 학습 로그에 기록된다. 학습자에게는 사전 동의를 구한다."*
+
+⭐ v2.3 변경 — 음성 전송 범위가 Articulation 단계에서 5개 학습 모드 전 구간으로 확장됨에 따라, 학습자 동의 화면(아래)에서 "전체 학습 흐름의 음성 호출"을 명시한다. 마이크 권한을 거부한 학습자는 양방향 채널 없이 단방향 TTS만 사용한다(KS X 9211 단방향 청각 대체는 그대로 보장).
 
 학습자 동의 화면 (1단계 환영 이후 삽입):
 ```
 [화면]
 "이 시뮬레이터는 학습 효과를 위해 학습자의 음성을 
  잠시 AI 서버에 보내 분석해요. 음성은 저장되지 않아요.
+
+ (v2.3 ⭐) 마이크 버튼을 더블탭하면 도담에게 음성으로
+ 도움을 요청할 수 있어요. 그때 발화도 같은 방식으로
+ 처리되며, 거부하셔도 학습은 단방향 음성으로 가능해요.
+
  동의하시면 시작 버튼을 더블탭해주세요."
 
 [ 동의하고 시작 ]  [ 음성 분석 없이 시작 ]
-                   ↑ 폴백 모드로 작동
+                   ↑ 폴백 모드로 작동 — TTS만, 마이크 미활성
 ```
 
 ### 15.8 학술적 정당화 (보고서 인용용)
 
-> **"본 시뮬레이터는 OpenAI GPT-4o-mini와 Google Gemini 2.5 Flash를 역할 분담하여 통합 활용한다. GPT는 학습자에게 직접 전달되는 도담의 자연어 대사 생성을 담당하여 Collins(2006)가 강조한 '개별화된 스캐폴딩(individualized scaffolding)'을 구현하며, Gemini는 학습자 음성 답변의 정확성 분석 및 학습 데이터 패턴 분석을 담당하여 메타인지 발달을 정량적으로 포착한다. 이는 단일 LLM 의존이 아닌 멀티 모델 아키텍처를 통한 '컴퓨터 기반 인지적 도제의 AI 시대 확장형'으로서, 응답 안정성과 분석 정확도를 동시에 확보하기 위한 설계 결정이다. 특히 Articulation 단계에서 Whisper API를 통한 학습자 음성의 실시간 전사·분석은 시각장애인 학습자의 메타인지 발달의 직접적 증거(예: 사이즈·옵션의 자발적 회상)를 포착할 수 있도록 설계되었다."**
+> **"본 시뮬레이터는 OpenAI GPT-4o-mini, OpenAI Whisper, Google Gemini 2.5 Flash를 역할 분담하여 통합 활용한다. GPT는 학습자에게 직접 전달되는 도담의 자연어 대사 생성을 담당하여 Collins(2006)가 강조한 '개별화된 스캐폴딩(individualized scaffolding)'을 구현하며, Gemini는 학습자 음성 답변의 정확성 분석 및 학습 데이터 패턴 분석을 담당하여 메타인지 발달을 정량적으로 포착한다. Whisper는 학습자의 음성 입력을 텍스트로 전사하여 양방향 청각 인터페이스의 기반이 된다. 이는 단일 LLM 의존이 아닌 멀티 모델 아키텍처를 통한 '컴퓨터 기반 인지적 도제의 AI 시대 확장형'으로서, 응답 안정성과 분석 정확도를 동시에 확보하기 위한 설계 결정이다."**
+>
+> **(v2.3 추가) "본 연구는 Whisper의 적용 범위를 v2.2의 Articulation 단계 한정에서 5개 학습 모드(Tutorial / Practice / Challenge / Real Guided / Real Free) 전 구간으로 확장하여, 학습자가 어느 단계에서든 도담을 음성으로 호출할 수 있는 양방향 청각 인터페이스를 구현하였다. 이는 KS X 9211:2025 §5.2.2 d) '청각적 대체 콘텐츠' 의무를 단방향(시각 → 청각)에서 양방향(시각 ↔ 학습자 음성)으로 확장한 학술적 시도이며, Collins(2006)의 '개별화된 스캐폴딩'을 학습자 주도 호출 채널까지 확장한 본 연구 고유의 네 번째 차별점이다. 응답 파이프라인은 (1) Whisper(주) + Web Speech(폴백) 이중 STT, (2) VAD 기반 자동 종료, (3) 정규식 의도 분류 + GPT-4o-mini 위임의 하이브리드 응답, (4) Collins 6단계 역할을 시스템 메시지로 주입한 context-aware GPT 응답으로 구성된다."**
 
 ### 15.9 Claude Code 추가 프롬프트
 
@@ -1362,8 +1615,53 @@ Articulation + Reflection AI 통합 구현.
 
 ---
 
+## 부록 A. 변경 이력
+
+### v2.3 (2026-05-16) — 양방향 음성 인터페이스 ⭐
+본 연구의 **네 번째 학술적 차별점** 도입.
+
+| 영역 | 변경 |
+|------|------|
+| 1.3 학술적 차별점 | 네 번째 차별점 "양방향 음성 인터페이스" 추가 |
+| 3.6 신설 | 양방향 음성 인터페이스의 동작 흐름·설계 결정·학술적 정당성·3중 폴백 |
+| 6장 KS X 9211 매트릭스 | §5.2.2 d) 양방향 확장 표기, §7.6.6·§8.3.2 음성 호출 분기 추가, 6.1절 신설 |
+| 8장 기술 스택 | STT 입력 채널(Whisper-1, Web Speech 폴백, VAD AudioContext+AnalyserNode) 명시, MicButton 4상태 머신 명시 |
+| 8.2 컴포넌트 아키텍처 | MicButton 다이어그램 + 양방향 데이터 흐름 다이어그램 추가 |
+| 9장 폴더 구조 | `lib/stt/` 신설, `components/voice/MicButton.tsx`, `app/api/{gpt,whisper}/route.ts` 명시 |
+| 10장 Phase 계획 | Phase 4-AI-A · 4-AI-B · 디버깅 라운드 결과 추가, 산출물 검증 체크리스트 보강 |
+| 14.3 신설 | 음성 인터페이스 한계 8개 항목 + 후속 연구 방향 |
+| 15.1 통합 개요 | GPT × Gemini × **Whisper** 3원 아키텍처로 재구성, Whisper 박스에 v2.3 범위 확장 명시 |
+| 15.3 구현 지점 | ⓪ 전체 학습 흐름 (양방향 음성 호출) 신설 — CONTEXT_HINTS 코드 발췌 포함 |
+| 15.6 비용 추정 | Whisper 양방향 호출 추가 비용 반영 (세션당 약 25원, 학기 100세션 2,500원) |
+| 15.7 개인정보·윤리 고지 | 음성 전송 범위 확장 명시, 동의 화면 v2.3 분기 추가 |
+| 15.8 학술적 정당화 | v2.3 추가 인용문 — Whisper 범위 확장과 §5.2.2 d) 양방향 해석의 학술적 의의 |
+| 부록 A 신설 | 본 변경 이력 |
+
+**구현 산출물 (Phase 4-AI 완료 시점)**
+- `app/api/whisper/route.ts`, `app/api/gpt/route.ts` (서버사이드 프록시, `OPENAI_API_KEY` 보호)
+- `lib/stt/whisperService.ts` (MediaRecorder + AnalyserNode 노출)
+- `lib/stt/webSpeechFallback.ts` (1회성 webkitSpeechRecognition)
+- `lib/llm/intentDetection.ts` (정규식 7분류 + context-aware 정적 응답)
+- `components/voice/MicButton.tsx` (idle/preparing/recording/processing 4상태)
+- 5개 모드 페이지(`tutorial`, `practice`, `challenge`, `real-guided`, `real-free`) + 환영 모드 선택 화면에 MicButton 통합
+
+### v2.2 (2026-05-09) — 디스플레이 다양성
+- 1.3 세 번째 차별점 "디스플레이 다양성" 추가
+- 3.5 디스플레이 모드 다양성 신설 (세로형 800px / 가로형 1400px)
+- 5.2 #1 환영 → 모드 선택 2단계로 확장
+- 7.0 `learningStore.displayMode` 추가
+- Phase 3-C 신규 (50분 단발 작업)
+- 14.1 제한된 시연 환경 보강
+
+### v2.1 (~) — 초기 멀티 LLM 아키텍처
+- GPT × Gemini 역할 분담 도입
+- Whisper Articulation 한정 적용
+- 15장 전체 신설
+
+---
+
 **END OF DOCUMENT**
 
-> *이 설계서(v2.1)는 KS X 9211:2025, 2026 NIA 가이드, Lave & Wenger(1991) 상황학습이론, Collins(2006) 인지적 도제이론을 통합 기반으로 작성되었으며, OpenAI GPT-4o-mini와 Google Gemini 2.5 Flash의 멀티 LLM 아키텍처를 통해 인지적 도제의 AI 시대 확장형을 시도한 교육훈련 프로그램 개발용 문서입니다.*
+> *이 설계서(v2.3)는 KS X 9211:2025, 2026 NIA 가이드, Lave & Wenger(1991) 상황학습이론, Collins(2006) 인지적 도제이론을 통합 기반으로 작성되었으며, OpenAI GPT-4o-mini · Whisper-1 과 Google Gemini 2.5 Flash의 멀티 모델 아키텍처를 통해 인지적 도제의 AI 시대 확장형을 시도한 교육훈련 프로그램 개발용 문서입니다. v2.3에서는 학습자가 도담을 음성으로 호출할 수 있는 양방향 청각 인터페이스를 5개 학습 모드 전 구간에 도입하여, KS X 9211:2025 §5.2.2 d) "청각적 대체 콘텐츠" 의무를 양방향으로 확장한 본 연구의 네 번째 학술적 차별점을 구현하였습니다.*
 >
 > *본 시뮬레이터는 단순한 키오스크 시뮬레이터가 아닌, 시각장애인의 디지털 시민 정체성 회복을 위한 학습 환경(Learning Environment)임을 다시 한번 강조합니다.*
