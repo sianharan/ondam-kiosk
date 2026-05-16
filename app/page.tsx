@@ -20,6 +20,7 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 
 import { KioskFrame } from "@/components/kiosk/KioskFrame";
+import { MicButton } from "@/components/voice/MicButton";
 import { VoiceButton } from "@/components/voice/VoiceButton";
 import { VoiceCoach } from "@/components/voice/VoiceCoach";
 import { useDoubleTap } from "@/lib/interaction/doubleTap";
@@ -62,7 +63,12 @@ export default function Home() {
       {stage === "intro" ? (
         <IntroStage onNext={() => setStage("mode-select")} />
       ) : (
-        <ModeSelectStage onSelect={handleSelectMode} />
+        <>
+          <ModeSelectStage onSelect={handleSelectMode} />
+          {/* Phase 4-AI-A: 양방향 음성 인터페이스 테스트 진입점.
+              모드 선택 단계에서 "도담아 안녕" 발화로 GPT/Whisper 통합을 검증한다. */}
+          <MicButton context="mode-select" position="floating" />
+        </>
       )}
     </KioskFrame>
   );
