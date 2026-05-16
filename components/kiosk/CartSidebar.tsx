@@ -12,13 +12,15 @@ import * as React from "react";
 
 import { VoiceButton } from "@/components/voice/VoiceButton";
 import { VoiceCoach } from "@/components/voice/VoiceCoach";
-import { VOICE_SCRIPTS } from "@/lib/tts/voiceScripts";
-import { cn } from "@/lib/utils";
 import {
   CATEGORY_LABEL,
   EXTRA_OPTIONS,
   SIZE_OPTIONS,
 } from "@/lib/kiosk-data/menu";
+import { getModeConfig } from "@/lib/learning/modeConfigs";
+import { VOICE_SCRIPTS } from "@/lib/tts/voiceScripts";
+import { cn } from "@/lib/utils";
+import { useLearningStore } from "@/stores/learningStore";
 import { useOrderStore } from "@/stores/orderStore";
 
 export interface CartSidebarProps {
@@ -49,6 +51,14 @@ export function CartSidebar({
   const selectedSize = useOrderStore((s) => s.selectedSize);
   const selectedExtras = useOrderStore((s) => s.selectedExtras);
   const getTotalPrice = useOrderStore((s) => s.getTotalPrice);
+  const currentMode = useLearningStore((s) => s.currentMode);
+
+  // Phase 4-B — Fading: minimal / silent 모드에서는 장바구니 자동 안내 생략.
+  // 학습자는 [결제하기] 버튼 단일 탭으로 가격을 직접 듣고 진행할 수 있다.
+  const verbosity = currentMode
+    ? getModeConfig(currentMode).voiceVerbosity
+    : "detailed";
+  const announceCart = verbosity === "detailed" || verbosity === "normal";
 
   if (!selectedItem) {
     return (
@@ -99,7 +109,9 @@ export function CartSidebar({
         </p>
       </header>
 
-      {!silent && <VoiceCoach message={VOICE_SCRIPTS.cart(voiceSummary)} />}
+      {!silent && announceCart && (
+        <VoiceCoach message={VOICE_SCRIPTS.cart(voiceSummary)} />
+      )}
 
       {/* ── 요약 카드 ─────────────────────────────────────── */}
       <dl

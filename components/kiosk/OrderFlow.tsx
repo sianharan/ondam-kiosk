@@ -32,7 +32,7 @@ import {
 import { useLearningStore } from "@/stores/learningStore";
 import { useOrderStore } from "@/stores/orderStore";
 
-type Stage =
+export type OrderFlowStage =
   | "category"
   | "menu"
   | "options"
@@ -56,6 +56,11 @@ export interface OrderFlowProps {
    * 진입 시퀀스 앞에 한 번만 끼워 넣는다 (재진입 시에는 모드 인트로 생략).
    */
   modeIntro?: string | readonly string[];
+  /**
+   * Phase 4-B — Challenge 모드의 HintButton 처럼, 부모 페이지가 현재 stage 에
+   * 따라 다른 UI 를 곁들이고 싶을 때 사용.  stage 가 바뀌면 호출된다.
+   */
+  onStageChange?: (stage: OrderFlowStage) => void;
 }
 
 export function OrderFlow({
@@ -63,8 +68,13 @@ export function OrderFlow({
   nextLabel,
   onAdvance,
   modeIntro,
+  onStageChange,
 }: OrderFlowProps) {
-  const [stage, setStage] = React.useState<Stage>("category");
+  const [stage, setStage] = React.useState<OrderFlowStage>("category");
+
+  React.useEffect(() => {
+    onStageChange?.(stage);
+  }, [stage, onStageChange]);
   const selectedCategory = useOrderStore((s) => s.selectedCategory);
   const orderNumber = useOrderStore((s) => s.orderNumber);
   const resetOrder = useOrderStore((s) => s.resetOrder);

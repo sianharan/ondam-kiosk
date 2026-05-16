@@ -17,9 +17,6 @@ import { VoiceButton } from "@/components/voice/VoiceButton";
 import { VoiceCoach } from "@/components/voice/VoiceCoach";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { ttsManager } from "@/lib/tts/fallbackTTS";
-import { VOICE_SCRIPTS } from "@/lib/tts/voiceScripts";
-import { VOLUME_TO_AUDIO, useVoiceStore } from "@/stores/voiceStore";
 import {
   EXTRA_OPTIONS,
   SIZE_OPTIONS,
@@ -27,8 +24,13 @@ import {
   type SizeKey,
   type Temperature,
 } from "@/lib/kiosk-data/menu";
-import { useOrderStore } from "@/stores/orderStore";
+import { getModeConfig } from "@/lib/learning/modeConfigs";
+import { ttsManager } from "@/lib/tts/fallbackTTS";
+import { VOICE_SCRIPTS } from "@/lib/tts/voiceScripts";
 import { cn } from "@/lib/utils";
+import { useLearningStore } from "@/stores/learningStore";
+import { useOrderStore } from "@/stores/orderStore";
+import { VOLUME_TO_AUDIO, useVoiceStore } from "@/stores/voiceStore";
 
 export interface OptionPanelProps {
   onComplete: () => void;
@@ -53,15 +55,27 @@ export function OptionPanel({ onComplete }: OptionPanelProps) {
   const speed = useVoiceStore((s) => s.speed);
   const volume = useVoiceStore((s) => s.volume);
 
+  // Phase 4-B — Fading 정책
+  //   detailed/normal : 진입 안내 + 옵션 선택 시 짧은 음성 피드백
+  //   minimal         : 진입 안내 X, 선택 시에만 짧은 피드백 (사용자가 명시적 조작)
+  //   silent          : 모든 자동 발화 X (단일 탭 voiceLabel 발화는 VoiceButton 차원)
+  const currentMode = useLearningStore((s) => s.currentMode);
+  const verbosity = currentMode
+    ? getModeConfig(currentMode).voiceVerbosity
+    : "detailed";
+  const announceEntry = verbosity === "detailed" || verbosity === "normal";
+  const announceShortFeedback = verbosity !== "silent";
+
   const speakShort = React.useCallback(
     (text: string) => {
       if (!isVoiceEnabled) return;
+      if (!announceShortFeedback) return;
       ttsManager.setVoice(voice);
       ttsManager.setSpeed(speed);
       ttsManager.setVolume(VOLUME_TO_AUDIO[volume]);
       void ttsManager.speak(text, { interrupt: true });
     },
-    [isVoiceEnabled, voice, speed, volume],
+    [isVoiceEnabled, voice, speed, volume, announceShortFeedback],
   );
 
   if (!selectedItem) {
@@ -103,7 +117,9 @@ export function OptionPanel({ onComplete }: OptionPanelProps) {
         </p>
       </header>
 
-      <VoiceCoach message={entrySequence} sequenceGapMs={500} />
+      {announceEntry && (
+        <VoiceCoach message={entrySequence} sequenceGapMs={500} />
+      )}
 
       {!hasAnyOption && (
         <p className="text-xl text-foreground/80">

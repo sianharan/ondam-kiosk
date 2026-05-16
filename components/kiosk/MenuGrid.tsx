@@ -13,18 +13,19 @@ import * as React from "react";
 
 import { VoiceCoach } from "@/components/voice/VoiceCoach";
 import { useDoubleTap } from "@/lib/interaction/doubleTap";
-import { ttsManager } from "@/lib/tts/fallbackTTS";
-import { VOICE_SCRIPTS } from "@/lib/tts/voiceScripts";
-import { VOLUME_TO_AUDIO, useVoiceStore } from "@/stores/voiceStore";
-import { cn } from "@/lib/utils";
 import {
   CATEGORY_LABEL,
   getMenuByCategory,
   type Category,
   type MenuItem,
 } from "@/lib/kiosk-data/menu";
+import { getModeConfig } from "@/lib/learning/modeConfigs";
+import { ttsManager } from "@/lib/tts/fallbackTTS";
+import { VOICE_SCRIPTS } from "@/lib/tts/voiceScripts";
+import { cn } from "@/lib/utils";
 import { useLearningStore } from "@/stores/learningStore";
 import { useOrderStore } from "@/stores/orderStore";
+import { VOLUME_TO_AUDIO, useVoiceStore } from "@/stores/voiceStore";
 
 export interface MenuGridProps {
   category: Category;
@@ -53,6 +54,7 @@ function buildMenuVoiceLabel(item: MenuItem): string {
 export function MenuGrid({ category, onSelect, onBack }: MenuGridProps) {
   const setItem = useOrderStore((s) => s.setItem);
   const displayMode = useLearningStore((s) => s.displayMode);
+  const currentMode = useLearningStore((s) => s.currentMode);
   const items = React.useMemo(
     () => getMenuByCategory(category),
     [category],
@@ -72,6 +74,13 @@ export function MenuGrid({ category, onSelect, onBack }: MenuGridProps) {
       ? "grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-5"
       : "grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-5";
 
+  // Phase 4-B — Fading: minimal / silent 모드에서는 메뉴 자동 안내 생략
+  // (학습자는 각 카드 단일 탭으로 직접 메뉴 정보를 들어볼 수 있다).
+  const verbosity = currentMode
+    ? getModeConfig(currentMode).voiceVerbosity
+    : "detailed";
+  const announceMenu = verbosity === "detailed" || verbosity === "normal";
+
   return (
     <section className="flex flex-col gap-6">
       <div className="flex items-center justify-between gap-4">
@@ -84,7 +93,9 @@ export function MenuGrid({ category, onSelect, onBack }: MenuGridProps) {
         </h2>
       </div>
 
-      <VoiceCoach message={entrySequence} sequenceGapMs={400} />
+      {announceMenu && (
+        <VoiceCoach message={entrySequence} sequenceGapMs={400} />
+      )}
 
       <ul aria-labelledby="menu-grid-heading" className={gridClass}>
         {items.map((item) => (

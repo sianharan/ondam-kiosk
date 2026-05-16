@@ -12,13 +12,14 @@ import * as React from "react";
 
 import { VoiceCoach } from "@/components/voice/VoiceCoach";
 import { useDoubleTap } from "@/lib/interaction/doubleTap";
+import { CATEGORY_LABEL, type Category } from "@/lib/kiosk-data/menu";
+import { getModeConfig } from "@/lib/learning/modeConfigs";
 import { ttsManager } from "@/lib/tts/fallbackTTS";
 import { VOICE_SCRIPTS } from "@/lib/tts/voiceScripts";
-import { VOLUME_TO_AUDIO, useVoiceStore } from "@/stores/voiceStore";
 import { cn } from "@/lib/utils";
-import { CATEGORY_LABEL, type Category } from "@/lib/kiosk-data/menu";
 import { useLearningStore } from "@/stores/learningStore";
 import { useOrderStore } from "@/stores/orderStore";
+import { VOLUME_TO_AUDIO, useVoiceStore } from "@/stores/voiceStore";
 
 interface CategoryDef {
   id: Category;
@@ -168,12 +169,32 @@ export function CategoryGrid({ onSelect, prependVoice }: CategoryGridProps) {
   const selectedCategory = useOrderStore((s) => s.selectedCategory);
   const setCategory = useOrderStore((s) => s.setCategory);
   const displayMode = useLearningStore((s) => s.displayMode);
+  const currentMode = useLearningStore((s) => s.currentMode);
 
   // 가로형: 1×4 가로 일렬. 세로형(또는 미선택): 2×2. (PROJECT_DESIGN 3.5.1/3.5.2)
   const gridClass =
     displayMode === "horizontal"
       ? "grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-5"
       : "grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6";
+
+  // Phase 4-B — 모드별 자동 음성 안내 정책 (PROJECT_DESIGN 4.2 Fading)
+  //   detailed / normal : modeIntro + ENTRY_SEQUENCE (카테고리 4개 위치 안내)
+  //   minimal / silent  : modeIntro 만 (한 줄짜리 인사 후 화면 안내는 침묵)
+  //
+  // silent 모드(Real Free)도 학습자가 어디에 도착했는지 알리는 진입 멘트 한 줄은
+  // 들려준다 — 그 이후 카테고리/메뉴/옵션의 자동 발화만 모두 차단해 자율 탐색을
+  // 보장한다.  currentMode === null 인 경우 안전하게 detailed 로 폴백.
+  const verbosity = currentMode
+    ? getModeConfig(currentMode).voiceVerbosity
+    : "detailed";
+
+  const voiceMessage = React.useMemo<readonly string[] | null>(() => {
+    const intro = prependVoice ?? [];
+    if (verbosity === "minimal" || verbosity === "silent") {
+      return intro.length > 0 ? intro : null;
+    }
+    return intro.length > 0 ? [...intro, ...ENTRY_SEQUENCE] : ENTRY_SEQUENCE;
+  }, [prependVoice, verbosity]);
 
   return (
     <section className="flex flex-col gap-6">
@@ -189,14 +210,9 @@ export function CategoryGrid({ onSelect, prependVoice }: CategoryGridProps) {
         </p>
       </header>
 
-      <VoiceCoach
-        message={
-          prependVoice && prependVoice.length > 0
-            ? [...prependVoice, ...ENTRY_SEQUENCE]
-            : ENTRY_SEQUENCE
-        }
-        sequenceGapMs={400}
-      />
+      {voiceMessage && (
+        <VoiceCoach message={voiceMessage} sequenceGapMs={400} />
+      )}
 
       <div
         role="radiogroup"
