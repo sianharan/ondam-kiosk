@@ -49,24 +49,53 @@ export interface OrderFlowProps {
   nextLabel: string;
   /** 주문 + 결제 + 완료 안내까지 끝났을 때 호출. 부모가 router.push 등 수행 */
   onAdvance: () => void;
+  /**
+   * 모드 진입 멘트.  v2.2 Phase 3-C 이전에는 모드 페이지가 자체 VoiceCoach 로
+   * 따로 발화했지만, 그러면 카테고리 화면에서 VoiceCoach 가 두 개 동시 마운트되어
+   * 패널 중복 + 음성 충돌이 발생했다.  이제는 OrderFlow 가 받아서 첫 카테고리
+   * 진입 시퀀스 앞에 한 번만 끼워 넣는다 (재진입 시에는 모드 인트로 생략).
+   */
+  modeIntro?: string | readonly string[];
 }
 
-export function OrderFlow({ mode, nextLabel, onAdvance }: OrderFlowProps) {
+export function OrderFlow({
+  mode,
+  nextLabel,
+  onAdvance,
+  modeIntro,
+}: OrderFlowProps) {
   const [stage, setStage] = React.useState<Stage>("category");
   const selectedCategory = useOrderStore((s) => s.selectedCategory);
   const orderNumber = useOrderStore((s) => s.orderNumber);
   const resetOrder = useOrderStore((s) => s.resetOrder);
   const displayMode = useLearningStore((s) => s.displayMode);
 
+  // 모드 인트로는 첫 카테고리 진입에서만 발화.  메뉴 → 카테고리 뒤로가기나
+  // [처음으로] 재시작 후 카테고리 재진입 시에는 카테고리 안내만 들리게 한다.
+  const modeIntroConsumedRef = React.useRef(false);
+  const introLines = React.useMemo<readonly string[] | undefined>(() => {
+    if (modeIntroConsumedRef.current) return undefined;
+    if (!modeIntro) return undefined;
+    return Array.isArray(modeIntro) ? modeIntro : [modeIntro as string];
+  }, [modeIntro, stage]);
+
   const handleRestart = React.useCallback(() => {
     resetOrder();
     setStage("category");
   }, [resetOrder]);
 
+  const handleCategorySelect = React.useCallback(() => {
+    modeIntroConsumedRef.current = true;
+    setStage("menu");
+  }, []);
+
   const stageNode = (
     <>
       {stage === "category" && (
-        <CategoryGrid onSelect={() => setStage("menu")} />
+        <CategoryGrid
+          onSelect={handleCategorySelect}
+          prependVoice={introLines}
+        />
       )}
 
       {stage === "menu" && selectedCategory && (
@@ -94,8 +123,13 @@ export function OrderFlow({ mode, nextLabel, onAdvance }: OrderFlowProps) {
 
       {stage === "payment" && (
         <>
-          {/* 다이얼로그 뒤로 장바구니가 비치는 게 자연스러움 */}
-          <CartSidebar onCheckout={() => {}} onRestart={handleRestart} />
+          {/* 다이얼로그 뒤로 장바구니가 비치는 게 자연스러움.
+              결제 안내 음성과 충돌하지 않도록 backdrop CartSidebar 는 silent. */}
+          <CartSidebar
+            onCheckout={() => {}}
+            onRestart={handleRestart}
+            silent
+          />
           <PaymentDialog
             open={true}
             onClose={() => setStage("done")}

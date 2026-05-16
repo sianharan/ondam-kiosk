@@ -24,13 +24,25 @@ import { useOrderStore } from "@/stores/orderStore";
 export interface CartSidebarProps {
   onCheckout: () => void;
   onRestart: () => void;
+  /**
+   * true 면 내부 VoiceCoach 를 생략한다.
+   *
+   * OrderFlow stage="payment" 에서 PaymentDialog 뒤로 비치는 backdrop 으로
+   * CartSidebar 가 한 번 더 렌더되는데, 그때 cart 안내가 결제 안내와 동시에
+   * 발화돼 음성이 겹치는 문제를 막는다.  v2.2 Phase 3-C 동시 VoiceCoach 차단.
+   */
+  silent?: boolean;
 }
 
 function formatPrice(price: number): string {
   return `${price.toLocaleString("ko-KR")}원`;
 }
 
-export function CartSidebar({ onCheckout, onRestart }: CartSidebarProps) {
+export function CartSidebar({
+  onCheckout,
+  onRestart,
+  silent = false,
+}: CartSidebarProps) {
   const selectedItem = useOrderStore((s) => s.selectedItem);
   const selectedCategory = useOrderStore((s) => s.selectedCategory);
   const selectedTemperature = useOrderStore((s) => s.selectedTemperature);
@@ -87,7 +99,7 @@ export function CartSidebar({ onCheckout, onRestart }: CartSidebarProps) {
         </p>
       </header>
 
-      <VoiceCoach message={VOICE_SCRIPTS.cart(voiceSummary)} />
+      {!silent && <VoiceCoach message={VOICE_SCRIPTS.cart(voiceSummary)} />}
 
       {/* ── 요약 카드 ─────────────────────────────────────── */}
       <dl

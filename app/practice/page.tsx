@@ -12,7 +12,6 @@ import { useRouter } from "next/navigation";
 import { KioskFrame } from "@/components/kiosk/KioskFrame";
 import { ModeBanner } from "@/components/kiosk/ModeBanner";
 import { OrderFlow } from "@/components/kiosk/OrderFlow";
-import { VoiceCoach } from "@/components/voice/VoiceCoach";
 import { TimeoutWarning } from "@/components/voice/TimeoutWarning";
 import { MODE_TIMEOUTS, useTimeout } from "@/lib/interaction/timeoutManager";
 import { useRequireLearningSession } from "@/lib/interaction/useRequireLearningSession";
@@ -56,10 +55,10 @@ export default function PracticePage() {
           headline="이번엔 직접 주문해 보세요."
           detail="도담이 옆에서 도와드려요. 천천히 골라도 괜찮아요. (5분 제한)"
         />
-        <VoiceCoach message={VOICE_SCRIPTS.practice.intro} />
         <OrderFlow
           mode="practice"
           nextLabel="Challenge"
+          modeIntro={VOICE_SCRIPTS.practice.intro}
           onAdvance={advance}
         />
       </KioskFrame>

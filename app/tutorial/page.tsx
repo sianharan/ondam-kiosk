@@ -12,7 +12,6 @@ import { useRouter } from "next/navigation";
 import { KioskFrame } from "@/components/kiosk/KioskFrame";
 import { ModeBanner } from "@/components/kiosk/ModeBanner";
 import { OrderFlow } from "@/components/kiosk/OrderFlow";
-import { VoiceCoach } from "@/components/voice/VoiceCoach";
 import { useRequireLearningSession } from "@/lib/interaction/useRequireLearningSession";
 import { VOICE_SCRIPTS } from "@/lib/tts/voiceScripts";
 import { useLearningStore } from "@/stores/learningStore";
@@ -41,10 +40,10 @@ export default function TutorialPage() {
         headline="도담이 먼저 아메리카노 주문 과정을 보여드릴게요."
         detail="지금은 따라보기 단계예요. 천천히 한 번 클릭으로 흐름을 익혀봐요."
       />
-      <VoiceCoach message={VOICE_SCRIPTS.tutorial.intro} />
       <OrderFlow
         mode="tutorial"
         nextLabel="Practice"
+        modeIntro={VOICE_SCRIPTS.tutorial.intro}
         onAdvance={() => router.push("/practice")}
       />
     </KioskFrame>

@@ -12,7 +12,6 @@ import { useRouter } from "next/navigation";
 import { KioskFrame } from "@/components/kiosk/KioskFrame";
 import { ModeBanner } from "@/components/kiosk/ModeBanner";
 import { OrderFlow } from "@/components/kiosk/OrderFlow";
-import { VoiceCoach } from "@/components/voice/VoiceCoach";
 import { TimeoutWarning } from "@/components/voice/TimeoutWarning";
 import { MODE_TIMEOUTS, useTimeout } from "@/lib/interaction/timeoutManager";
 import { useRequireLearningSession } from "@/lib/interaction/useRequireLearningSession";
@@ -53,13 +52,13 @@ export default function RealGuidedPage() {
           headline="이번엔 카페 소음도 들리는 환경이에요."
           detail="정해진 시나리오로 한 번 더 연습해 봐요. 도담은 호출하실 때만 도와드려요. (3분 제한)"
         />
-        <VoiceCoach
-          message={[VOICE_SCRIPTS.realGuided.intro, VOICE_SCRIPTS.realGuided.ambient]}
-          sequenceGapMs={800}
-        />
         <OrderFlow
           mode="realGuided"
           nextLabel="Real Free"
+          modeIntro={[
+            VOICE_SCRIPTS.realGuided.intro,
+            VOICE_SCRIPTS.realGuided.ambient,
+          ]}
           onAdvance={advance}
         />
       </KioskFrame>

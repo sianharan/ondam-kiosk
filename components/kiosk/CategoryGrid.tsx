@@ -150,9 +150,21 @@ const ENTRY_SEQUENCE = [
 
 export interface CategoryGridProps {
   onSelect: (category: Category) => void;
+  /**
+   * 카테고리 진입 시퀀스 앞에 추가로 발화할 라인.
+   *
+   * 부모(OrderFlow → 모드 페이지)에서 "Modeling 단계예요…" 같은 모드 인트로를
+   * 넘기면 카테고리 안내 시퀀스 앞에 한 번만 붙는다.  카테고리 화면이 다시 마운트될
+   * 때마다 같이 흘러갈 수 있으므로, 일회성 보장은 부모(OrderFlow 의 useRef)가 한다.
+   *
+   * v2.2 Phase 3-C 이전에는 모드 페이지에서 별도 VoiceCoach 를 띄워 같은 화면에
+   * VoiceCoach 패널이 두 개 떠 있고 음성도 두 줄로 충돌했다.  본 prop 도입으로
+   * 한 화면 한 VoiceCoach 원칙을 회복한다.
+   */
+  prependVoice?: readonly string[];
 }
 
-export function CategoryGrid({ onSelect }: CategoryGridProps) {
+export function CategoryGrid({ onSelect, prependVoice }: CategoryGridProps) {
   const selectedCategory = useOrderStore((s) => s.selectedCategory);
   const setCategory = useOrderStore((s) => s.setCategory);
   const displayMode = useLearningStore((s) => s.displayMode);
@@ -177,7 +189,14 @@ export function CategoryGrid({ onSelect }: CategoryGridProps) {
         </p>
       </header>
 
-      <VoiceCoach message={ENTRY_SEQUENCE} sequenceGapMs={400} />
+      <VoiceCoach
+        message={
+          prependVoice && prependVoice.length > 0
+            ? [...prependVoice, ...ENTRY_SEQUENCE]
+            : ENTRY_SEQUENCE
+        }
+        sequenceGapMs={400}
+      />
 
       <div
         role="radiogroup"

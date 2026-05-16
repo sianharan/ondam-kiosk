@@ -12,7 +12,6 @@ import { useRouter } from "next/navigation";
 import { KioskFrame } from "@/components/kiosk/KioskFrame";
 import { ModeBanner } from "@/components/kiosk/ModeBanner";
 import { OrderFlow } from "@/components/kiosk/OrderFlow";
-import { VoiceCoach } from "@/components/voice/VoiceCoach";
 import { TimeoutWarning } from "@/components/voice/TimeoutWarning";
 import { MODE_TIMEOUTS, useTimeout } from "@/lib/interaction/timeoutManager";
 import { useRequireLearningSession } from "@/lib/interaction/useRequireLearningSession";
@@ -53,10 +52,10 @@ export default function ChallengePage() {
           headline="도담의 도움이 줄어들어요. 스스로 해보세요."
           detail="결제 수단도 한 가지 늘어났어요. 카드와 모바일 페이 중에서 골라보세요. (4분 제한)"
         />
-        <VoiceCoach message={VOICE_SCRIPTS.challenge.intro} />
         <OrderFlow
           mode="challenge"
           nextLabel="Real Guided"
+          modeIntro={VOICE_SCRIPTS.challenge.intro}
           onAdvance={advance}
         />
       </KioskFrame>
