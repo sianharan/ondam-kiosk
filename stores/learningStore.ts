@@ -10,6 +10,16 @@ import type { LearningMode } from '@/lib/kiosk-data/payment';
 
 export type LearningStep = 'category' | 'menu' | 'options' | 'payment';
 
+/**
+ * v2.2 — 디스플레이 모드 (PROJECT_DESIGN 3.5)
+ *
+ *   - 'vertical'   : 800px / max-w-2xl / 단일 컬럼 / 카페 카운터형
+ *   - 'horizontal' : 1400px / max-w-7xl / 좌우 분할 / 매장 입구·푸드코트형
+ *
+ * 환영 단계(1/10)에서 학습자가 직접 선택하고, 이후 전 페이지가 같은 모드로 렌더된다.
+ */
+export type DisplayMode = 'vertical' | 'horizontal';
+
 export interface StepTimings {
   category: number;
   menu: number;
@@ -25,6 +35,9 @@ interface LearningState {
   sessionStartTime: number | null;
   stepTimings: StepTimings;
   helpRequestCount: number;
+
+  /** v2.2 — 환영 단계에서 학습자가 고른 키오스크 형태. null = 미선택 */
+  displayMode: DisplayMode | null;
 }
 
 interface LearningActions {
@@ -36,6 +49,9 @@ interface LearningActions {
   resetSession: () => void;
   /** 세션 시작부터 지금까지의 총 ms (시작 안 했으면 0) */
   getSessionDuration: () => number;
+
+  /** v2.2 — 환영 단계에서 호출. 이후 모든 페이지가 이 모드로 렌더링 */
+  setDisplayMode: (mode: DisplayMode) => void;
 }
 
 type LearningStore = LearningState & LearningActions;
@@ -53,6 +69,7 @@ const INITIAL_STATE: LearningState = {
   sessionStartTime: null,
   stepTimings: { ...EMPTY_TIMINGS },
   helpRequestCount: 0,
+  displayMode: null,
 };
 
 export const useLearningStore = create<LearningStore>((set, get) => ({
@@ -88,4 +105,6 @@ export const useLearningStore = create<LearningStore>((set, get) => ({
     if (start === null) return 0;
     return Date.now() - start;
   },
+
+  setDisplayMode: (mode) => set({ displayMode: mode }),
 }));

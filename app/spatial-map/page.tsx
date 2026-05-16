@@ -13,6 +13,7 @@ import { useRouter } from "next/navigation";
 import { KioskFrame } from "@/components/kiosk/KioskFrame";
 import { VoiceCoach } from "@/components/voice/VoiceCoach";
 import { VoiceButton } from "@/components/voice/VoiceButton";
+import { useRequireLearningSession } from "@/lib/interaction/useRequireLearningSession";
 import { VOICE_SCRIPTS } from "@/lib/tts/voiceScripts";
 
 const STRUCTURE_ITEMS: { area: string; description: string }[] = [
@@ -52,6 +53,9 @@ const SPATIAL_SEQUENCE = [
 
 export default function SpatialMapPage() {
   const router = useRouter();
+  const { ready } = useRequireLearningSession({ requireDisplayMode: true });
+
+  if (!ready) return null;
 
   return (
     <>

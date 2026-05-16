@@ -21,9 +21,15 @@ import { MenuGrid } from "@/components/kiosk/MenuGrid";
 import { OptionPanel } from "@/components/kiosk/OptionPanel";
 import { PaymentDialog } from "@/components/kiosk/PaymentDialog";
 import {
+  CATEGORY_LABEL,
+  EXTRA_OPTIONS,
+  SIZE_OPTIONS,
+} from "@/lib/kiosk-data/menu";
+import {
   PAYMENT_BY_MODE,
   type LearningMode,
 } from "@/lib/kiosk-data/payment";
+import { useLearningStore } from "@/stores/learningStore";
 import { useOrderStore } from "@/stores/orderStore";
 
 type Stage =
@@ -50,14 +56,15 @@ export function OrderFlow({ mode, nextLabel, onAdvance }: OrderFlowProps) {
   const selectedCategory = useOrderStore((s) => s.selectedCategory);
   const orderNumber = useOrderStore((s) => s.orderNumber);
   const resetOrder = useOrderStore((s) => s.resetOrder);
+  const displayMode = useLearningStore((s) => s.displayMode);
 
   const handleRestart = React.useCallback(() => {
     resetOrder();
     setStage("category");
   }, [resetOrder]);
 
-  return (
-    <div>
+  const stageNode = (
+    <>
       {stage === "category" && (
         <CategoryGrid onSelect={() => setStage("menu")} />
       )}
@@ -103,6 +110,95 @@ export function OrderFlow({ mode, nextLabel, onAdvance }: OrderFlowProps) {
           nextLabel={nextLabel}
           onAdvance={onAdvance}
         />
+      )}
+    </>
+  );
+
+  // 가로형 매장 키오스크: 옵션 단계부터 결제 다이얼로그까지 오른쪽 레일에
+  // "현재 주문" 요약을 항상 보여 준다. (PROJECT_DESIGN 3.5.2 — 좌측 메뉴 영역
+  //   + 우측 옵션/장바구니 영역). 세로형은 v2.1 흐름 그대로.
+  const showRail =
+    displayMode === "horizontal" &&
+    (stage === "options" || stage === "cart" || stage === "payment");
+
+  if (!showRail) {
+    return <div>{stageNode}</div>;
+  }
+
+  return (
+    <div className="grid grid-cols-1 gap-6 md:grid-cols-[1fr_minmax(260px,340px)] md:gap-8">
+      <div className="min-w-0">{stageNode}</div>
+      <aside className="md:sticky md:top-4 md:self-start" aria-label="현재 주문 요약">
+        <OrderSummaryRail />
+      </aside>
+    </div>
+  );
+}
+
+// ── 가로형 우측 레일: 읽기 전용 주문 요약 ───────────────────
+function OrderSummaryRail() {
+  const selectedCategory = useOrderStore((s) => s.selectedCategory);
+  const selectedItem = useOrderStore((s) => s.selectedItem);
+  const selectedTemperature = useOrderStore((s) => s.selectedTemperature);
+  const selectedSize = useOrderStore((s) => s.selectedSize);
+  const selectedExtras = useOrderStore((s) => s.selectedExtras);
+  const getTotalPrice = useOrderStore((s) => s.getTotalPrice);
+
+  const tempText =
+    selectedTemperature === "hot"
+      ? "따뜻하게"
+      : selectedTemperature === "iced"
+        ? "차갑게"
+        : null;
+  const sizeText =
+    selectedItem?.options.size && selectedSize
+      ? SIZE_OPTIONS[selectedSize].label
+      : null;
+  const extraTexts = selectedExtras
+    .map((k) => EXTRA_OPTIONS[k]?.label)
+    .filter(Boolean) as string[];
+
+  return (
+    <div
+      className="flex flex-col gap-4 rounded-2xl border border-foreground/15 bg-muted/40 p-5"
+      aria-live="polite"
+    >
+      <h3 className="text-xl font-bold text-primary md:text-2xl">현재 주문</h3>
+
+      {!selectedItem ? (
+        <p className="text-base text-foreground/70 md:text-lg">
+          {selectedCategory
+            ? `${CATEGORY_LABEL[selectedCategory]} 카테고리에서 메뉴를 골라주세요.`
+            : "아직 메뉴가 선택되지 않았어요."}
+        </p>
+      ) : (
+        <>
+          <div className="flex flex-col gap-1">
+            <span className="text-base text-foreground/60 md:text-lg">
+              {CATEGORY_LABEL[selectedItem.category]}
+            </span>
+            <span className="text-xl font-bold text-foreground md:text-2xl">
+              {selectedItem.name}
+            </span>
+          </div>
+
+          {(tempText || sizeText || extraTexts.length > 0) && (
+            <ul className="flex flex-col gap-1 text-base text-foreground/80 md:text-lg">
+              {tempText && <li>· {tempText}</li>}
+              {sizeText && <li>· 사이즈 {sizeText}</li>}
+              {extraTexts.map((label) => (
+                <li key={label}>· {label}</li>
+              ))}
+            </ul>
+          )}
+
+          <div className="mt-2 flex items-baseline justify-between border-t border-foreground/10 pt-3">
+            <span className="text-base text-foreground/60 md:text-lg">합계</span>
+            <span className="text-2xl font-bold text-primary md:text-3xl">
+              {getTotalPrice().toLocaleString("ko-KR")}원
+            </span>
+          </div>
+        </>
       )}
     </div>
   );

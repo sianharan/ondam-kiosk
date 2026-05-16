@@ -13,6 +13,7 @@ import { KioskFrame } from "@/components/kiosk/KioskFrame";
 import { ModeBanner } from "@/components/kiosk/ModeBanner";
 import { OrderFlow } from "@/components/kiosk/OrderFlow";
 import { VoiceCoach } from "@/components/voice/VoiceCoach";
+import { useRequireLearningSession } from "@/lib/interaction/useRequireLearningSession";
 import { VOICE_SCRIPTS } from "@/lib/tts/voiceScripts";
 import { useLearningStore } from "@/stores/learningStore";
 import { useOrderStore } from "@/stores/orderStore";
@@ -22,12 +23,16 @@ export default function RealFreePage() {
   const setMode = useLearningStore((s) => s.setMode);
   const setStep = useLearningStore((s) => s.setStep);
   const resetOrder = useOrderStore((s) => s.resetOrder);
+  const { ready } = useRequireLearningSession({ requireDisplayMode: true });
 
   React.useEffect(() => {
+    if (!ready) return;
     setMode("realFree");
     setStep(7);
     resetOrder();
-  }, [setMode, setStep, resetOrder]);
+  }, [ready, setMode, setStep, resetOrder]);
+
+  if (!ready) return null;
 
   return (
     <KioskFrame currentStep={7} title="Real Free — 자유 주문">

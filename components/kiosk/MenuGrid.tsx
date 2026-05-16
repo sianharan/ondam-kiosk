@@ -23,6 +23,7 @@ import {
   type Category,
   type MenuItem,
 } from "@/lib/kiosk-data/menu";
+import { useLearningStore } from "@/stores/learningStore";
 import { useOrderStore } from "@/stores/orderStore";
 
 export interface MenuGridProps {
@@ -51,6 +52,7 @@ function buildMenuVoiceLabel(item: MenuItem): string {
 
 export function MenuGrid({ category, onSelect, onBack }: MenuGridProps) {
   const setItem = useOrderStore((s) => s.setItem);
+  const displayMode = useLearningStore((s) => s.displayMode);
   const items = React.useMemo(
     () => getMenuByCategory(category),
     [category],
@@ -63,6 +65,12 @@ export function MenuGrid({ category, onSelect, onBack }: MenuGridProps) {
     ],
     [category, items],
   );
+
+  // 가로형: 큰 매장 키오스크답게 3열까지 확장. 세로형: 1~2열 기본.
+  const gridClass =
+    displayMode === "horizontal"
+      ? "grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-5"
+      : "grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-5";
 
   return (
     <section className="flex flex-col gap-6">
@@ -78,10 +86,7 @@ export function MenuGrid({ category, onSelect, onBack }: MenuGridProps) {
 
       <VoiceCoach message={entrySequence} sequenceGapMs={400} />
 
-      <ul
-        aria-labelledby="menu-grid-heading"
-        className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-5"
-      >
+      <ul aria-labelledby="menu-grid-heading" className={gridClass}>
         {items.map((item) => (
           <li key={item.id}>
             <MenuCard

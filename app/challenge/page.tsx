@@ -15,6 +15,7 @@ import { OrderFlow } from "@/components/kiosk/OrderFlow";
 import { VoiceCoach } from "@/components/voice/VoiceCoach";
 import { TimeoutWarning } from "@/components/voice/TimeoutWarning";
 import { MODE_TIMEOUTS, useTimeout } from "@/lib/interaction/timeoutManager";
+import { useRequireLearningSession } from "@/lib/interaction/useRequireLearningSession";
 import { VOICE_SCRIPTS } from "@/lib/tts/voiceScripts";
 import { useLearningStore } from "@/stores/learningStore";
 import { useOrderStore } from "@/stores/orderStore";
@@ -24,6 +25,7 @@ export default function ChallengePage() {
   const setMode = useLearningStore((s) => s.setMode);
   const setStep = useLearningStore((s) => s.setStep);
   const resetOrder = useOrderStore((s) => s.resetOrder);
+  const { ready } = useRequireLearningSession({ requireDisplayMode: true });
 
   const [warningOpen, setWarningOpen] = React.useState(false);
   const advance = React.useCallback(() => router.push("/real-guided"), [router]);
@@ -35,10 +37,13 @@ export default function ChallengePage() {
   });
 
   React.useEffect(() => {
+    if (!ready) return;
     setMode("challenge");
     setStep(5);
     resetOrder();
-  }, [setMode, setStep, resetOrder]);
+  }, [ready, setMode, setStep, resetOrder]);
+
+  if (!ready) return null;
 
   return (
     <>

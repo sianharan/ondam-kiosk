@@ -1,8 +1,17 @@
+"use client";
+
 /**
  * KioskFrame — 키오스크 외관 컴포넌트
  *
- * PROJECT_DESIGN.md 3.3 (디자인 원칙) + 8.2 (아키텍처) 기반.
- * 카페 카운터형 스탠드 키오스크의 시각적 프레임을 제공한다.
+ * PROJECT_DESIGN.md 3.3 (디자인 원칙) + 8.2 (아키텍처) + 3.5 (v2.2 디스플레이 다양성).
+ *
+ * v2.2 — learningStore.displayMode 에 따라 프레임 폭이 바뀐다:
+ *   - 'vertical'   (또는 null): 800 px / max-w-2xl / 카페 카운터형 (v2.1 기본과 동일)
+ *   - 'horizontal'              : 1400 px / max-w-7xl / 매장 입구·푸드코트형
+ *
+ * 가로형에서도 한 프레임 안에 상단 헤더 + 하단 푸터 구조는 그대로다.
+ * 본문 영역의 좌우 분할은 자식 컴포넌트 (OrderFlow 등) 가 displayMode 를 읽어
+ * 직접 결정한다 — 환영 / 공간 지도 같은 단순 단일 컬럼 화면은 그대로 둔다.
  *
  * - 본문 폰트 24px 이상 (KS X 9211:2025 5.2.3)
  * - 명도 대비 4.5:1 이상 — primary #1A2A4A on white = 13.7:1 (WCAG AAA)
@@ -13,6 +22,7 @@ import * as React from "react";
 
 import { ReplayButton } from "@/components/voice/ReplayButton";
 import { cn } from "@/lib/utils";
+import { useLearningStore } from "@/stores/learningStore";
 
 export interface KioskFrameProps {
   children: React.ReactNode;
@@ -33,16 +43,23 @@ export function KioskFrame({
   className,
 }: KioskFrameProps) {
   const showStep = typeof currentStep === "number";
+  const displayMode = useLearningStore((s) => s.displayMode);
+
+  // 가로형 = 큰 매장 키오스크 폭 (1400px). 그 외 (null 포함) = 세로형 기본 (800px).
+  const isHorizontal = displayMode === "horizontal";
+  const widthClass = isHorizontal ? "max-w-[1400px]" : "max-w-[800px]";
 
   return (
     <div
       className="flex min-h-screen items-start justify-center bg-muted/40 px-4 py-8 md:py-12"
       role="region"
       aria-label="온담 카페 키오스크"
+      data-display-mode={displayMode ?? "unset"}
     >
       <div
         className={cn(
-          "flex w-full max-w-[800px] flex-col overflow-hidden rounded-3xl bg-background shadow-[0_18px_60px_-15px_rgba(26,42,74,0.35)] ring-1 ring-foreground/10",
+          "flex w-full flex-col overflow-hidden rounded-3xl bg-background shadow-[0_18px_60px_-15px_rgba(26,42,74,0.35)] ring-1 ring-foreground/10",
+          widthClass,
           className,
         )}
       >

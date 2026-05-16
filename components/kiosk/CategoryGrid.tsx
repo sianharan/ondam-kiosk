@@ -17,6 +17,7 @@ import { VOICE_SCRIPTS } from "@/lib/tts/voiceScripts";
 import { VOLUME_TO_AUDIO, useVoiceStore } from "@/stores/voiceStore";
 import { cn } from "@/lib/utils";
 import { CATEGORY_LABEL, type Category } from "@/lib/kiosk-data/menu";
+import { useLearningStore } from "@/stores/learningStore";
 import { useOrderStore } from "@/stores/orderStore";
 
 interface CategoryDef {
@@ -154,6 +155,13 @@ export interface CategoryGridProps {
 export function CategoryGrid({ onSelect }: CategoryGridProps) {
   const selectedCategory = useOrderStore((s) => s.selectedCategory);
   const setCategory = useOrderStore((s) => s.setCategory);
+  const displayMode = useLearningStore((s) => s.displayMode);
+
+  // 가로형: 1×4 가로 일렬. 세로형(또는 미선택): 2×2. (PROJECT_DESIGN 3.5.1/3.5.2)
+  const gridClass =
+    displayMode === "horizontal"
+      ? "grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-5"
+      : "grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6";
 
   return (
     <section className="flex flex-col gap-6">
@@ -174,7 +182,7 @@ export function CategoryGrid({ onSelect }: CategoryGridProps) {
       <div
         role="radiogroup"
         aria-labelledby="category-grid-heading"
-        className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6"
+        className={gridClass}
       >
         {CATEGORIES.map((c) => (
           <CategoryCard
