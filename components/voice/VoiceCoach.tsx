@@ -85,7 +85,19 @@ export function VoiceCoach({
         for (let i = 0; i < seq.length; i += 1) {
           if (generationRef.current !== myGeneration) return;
           setCurrentText(seq[i]);
-          await ttsManager.speak(seq[i]);
+          try {
+            await ttsManager.speak(seq[i]);
+          } catch (err) {
+            // 자동 마운트 발화에서 가장 흔한 실패: 첫 사용자 제스처 전 브라우저가
+            // speechSynthesis 를 차단해 "not-allowed" 를 던지는 경우.  사용자가
+            // 화면을 한 번이라도 만지면 다음 발화부터 정상 동작하므로 UI 를
+            // 크래시시키지 않고 시퀀스만 조용히 끊는다.  KS X 9211 5.2.2 d) 의
+            // 청각 대체는 화면 텍스트로도 동시에 노출되어 있어 정보 손실 없음.
+            if (typeof console !== "undefined") {
+              console.warn("[VoiceCoach] TTS 발화 실패, 음성 안내 건너뜀:", err);
+            }
+            break;
+          }
           if (generationRef.current !== myGeneration) return;
           if (i < seq.length - 1 && sequenceGapMs > 0) {
             await new Promise<void>((resolve) =>
