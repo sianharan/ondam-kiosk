@@ -1,11 +1,10 @@
 "use client";
 
 /**
- * /tutorial (3/10) — Modeling 모드
+ * /real-guided (6/10) — Fading 완성
  *
- * PROJECT_DESIGN.md 5.2 #3 / 4.2 Tutorial(Modeling).
- * Phase 2-C 에서는 도담의 사고 외현화 음성이 아직 없으므로
- * 학습자가 직접 클릭으로 흐름을 따라가게 한다.
+ * PROJECT_DESIGN.md 4.2 Real Guided.
+ * 실세계 소음(60dB)·도움 최소화는 Phase 4·5 에서 구현.
  */
 
 import * as React from "react";
@@ -17,29 +16,29 @@ import { OrderFlow } from "@/components/kiosk/OrderFlow";
 import { useLearningStore } from "@/stores/learningStore";
 import { useOrderStore } from "@/stores/orderStore";
 
-export default function TutorialPage() {
+export default function RealGuidedPage() {
   const router = useRouter();
   const setMode = useLearningStore((s) => s.setMode);
   const setStep = useLearningStore((s) => s.setStep);
   const resetOrder = useOrderStore((s) => s.resetOrder);
 
   React.useEffect(() => {
-    setMode("tutorial");
-    setStep(3);
+    setMode("realGuided");
+    setStep(6);
     resetOrder();
   }, [setMode, setStep, resetOrder]);
 
   return (
-    <KioskFrame currentStep={3} title="Tutorial — 함께 배워보기">
+    <KioskFrame currentStep={6} title="Real Guided — 실전 1단계">
       <ModeBanner
-        eyebrow="Modeling 단계"
-        headline="도담이 먼저 아메리카노 주문 과정을 보여드릴게요."
-        detail="지금은 따라보기 단계예요. 천천히 한 번 클릭으로 흐름을 익혀봐요."
+        eyebrow="Fading 완성 단계"
+        headline="이번엔 카페 소음도 들리는 환경이에요."
+        detail="정해진 시나리오로 한 번 더 연습해 봐요. 도담은 호출하실 때만 도와드려요."
       />
       <OrderFlow
-        mode="tutorial"
-        nextLabel="Practice"
-        onAdvance={() => router.push("/practice")}
+        mode="realGuided"
+        nextLabel="Real Free"
+        onAdvance={() => router.push("/real-free")}
       />
     </KioskFrame>
   );

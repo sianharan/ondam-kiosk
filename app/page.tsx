@@ -1,10 +1,14 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+
 import { Button } from "@/components/ui/button";
 
 export default function Home() {
+  const router = useRouter();
+
   const handleStart = () => {
-    console.log("시작하기 클릭됨");
+    router.push("/spatial-map");
   };
 
   return (
@@ -12,7 +16,7 @@ export default function Home() {
       className="flex min-h-screen flex-col items-center justify-center bg-background px-6 py-16 text-foreground"
       aria-labelledby="welcome-title"
     >
-      <div className="flex max-w-2xl flex-col items-center gap-8 text-center">
+      <div className="flex max-w-2xl flex-col items-center gap-8 text-center animate-in fade-in duration-700">
         <h1
           id="welcome-title"
           className="text-6xl font-bold tracking-tight text-primary md:text-7xl"
@@ -34,7 +38,7 @@ export default function Home() {
         <Button
           type="button"
           onClick={handleStart}
-          aria-label="시작하기. 더블탭하여 학습을 시작합니다"
+          aria-label="시작하기. 공간 지도 화면으로 이동합니다"
           className="mt-4 h-auto rounded-2xl bg-primary px-12 py-6 text-2xl font-semibold text-primary-foreground shadow-lg transition-colors hover:bg-primary/90 focus-visible:ring-4 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:outline-none md:text-3xl"
         >
           시작하기

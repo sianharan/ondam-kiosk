@@ -1,11 +1,10 @@
 "use client";
 
 /**
- * /tutorial (3/10) — Modeling 모드
+ * /practice (4/10) — Coaching 모드
  *
- * PROJECT_DESIGN.md 5.2 #3 / 4.2 Tutorial(Modeling).
- * Phase 2-C 에서는 도담의 사고 외현화 음성이 아직 없으므로
- * 학습자가 직접 클릭으로 흐름을 따라가게 한다.
+ * PROJECT_DESIGN.md 4.2 Practice(Coaching).
+ * AI 도움 80% (Phase 4 에서 구현).
  */
 
 import * as React from "react";
@@ -17,29 +16,29 @@ import { OrderFlow } from "@/components/kiosk/OrderFlow";
 import { useLearningStore } from "@/stores/learningStore";
 import { useOrderStore } from "@/stores/orderStore";
 
-export default function TutorialPage() {
+export default function PracticePage() {
   const router = useRouter();
   const setMode = useLearningStore((s) => s.setMode);
   const setStep = useLearningStore((s) => s.setStep);
   const resetOrder = useOrderStore((s) => s.resetOrder);
 
   React.useEffect(() => {
-    setMode("tutorial");
-    setStep(3);
+    setMode("practice");
+    setStep(4);
     resetOrder();
   }, [setMode, setStep, resetOrder]);
 
   return (
-    <KioskFrame currentStep={3} title="Tutorial — 함께 배워보기">
+    <KioskFrame currentStep={4} title="Practice — 직접 해보기">
       <ModeBanner
-        eyebrow="Modeling 단계"
-        headline="도담이 먼저 아메리카노 주문 과정을 보여드릴게요."
-        detail="지금은 따라보기 단계예요. 천천히 한 번 클릭으로 흐름을 익혀봐요."
+        eyebrow="Coaching 단계"
+        headline="이번엔 직접 주문해 보세요."
+        detail="도담이 옆에서 도와드려요. 천천히 골라도 괜찮아요."
       />
       <OrderFlow
-        mode="tutorial"
-        nextLabel="Practice"
-        onAdvance={() => router.push("/practice")}
+        mode="practice"
+        nextLabel="Challenge"
+        onAdvance={() => router.push("/challenge")}
       />
     </KioskFrame>
   );
