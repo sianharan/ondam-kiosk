@@ -82,12 +82,9 @@ export function useDoubleTap(handlers: TapHandlers): DoubleTapBindings {
     }, DOUBLE_TAP_WINDOW_MS);
   }, []);
 
-  const onClick = React.useCallback(
-    (_e: React.MouseEvent | React.KeyboardEvent) => {
-      trigger();
-    },
-    [trigger],
-  );
+  const onClick = React.useCallback(() => {
+    trigger();
+  }, [trigger]);
 
   const onKeyDown = React.useCallback(
     (e: React.KeyboardEvent) => {

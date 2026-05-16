@@ -9,19 +9,13 @@
  *   - 접근성: aria-label = voiceLabel, focus-visible ring-4
  *   - 키보드: Enter / Space 도 동일한 단일/더블 규칙 (doubleTap 훅)
  *
- * 사용 예
- *   <VoiceButton
- *     voiceLabel="시작하기 버튼이에요. 두 번 두드리면 다음 단계로 넘어가요."
- *     onActivate={() => router.push("/spatial-map")}
- *   >
- *     시작하기
- *   </VoiceButton>
+ * 발화 엔진은 ttsManager (OpenAI nova → 폴백 Web Speech).
  */
 
 import * as React from "react";
 
 import { useDoubleTap } from "@/lib/interaction/doubleTap";
-import { speechManager } from "@/lib/tts/webSpeech";
+import { ttsManager } from "@/lib/tts/fallbackTTS";
 import { useVoiceStore } from "@/stores/voiceStore";
 import { cn } from "@/lib/utils";
 
@@ -46,8 +40,7 @@ export interface VoiceButtonProps
 const VARIANT_STYLES: Record<Variant, string> = {
   primary:
     "bg-accent text-accent-foreground shadow-md hover:-translate-y-0.5 hover:shadow-lg",
-  secondary:
-    "bg-primary text-primary-foreground shadow-md hover:opacity-95",
+  secondary: "bg-primary text-primary-foreground shadow-md hover:opacity-95",
   ghost:
     "bg-transparent text-foreground ring-1 ring-foreground/20 hover:bg-foreground/5",
 };
@@ -64,20 +57,21 @@ export function VoiceButton({
   ...rest
 }: VoiceButtonProps) {
   const isEnabled = useVoiceStore((s) => s.isEnabled);
-  const rate = useVoiceStore((s) => s.rate);
+  const voice = useVoiceStore((s) => s.voice);
+  const speed = useVoiceStore((s) => s.speed);
   const volume = useVoiceStore((s) => s.volume);
 
   const handleSingleTap = React.useCallback(() => {
     if (!isEnabled) return;
-    speechManager.setRate(rate);
-    speechManager.setVolume(volume);
-    // 안내 발화는 즉시 (앞 안내 끊고) 새로 — 더 직관적.
-    void speechManager.speak(voiceLabel, { interrupt: true });
-  }, [isEnabled, rate, volume, voiceLabel]);
+    ttsManager.setVoice(voice);
+    ttsManager.setSpeed(speed);
+    ttsManager.setVolume(volume);
+    void ttsManager.speak(voiceLabel, { interrupt: true });
+  }, [isEnabled, voice, speed, volume, voiceLabel]);
 
   const handleDoubleTap = React.useCallback(() => {
     // 실행 전 안내 음성을 끊어 다음 화면 음성과 충돌하지 않도록.
-    speechManager.stop();
+    ttsManager.stop();
     onActivate();
   }, [onActivate]);
 
@@ -94,7 +88,6 @@ export function VoiceButton({
       onClick={onClick}
       onKeyDown={onKeyDown}
       aria-label={ariaLabel ?? voiceLabel}
-      aria-describedby={undefined}
       data-voice-label={voiceLabel}
       className={cn(
         "rounded-2xl px-10 py-5 text-2xl font-bold transition-all",

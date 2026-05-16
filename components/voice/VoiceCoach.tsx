@@ -4,21 +4,22 @@
  * VoiceCoach — "도담" 자동 발화 + 시각적 표시 컴포넌트
  *
  * PROJECT_DESIGN.md 5.2.2 d) 청각적 대체 콘텐츠 의무를 화면 진입 시점에 자동 충족.
+ * 실제 발화는 ttsManager (OpenAI nova 우선, 실패 시 Web Speech 폴백).
  *
  * 동작
- *  - 마운트 시 message 를 speechManager 큐에 넣어 발화
+ *  - 마운트 시 message 를 ttsManager 큐에 넣어 발화
  *  - voiceStore.isEnabled 가 false 이면 발화하지 않음 (UI 표시도 비활성)
- *  - voiceStore.rate / volume 을 매 호출 직전에 매니저에 적용
+ *  - voiceStore.voice / speed / volume 을 매 호출 직전에 매니저에 적용
  *  - 언마운트 시 자동 stop — 페이지 이동 시 중복 발화 방지
  *
  * 추가 기능
  *  - 6.3.6 다시 듣기 / 6.3.7 읽기 종료 버튼 내장
- *  - 발화 중 도담 아이콘에 가벼운 펄스 애니메이션 (CSS, 3Hz 미만)
+ *  - 발화 중 도담 아이콘에 가벼운 펄스 애니메이션 (3Hz 미만)
  */
 
 import * as React from "react";
 
-import { speechManager } from "@/lib/tts/webSpeech";
+import { ttsManager } from "@/lib/tts/fallbackTTS";
 import { useVoiceStore } from "@/stores/voiceStore";
 import { cn } from "@/lib/utils";
 
@@ -45,7 +46,8 @@ export function VoiceCoach({
   className,
 }: VoiceCoachProps) {
   const isEnabled = useVoiceStore((s) => s.isEnabled);
-  const rate = useVoiceStore((s) => s.rate);
+  const voice = useVoiceStore((s) => s.voice);
+  const speed = useVoiceStore((s) => s.speed);
   const volume = useVoiceStore((s) => s.volume);
   const isSpeaking = useVoiceStore((s) => s.isSpeaking);
   const setSpeaking = useVoiceStore((s) => s.setSpeaking);
@@ -53,84 +55,91 @@ export function VoiceCoach({
 
   // 마지막에 발화한 시퀀스 — "다시 듣기" 용
   const lastSequenceRef = React.useRef<string[]>([]);
+  // 진행 중인 발화 세대(generation). 새 발화나 stop 시 증가시켜 이전 루프를 무력화.
+  const generationRef = React.useRef(0);
 
   const lines = React.useMemo<string[]>(
     () => (Array.isArray(message) ? [...message] : [message as string]),
     [message],
   );
 
-  // 발화 핵심 로직. cancelled flag 로 race 안전하게.
   const playSequence = React.useCallback(
     async (seq: string[]) => {
       if (!seq.length) return;
       lastSequenceRef.current = seq;
 
-      speechManager.setRate(rate);
-      speechManager.setVolume(volume);
+      generationRef.current += 1;
+      const myGeneration = generationRef.current;
 
+      ttsManager.setVoice(voice);
+      ttsManager.setSpeed(speed);
+      ttsManager.setVolume(volume);
       setSpeaking(true);
-      let cancelled = false;
-      const cleanup = () => {
-        cancelled = true;
-      };
-      // 호출자가 도중에 stop 했을 때를 위해 unmount 전 cleanup 을 외부에서 호출 가능하게.
-      (playSequence as unknown as { _cleanup?: () => void })._cleanup = cleanup;
 
       try {
         for (let i = 0; i < seq.length; i += 1) {
-          if (cancelled) break;
+          if (generationRef.current !== myGeneration) return;
           setCurrentText(seq[i]);
-          await speechManager.speak(seq[i]);
-          if (cancelled) break;
+          await ttsManager.speak(seq[i]);
+          if (generationRef.current !== myGeneration) return;
           if (i < seq.length - 1 && sequenceGapMs > 0) {
             await new Promise<void>((resolve) =>
               setTimeout(resolve, sequenceGapMs),
             );
           }
         }
+        if (generationRef.current === myGeneration) onComplete?.();
       } finally {
-        setSpeaking(false);
-        setCurrentText(null);
-        if (!cancelled) onComplete?.();
+        if (generationRef.current === myGeneration) {
+          setSpeaking(false);
+          setCurrentText(null);
+        }
       }
     },
-    [onComplete, rate, sequenceGapMs, setCurrentText, setSpeaking, volume],
+    [
+      onComplete,
+      sequenceGapMs,
+      setCurrentText,
+      setSpeaking,
+      speed,
+      voice,
+      volume,
+    ],
   );
 
-  // 자동 발화: lines 또는 isEnabled 변경 시 새로 시작.
   React.useEffect(() => {
     if (!autoStart) return;
     if (!isEnabled) return;
 
-    // 새 메시지로 들어왔으면 이전 발화 비우고 시작
-    speechManager.stop();
+    ttsManager.stop();
     playSequence(lines);
 
     return () => {
-      // 페이지 이동/언마운트 시 중복 발화 방지
-      speechManager.stop();
+      generationRef.current += 1;
+      ttsManager.stop();
       setSpeaking(false);
       setCurrentText(null);
     };
-    // playSequence 는 deps 가 stable 하지 않으므로 lines/autoStart/isEnabled 기준으로만 트리거.
+    // playSequence 는 매번 재생성될 수 있으므로 의존성에서 제외하고,
+    // 메시지/활성화 토글만 트리거로 사용한다.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lines, autoStart, isEnabled]);
 
   const handleReplay = React.useCallback(() => {
     if (!isEnabled) return;
-    speechManager.stop();
+    ttsManager.stop();
     playSequence(
       lastSequenceRef.current.length ? lastSequenceRef.current : lines,
     );
   }, [isEnabled, lines, playSequence]);
 
   const handleStop = React.useCallback(() => {
-    speechManager.stop();
+    generationRef.current += 1;
+    ttsManager.stop();
     setSpeaking(false);
     setCurrentText(null);
   }, [setCurrentText, setSpeaking]);
 
-  // isEnabled 가 꺼지면 즉시 멈춤
   React.useEffect(() => {
     if (!isEnabled) handleStop();
   }, [isEnabled, handleStop]);
@@ -140,16 +149,13 @@ export function VoiceCoach({
       role="status"
       aria-live="polite"
       aria-atomic="true"
-      aria-label={
-        isSpeaking ? "도담이 안내하고 있어요" : "도담 음성 안내"
-      }
+      aria-label={isSpeaking ? "도담이 안내하고 있어요" : "도담 음성 안내"}
       className={cn(
         "flex items-center gap-3 rounded-2xl border border-foreground/15 bg-background/95 px-4 py-3 shadow-sm",
         position === "top" ? "mb-4" : "mt-4",
         className,
       )}
     >
-      {/* 도담 아바타 — 발화 중에는 펄스 */}
       <div
         aria-hidden="true"
         className={cn(

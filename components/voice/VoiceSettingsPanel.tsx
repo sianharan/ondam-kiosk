@@ -5,24 +5,23 @@
  *
  * KS X 9211:2025 충족
  *   - 8.3.2 충분한 시간 제공: 학습자가 속도(0.8 ~ 1.5)를 선택
- *   - 6.3.3 사용 후 음량 65dBA 이하 자동 초기화: resetToDefault 호출 지점은 세션 종료 시
- *   - 음소거 토글로 발화 즉시 중단
+ *   - 5.2.2 d): 음성 안내 켜기/끄기 + 음성 종류 선택
  *
- * 디자인
- *   - 키오스크 프레임 헤더 오른쪽에 떠 있는 작은 패널 (절대 위치)
- *   - 속도 4단계 라디오 버튼 + 음소거 토글
- *   - 단순 클릭(더블탭 X) — 설정은 KS X 9211 7.6.6 적용 대상이 아닌 보조 UI
+ * 음성: nova / shimmer / echo (OpenAI TTS). 폴백은 Web Speech.
  */
 
 import * as React from "react";
 
-import { speechManager } from "@/lib/tts/webSpeech";
-import {
-  VOICE_RATE_OPTIONS,
-  useVoiceStore,
-  type VoiceRate,
-} from "@/stores/voiceStore";
+import { ttsManager } from "@/lib/tts/fallbackTTS";
 import { VOICE_SCRIPTS } from "@/lib/tts/voiceScripts";
+import {
+  VOICE_DESCRIPTIONS,
+  VOICE_NAMES,
+  VOICE_SPEED_OPTIONS,
+  useVoiceStore,
+  type VoiceName,
+  type VoiceSpeed,
+} from "@/stores/voiceStore";
 import { cn } from "@/lib/utils";
 
 export interface VoiceSettingsPanelProps {
@@ -31,18 +30,29 @@ export interface VoiceSettingsPanelProps {
 
 export function VoiceSettingsPanel({ className }: VoiceSettingsPanelProps) {
   const isEnabled = useVoiceStore((s) => s.isEnabled);
-  const rate = useVoiceStore((s) => s.rate);
+  const voice = useVoiceStore((s) => s.voice);
+  const speed = useVoiceStore((s) => s.speed);
   const toggle = useVoiceStore((s) => s.toggle);
-  const setRate = useVoiceStore((s) => s.setRate);
+  const setVoice = useVoiceStore((s) => s.setVoice);
+  const setSpeed = useVoiceStore((s) => s.setSpeed);
 
   const [open, setOpen] = React.useState(false);
 
-  const handleRateChange = (next: VoiceRate) => {
-    setRate(next);
-    speechManager.setRate(next);
-    // 즉시 확인용 짧은 안내
-    speechManager.stop();
-    void speechManager.speak(VOICE_SCRIPTS.system.rateChanged(next), {
+  const handleVoiceChange = (next: VoiceName) => {
+    setVoice(next);
+    ttsManager.setVoice(next);
+    ttsManager.stop();
+    void ttsManager.speak(
+      `${VOICE_DESCRIPTIONS[next].label} 목소리로 안내해드릴게요.`,
+      { interrupt: true },
+    );
+  };
+
+  const handleSpeedChange = (next: VoiceSpeed) => {
+    setSpeed(next);
+    ttsManager.setSpeed(next);
+    ttsManager.stop();
+    void ttsManager.speak(VOICE_SCRIPTS.system.rateChanged(next), {
       interrupt: true,
     });
   };
@@ -51,12 +61,9 @@ export function VoiceSettingsPanel({ className }: VoiceSettingsPanelProps) {
     const willBeEnabled = !isEnabled;
     toggle();
     if (!willBeEnabled) {
-      // 끄는 경우: 발화 즉시 중단 (UX: 안내 후 끄는 게 더 친절하지만, 끄려는 사람은 빨리 끄고 싶다)
-      speechManager.stop();
+      ttsManager.stop();
     } else {
-      void speechManager.speak(VOICE_SCRIPTS.system.unmuted, {
-        interrupt: true,
-      });
+      void ttsManager.speak(VOICE_SCRIPTS.system.unmuted, { interrupt: true });
     }
   };
 
@@ -83,7 +90,7 @@ export function VoiceSettingsPanel({ className }: VoiceSettingsPanelProps) {
           id="voice-settings-popover"
           role="group"
           aria-label="음성 안내 설정"
-          className="flex w-72 flex-col gap-4 rounded-2xl border border-foreground/15 bg-background p-4 shadow-lg"
+          className="flex w-80 flex-col gap-5 rounded-2xl border border-foreground/15 bg-background p-4 shadow-lg"
         >
           {/* ── 음성 On/Off ─────────────────────────────── */}
           <div className="flex items-center justify-between">
@@ -111,19 +118,60 @@ export function VoiceSettingsPanel({ className }: VoiceSettingsPanelProps) {
             </button>
           </div>
 
+          {/* ── 음성 종류 ────────────────────────────────── */}
+          <fieldset className="flex flex-col gap-2">
+            <legend className="text-base font-semibold text-foreground">
+              음성 선택
+            </legend>
+            <div className="flex flex-col gap-1">
+              {VOICE_NAMES.map((name) => {
+                const selected = voice === name;
+                const meta = VOICE_DESCRIPTIONS[name];
+                return (
+                  <button
+                    key={name}
+                    type="button"
+                    onClick={() => handleVoiceChange(name)}
+                    aria-pressed={selected}
+                    aria-label={`${meta.label} 음성. ${meta.tone}.`}
+                    disabled={!isEnabled}
+                    className={cn(
+                      "flex items-center justify-between rounded-lg px-3 py-2 text-left transition-colors focus-visible:ring-4 focus-visible:ring-primary focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40",
+                      selected
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-foreground/10 text-foreground hover:bg-foreground/15",
+                    )}
+                  >
+                    <span className="text-sm font-semibold">{meta.label}</span>
+                    <span
+                      className={cn(
+                        "text-xs",
+                        selected
+                          ? "text-primary-foreground/80"
+                          : "text-foreground/60",
+                      )}
+                    >
+                      {meta.tone}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </fieldset>
+
           {/* ── 속도 ────────────────────────────────────── */}
           <fieldset className="flex flex-col gap-2">
             <legend className="text-base font-semibold text-foreground">
               안내 속도
             </legend>
             <div className="grid grid-cols-4 gap-1">
-              {VOICE_RATE_OPTIONS.map((opt) => {
-                const selected = rate === opt;
+              {VOICE_SPEED_OPTIONS.map((opt) => {
+                const selected = speed === opt;
                 return (
                   <button
                     key={opt}
                     type="button"
-                    onClick={() => handleRateChange(opt)}
+                    onClick={() => handleSpeedChange(opt)}
                     aria-pressed={selected}
                     aria-label={`안내 속도 ${opt}배속`}
                     disabled={!isEnabled}
