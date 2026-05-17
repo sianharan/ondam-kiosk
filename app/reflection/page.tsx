@@ -1,11 +1,22 @@
 "use client";
 
 /**
- * /reflection (9/10) — 성찰 (Silver)
+ * /reflection (9/10) — 성찰 (Reflection)
  *
- * Phase 3-B 음성 통합
- *   - 진입 시 reflection.intro + summary + breakdown + tip 순차 발화
- *   - [완료] VoiceButton
+ * Collins 인지적 도제 6단계 중 6번째 (마지막). Phase 6:
+ *   - Articulation 에서 학습자가 음성으로 답한 3가지를 받아
+ *   - Gemini 2.5 Flash 에 분석 요청 (/api/gemini)
+ *   - 결과(strengths / weaknesses / nextSteps)를 시각 + 음성으로 표시
+ *   - [완료] 버튼으로 /complete 로
+ *
+ * 학술적 의의 (PROJECT_DESIGN.md 15.3 ③)
+ *   - 학습자가 자기 수행을 메타인지적으로 분석 (Collins 2006)
+ *   - GPT 가 자연어 대사를, Gemini 가 객관적 분석을 담당하는 멀티 모델 아키텍처
+ *   - 본 페이지는 분석(=Gemini) 담당 — GPT 대사 변환은 향후 확장(15.3 ③ Step 2) 영역
+ *
+ * 폴백 (PROJECT_DESIGN 15.4)
+ *   - Gemini 실패해도 라우트가 항상 strengths/nextSteps 폴백을 채워준다.
+ *   - 답변이 모두 비어 있어도 학습 종료 흐름은 끊지 않는다.
  */
 
 import * as React from "react";
@@ -15,199 +26,337 @@ import { KioskFrame } from "@/components/kiosk/KioskFrame";
 import { ModeBanner } from "@/components/kiosk/ModeBanner";
 import { VoiceButton } from "@/components/voice/VoiceButton";
 import { VoiceCoach } from "@/components/voice/VoiceCoach";
-import { VOICE_SCRIPTS } from "@/lib/tts/voiceScripts";
 import { useRequireLearningSession } from "@/lib/interaction/useRequireLearningSession";
+import {
+  CATEGORY_LABEL,
+  EXTRA_OPTIONS,
+  SIZE_OPTIONS,
+} from "@/lib/kiosk-data/menu";
 import { cn } from "@/lib/utils";
-import { useLearningStore } from "@/stores/learningStore";
+import {
+  type ReflectionResult,
+  useLearningStore,
+} from "@/stores/learningStore";
+import { useOrderStore } from "@/stores/orderStore";
 
-interface StepRow {
-  key: "category" | "menu" | "options" | "payment";
-  label: string;
-  learnerSec: number;
-  baselineSec: number;
-  bar: number;
-}
-
-const ROWS: StepRow[] = [
-  { key: "category", label: "카테고리 선택", learnerSec: 35, baselineSec: 20, bar: 0.6 },
-  { key: "menu", label: "메뉴 선택", learnerSec: 70, baselineSec: 30, bar: 1.0 },
-  { key: "options", label: "옵션 선택", learnerSec: 30, baselineSec: 25, bar: 0.2 },
-  { key: "payment", label: "결제", learnerSec: 88, baselineSec: 35, bar: 0.8 },
-];
-
-const LEARNER_TOTAL_SEC = 4 * 60 + 23;
-const BASELINE_TOTAL_SEC = 2 * 60 + 30;
-const TIP_TEXT =
-  "메뉴 선택 단계에서 천천히 품목 이름을 들어보세요. 아메리카노 다음에 카페라떼, 카푸치노가 차례로 나와요.";
-
-function formatMinSec(totalSec: number): string {
-  const m = Math.floor(totalSec / 60);
-  const s = totalSec % 60;
-  return `${m}분 ${s.toString().padStart(2, "0")}초`;
-}
+type LoadState = "idle" | "loading" | "done" | "error";
 
 export default function ReflectionPage() {
   const router = useRouter();
   const setStep = useLearningStore((s) => s.setStep);
+  const articulationAnswers = useLearningStore((s) => s.articulationAnswers);
+  const reflectionResult = useLearningStore((s) => s.reflectionResult);
+  const setReflectionResult = useLearningStore((s) => s.setReflectionResult);
+  const currentMode = useLearningStore((s) => s.currentMode);
+
+  const selectedItem = useOrderStore((s) => s.selectedItem);
+  const selectedTemperature = useOrderStore((s) => s.selectedTemperature);
+  const selectedSize = useOrderStore((s) => s.selectedSize);
+  const selectedExtras = useOrderStore((s) => s.selectedExtras);
+
   const { ready } = useRequireLearningSession();
+
+  const [loadState, setLoadState] = React.useState<LoadState>(
+    reflectionResult ? "done" : "idle",
+  );
+  const [errorDetail, setErrorDetail] = React.useState<string | null>(null);
+
+  // 완료한 시나리오 텍스트 (Gemini 프롬프트 + 화면 보조 표시 공용)
+  const completedScenario = React.useMemo(() => {
+    if (!selectedItem) {
+      return currentMode
+        ? `${currentMode} 단계의 자유 주문`
+        : "키오스크 학습 시나리오";
+    }
+    const tempText =
+      selectedTemperature === "hot"
+        ? "따뜻한"
+        : selectedTemperature === "iced"
+          ? "차가운"
+          : "";
+    const sizeText = SIZE_OPTIONS[selectedSize]?.label
+      ? `${SIZE_OPTIONS[selectedSize].label} 사이즈`
+      : "";
+    const extrasText = selectedExtras
+      .map((k) => EXTRA_OPTIONS[k].label)
+      .join(", ");
+
+    return [
+      `${CATEGORY_LABEL[selectedItem.category]} 카테고리의`,
+      tempText,
+      selectedItem.name,
+      sizeText,
+      extrasText && `옵션: ${extrasText}`,
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .trim();
+  }, [
+    currentMode,
+    selectedExtras,
+    selectedItem,
+    selectedSize,
+    selectedTemperature,
+  ]);
 
   React.useEffect(() => {
     setStep(9);
   }, [setStep]);
 
-  const hardest = React.useMemo(
-    () =>
-      ROWS.reduce((a, b) =>
-        b.learnerSec - b.baselineSec > a.learnerSec - a.baselineSec ? b : a,
-      ),
-    [],
-  );
+  // 진입 시 분석 호출. 이미 결과가 있으면 (예: 뒤로갔다가 다시 들어옴) 건너뛴다.
+  React.useEffect(() => {
+    if (!ready) return;
+    if (reflectionResult) {
+      setLoadState("done");
+      return;
+    }
+    let cancelled = false;
+
+    async function runAnalysis() {
+      setLoadState("loading");
+      setErrorDetail(null);
+      try {
+        const res = await fetch("/api/gemini", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            articulationAnswers,
+            completedScenario,
+          }),
+        });
+        const data = (await res.json()) as ReflectionResult & {
+          error?: string;
+        };
+        if (cancelled) return;
+        // 라우트가 항상 폴백 키를 채워 보내므로 정상/오류 모두 결과는 저장한다.
+        setReflectionResult({
+          strengths: data.strengths ?? [],
+          weaknesses: data.weaknesses ?? [],
+          nextSteps: data.nextSteps ?? [],
+        });
+        if (data.error) {
+          setErrorDetail(data.error);
+          setLoadState("error");
+        } else {
+          setLoadState("done");
+        }
+      } catch (err) {
+        if (cancelled) return;
+        console.error("[Reflection] Gemini 분석 호출 실패:", err);
+        // 네트워크 실패 — 최후 폴백.
+        setReflectionResult({
+          strengths: ["오늘 학습에 끝까지 참여하셨어요."],
+          weaknesses: [],
+          nextSteps: ["다음에 또 함께 천천히 연습해봐요."],
+        });
+        setErrorDetail(err instanceof Error ? err.message : "네트워크 오류");
+        setLoadState("error");
+      }
+    }
+
+    void runAnalysis();
+    return () => {
+      cancelled = true;
+    };
+    // articulationAnswers / completedScenario 는 페이지 진입 시점에 고정되므로
+    // 의도적으로 deps 에 ready 만 두어 재호출을 막는다.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready]);
+
+  const voiceSequence = React.useMemo<string[]>(() => {
+    if (loadState === "loading" || loadState === "idle") {
+      return [
+        "지금부터 오늘 학습을 정리해드릴게요. 도담이 답변을 분석하고 있어요.",
+      ];
+    }
+    if (!reflectionResult) {
+      return ["분석을 준비하고 있어요. 잠시만 기다려 주세요."];
+    }
+
+    const lines: string[] = [
+      "오늘 학습을 함께 정리해드릴게요.",
+    ];
+    if (reflectionResult.strengths.length > 0) {
+      lines.push("잘하신 점을 먼저 말씀드릴게요.");
+      for (const s of reflectionResult.strengths) lines.push(s);
+    }
+    if (reflectionResult.weaknesses.length > 0) {
+      lines.push("더 연습하면 좋은 점은 이렇게 보여요.");
+      for (const w of reflectionResult.weaknesses) lines.push(w);
+    }
+    if (reflectionResult.nextSteps.length > 0) {
+      lines.push("다음 단계 제안이에요.");
+      for (const n of reflectionResult.nextSteps) lines.push(n);
+    }
+    lines.push("오늘 정말 수고하셨어요.");
+    return lines;
+  }, [loadState, reflectionResult]);
 
   if (!ready) return null;
 
-  // 단계별 비교 음성
-  const breakdownLines = ROWS.map((r) => {
-    const delta = r.learnerSec - r.baselineSec;
-    if (delta > 30) return `${r.label}은 표준보다 ${delta}초 더 걸렸어요.`;
-    if (delta > 0) return `${r.label}은 ${delta}초 더 걸렸어요.`;
-    if (delta < 0) return `${r.label}은 표준보다 ${-delta}초 빨랐어요.`;
-    return `${r.label}은 표준과 같았어요.`;
-  });
-
-  const voiceSequence: string[] = [
-    VOICE_SCRIPTS.reflection.intro,
-    VOICE_SCRIPTS.reflection.summary(
-      formatMinSec(LEARNER_TOTAL_SEC),
-      formatMinSec(BASELINE_TOTAL_SEC),
-    ),
-    VOICE_SCRIPTS.reflection.breakdown,
-    ...breakdownLines,
-    `${hardest.label}이 가장 어려우셨네요.`,
-    VOICE_SCRIPTS.reflection.tip(TIP_TEXT),
-  ];
-
   return (
-    <KioskFrame currentStep={9} title="Reflection — 분석 결과">
+    <KioskFrame currentStep={9} title="Reflection — 학습 정리">
       <ModeBanner
-        eyebrow="성찰 단계 (Silver)"
-        headline="오늘 주문을 함께 돌아봐요."
-        detail="잘한 점과 다음에 연습하면 좋은 점을 시간으로 비교해서 보여드릴게요."
+        eyebrow="성찰 단계 — Collins 6단계 (마지막)"
+        headline="오늘 학습을 정리해드릴게요."
+        detail="도담이 답변을 바탕으로 잘하신 점과 다음 단계를 알려드려요."
         tone="primary"
       />
 
-      <VoiceCoach message={voiceSequence} sequenceGapMs={800} />
+      <VoiceCoach message={voiceSequence} sequenceGapMs={900} />
 
-      <section className="flex flex-col gap-6">
-        <div
-          className="grid gap-3 rounded-2xl border border-foreground/15 bg-background p-6 md:grid-cols-2"
-          aria-label="총 학습 시간 비교"
-        >
-          <div>
-            <p className="text-lg text-foreground/60 md:text-xl">내 시간</p>
-            <p className="text-4xl font-bold text-primary md:text-5xl">
-              {formatMinSec(LEARNER_TOTAL_SEC)}
-            </p>
-          </div>
-          <div>
-            <p className="text-lg text-foreground/60 md:text-xl">표준 시간</p>
-            <p className="text-3xl font-semibold text-foreground/70 md:text-4xl">
-              {formatMinSec(BASELINE_TOTAL_SEC)}
-            </p>
-          </div>
-        </div>
-
-        <div className="rounded-2xl border border-foreground/15 bg-background p-6">
-          <h3 className="text-2xl font-bold text-foreground md:text-3xl">
-            단계별 비교
-          </h3>
-          <p className="mt-1 text-lg text-foreground/60 md:text-xl">
-            막대가 길수록 표준보다 더 오래 걸린 단계예요.
-          </p>
-
-          <ul className="mt-5 flex flex-col gap-4" role="list">
-            {ROWS.map((row) => {
-              const delta = row.learnerSec - row.baselineSec;
-              const isHardest = row === hardest;
-              const deltaText = delta >= 0 ? `+${delta}초` : `${delta}초`;
-              return (
-                <li
-                  key={row.key}
-                  className={cn(
-                    "flex flex-col gap-2 rounded-xl p-4",
-                    isHardest
-                      ? "bg-accent/15 ring-2 ring-accent/40"
-                      : "bg-muted/40",
-                  )}
-                  aria-label={`${row.label}, 표준보다 ${deltaText}${isHardest ? ", 가장 오래 걸린 단계" : ""}`}
-                >
-                  <div className="flex items-baseline justify-between gap-3">
-                    <span className="text-xl font-semibold text-foreground md:text-2xl">
-                      {row.label}
-                    </span>
-                    <span
-                      className={cn(
-                        "text-xl font-bold md:text-2xl",
-                        delta > 30
-                          ? "text-accent"
-                          : delta > 0
-                            ? "text-foreground"
-                            : "text-emerald-700",
-                      )}
-                    >
-                      {deltaText}
-                    </span>
-                  </div>
-
-                  <div
-                    role="progressbar"
-                    aria-valuemin={0}
-                    aria-valuemax={100}
-                    aria-valuenow={Math.round(row.bar * 100)}
-                    aria-label={`${row.label} 소요 비교`}
-                    className="h-4 w-full overflow-hidden rounded-full bg-foreground/10"
-                  >
-                    <div
-                      className={cn(
-                        "h-full transition-[width]",
-                        isHardest ? "bg-accent" : "bg-primary/70",
-                      )}
-                      style={{ width: `${Math.round(row.bar * 100)}%` }}
-                    />
-                  </div>
-
-                  {isHardest && (
-                    <p className="mt-1 text-lg font-semibold text-accent md:text-xl">
-                      ← 이 단계가 가장 어려웠어요!
-                    </p>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-
-        <div
-          className="rounded-2xl bg-primary/5 p-6 ring-1 ring-primary/20"
-          aria-label="다음 연습 팁"
-        >
-          <h3 className="text-xl font-bold text-primary md:text-2xl">
-            💡 다음 연습 팁
-          </h3>
-          <p className="mt-2 text-xl leading-relaxed text-foreground md:text-2xl">
-            {TIP_TEXT}
-          </p>
-        </div>
-
-        <footer className="flex justify-end pt-2">
-          <VoiceButton
-            voiceLabel="완료 버튼이에요. 두 번 두드리면 마지막 완료 화면으로 가요."
-            onActivate={() => router.push("/complete")}
-            variant="secondary"
-          >
-            완료
-          </VoiceButton>
-        </footer>
+      {/* 학습자가 자기 답변을 한 번 더 확인할 수 있도록 미리보기 */}
+      <section
+        aria-label="내 답변 요약"
+        className="mt-2 grid gap-3 rounded-2xl border border-foreground/15 bg-background p-5 md:p-6"
+      >
+        <h3 className="text-xl font-bold text-foreground md:text-2xl">
+          내 답변
+        </h3>
+        <AnswerLine label="주문한 메뉴" text={articulationAnswers[0]} />
+        <AnswerLine label="가장 쉬웠던 부분" text={articulationAnswers[1]} />
+        <AnswerLine label="가장 어려웠던 부분" text={articulationAnswers[2]} />
       </section>
+
+      {(loadState === "loading" || loadState === "idle") && (
+        <LoadingBlock />
+      )}
+
+      {loadState === "error" && errorDetail && (
+        <div
+          role="status"
+          className="mt-6 rounded-2xl border border-amber-300 bg-amber-50 p-5 text-lg text-amber-900 md:text-xl"
+        >
+          분석 중에 잠시 문제가 있었어요. 학습 정리는 도담이 준비한 기본 안내로
+          보여드릴게요.
+        </div>
+      )}
+
+      {reflectionResult && loadState !== "loading" && (
+        <ResultBlocks result={reflectionResult} />
+      )}
+
+      <footer className="mt-8 flex justify-end pt-2">
+        <VoiceButton
+          voiceLabel="완료 버튼이에요. 두 번 두드리면 마지막 완료 화면으로 가요."
+          onActivate={() => router.push("/complete")}
+          variant="secondary"
+          disabled={loadState === "loading"}
+        >
+          완료
+        </VoiceButton>
+      </footer>
     </KioskFrame>
+  );
+}
+
+function AnswerLine({ label, text }: { label: string; text: string }) {
+  const display = text.trim().length > 0 ? text : "(답변 없음)";
+  return (
+    <div className="flex flex-col gap-1 rounded-xl bg-muted/40 p-4">
+      <span className="text-sm font-bold uppercase tracking-wider text-foreground/60">
+        {label}
+      </span>
+      <span className="text-lg leading-relaxed text-foreground md:text-xl">
+        {display}
+      </span>
+    </div>
+  );
+}
+
+function LoadingBlock() {
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      className="mt-6 flex items-center gap-4 rounded-2xl border border-foreground/15 bg-background p-6"
+    >
+      <span
+        aria-hidden="true"
+        className="inline-block h-10 w-10 animate-spin rounded-full border-4 border-accent border-t-transparent"
+      />
+      <p className="text-xl text-foreground md:text-2xl">
+        도담이 분석하고 있어요…
+      </p>
+    </div>
+  );
+}
+
+function ResultBlocks({ result }: { result: ReflectionResult }) {
+  return (
+    <section
+      aria-label="학습 분석 결과"
+      className="mt-6 grid gap-4"
+    >
+      <ResultCard
+        title="🌟 잘하셨어요"
+        items={result.strengths}
+        emptyText="끝까지 학습에 참여하신 것 자체가 가장 큰 성취예요."
+        tone="positive"
+      />
+      <ResultCard
+        title="💪 더 연습해볼까요"
+        items={result.weaknesses}
+        emptyText="특별히 어려웠던 부분은 보이지 않았어요. 자신감을 가지셔도 좋아요."
+        tone="neutral"
+      />
+      <ResultCard
+        title="🎯 다음 단계"
+        items={result.nextSteps}
+        emptyText="다음에도 같은 흐름으로 천천히 연습해 보세요."
+        tone="accent"
+      />
+    </section>
+  );
+}
+
+function ResultCard({
+  title,
+  items,
+  emptyText,
+  tone,
+}: {
+  title: string;
+  items: string[];
+  emptyText: string;
+  tone: "positive" | "neutral" | "accent";
+}) {
+  const hasItems = items.length > 0;
+  return (
+    <div
+      className={cn(
+        "rounded-2xl p-6 ring-1",
+        tone === "positive" && "bg-emerald-50 ring-emerald-200",
+        tone === "accent" && "bg-primary/5 ring-primary/20",
+        tone === "neutral" && "bg-muted/40 ring-foreground/15",
+      )}
+    >
+      <h3
+        className={cn(
+          "text-2xl font-bold md:text-3xl",
+          tone === "positive" && "text-emerald-800",
+          tone === "accent" && "text-primary",
+          tone === "neutral" && "text-foreground",
+        )}
+      >
+        {title}
+      </h3>
+      {hasItems ? (
+        <ul className="mt-3 flex flex-col gap-2">
+          {items.map((line, i) => (
+            <li
+              key={i}
+              className="text-xl leading-relaxed text-foreground md:text-2xl"
+            >
+              • {line}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="mt-3 text-lg leading-relaxed text-foreground/80 md:text-xl">
+          {emptyText}
+        </p>
+      )}
+    </div>
   );
 }
