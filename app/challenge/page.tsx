@@ -39,7 +39,7 @@ const CHALLENGE_HINTS: Record<OrderFlowStage, string> = {
     "온도와 사이즈를 선택해주세요. 잘 모르겠으면 톨로 시작하시면 돼요.",
   cart: "장바구니가 맞으면 결제하기 버튼을 두 번 두드려주세요.",
   payment: "원하시는 결제 수단을 두 번 두드려 선택해주세요.",
-  done: "",
+  receipt: "",
 };
 
 export default function ChallengePage() {
@@ -74,7 +74,7 @@ export default function ChallengePage() {
 
   if (!ready) return null;
 
-  const showHint = stage !== "done" && CHALLENGE_HINTS[stage].length > 0;
+  const showHint = stage !== "receipt" && CHALLENGE_HINTS[stage].length > 0;
 
   return (
     <>

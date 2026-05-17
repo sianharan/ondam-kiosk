@@ -1,16 +1,16 @@
 "use client";
 
 /**
- * OrderFlow — 5개 학습 모드가 공유하는 주문 흐름 (Phase 2-C 추출)
+ * OrderFlow — 5개 학습 모드가 공유하는 주문 흐름 (Phase 2-C 추출 → Phase 7 보강)
  *
  * Tutorial / Practice / Challenge / Real Guided / Real Free 모두
- * 카테고리 → 메뉴 → 옵션 → 장바구니 → 결제 → 완료 흐름을 거친다.
+ * 카테고리 → 메뉴 → 옵션 → 장바구니 → 결제 → 영수증 흐름을 거친다.
  * 모드별 차이(음성/AI/소음)는 Phase 3 이후에서 더해진다.
  *
- * 결제까지 끝나면 본 컴포넌트는 잠깐 "주문 완료" 안내 화면을 띄우고
- *   - 3초 후 자동 onAdvance, 또는
- *   - 사용자가 [다음으로] 버튼을 누르면 즉시 onAdvance
- * 부모 페이지(모드 페이지)가 이 콜백으로 다음 라우트로 이동시킨다.
+ * 결제 다이얼로그가 닫히면 receipt 단계에서 큰 주문번호 영수증을 보여주고,
+ * 학습자가 [다음으로] 버튼을 두 번 두드리면 onAdvance 가 호출된다 (Phase 7 변경:
+ * 자동 이동을 없애 학습자가 영수증을 충분히 확인할 시간을 보장 — KS X 9211 8.2.2).
+ * 부모 페이지(모드 페이지)가 onAdvance 로 라우터 푸시를 수행한다.
  */
 
 import * as React from "react";
@@ -20,6 +20,8 @@ import { CategoryGrid } from "@/components/kiosk/CategoryGrid";
 import { MenuGrid } from "@/components/kiosk/MenuGrid";
 import { OptionPanel } from "@/components/kiosk/OptionPanel";
 import { PaymentDialog } from "@/components/kiosk/PaymentDialog";
+import { VoiceButton } from "@/components/voice/VoiceButton";
+import { VoiceCoach } from "@/components/voice/VoiceCoach";
 import {
   CATEGORY_LABEL,
   EXTRA_OPTIONS,
@@ -29,6 +31,7 @@ import {
   PAYMENT_BY_MODE,
   type LearningMode,
 } from "@/lib/kiosk-data/payment";
+import { VOICE_SCRIPTS } from "@/lib/tts/voiceScripts";
 import { useLearningStore } from "@/stores/learningStore";
 import { useOrderStore } from "@/stores/orderStore";
 
@@ -38,9 +41,7 @@ export type OrderFlowStage =
   | "options"
   | "cart"
   | "payment"
-  | "done";
-
-const AUTO_ADVANCE_MS = 3000;
+  | "receipt";
 
 export interface OrderFlowProps {
   /** 학습 모드 — 결제 수단 노출 범위 결정 (PAYMENT_BY_MODE) */
@@ -142,14 +143,15 @@ export function OrderFlow({
           />
           <PaymentDialog
             open={true}
-            onClose={() => setStage("done")}
+            onClose={() => setStage("receipt")}
             availablePayments={PAYMENT_BY_MODE[mode]}
+            mode={mode}
           />
         </>
       )}
 
-      {stage === "done" && (
-        <DoneScreen
+      {stage === "receipt" && (
+        <ReceiptScreen
           orderNumber={orderNumber}
           nextLabel={nextLabel}
           onAdvance={onAdvance}
@@ -163,7 +165,10 @@ export function OrderFlow({
   //   + 우측 옵션/장바구니 영역). 세로형은 v2.1 흐름 그대로.
   const showRail =
     displayMode === "horizontal" &&
-    (stage === "options" || stage === "cart" || stage === "payment");
+    (stage === "options" ||
+      stage === "cart" ||
+      stage === "payment" ||
+      stage === "receipt");
 
   if (!showRail) {
     return <div>{stageNode}</div>;
@@ -248,55 +253,70 @@ function OrderSummaryRail() {
   );
 }
 
-// ── 주문 완료 → 다음 단계 대기 화면 ────────────────────────
-interface DoneScreenProps {
+// ── 결제 완료 영수증 화면 (Phase 7) ────────────────────────
+// 큰 주문번호 + "다시 듣기" + "다음으로" 버튼.  PaymentDialog 가 닫힌 뒤,
+// 다음 학습 단계(Articulation 등)로 넘어가기 전 잠시 머무는 화면.
+interface ReceiptScreenProps {
   orderNumber: number | null;
   nextLabel: string;
   onAdvance: () => void;
 }
 
-function DoneScreen({ orderNumber, nextLabel, onAdvance }: DoneScreenProps) {
-  const [remaining, setRemaining] = React.useState(AUTO_ADVANCE_MS / 1000);
-
-  React.useEffect(() => {
-    const tick = setInterval(() => {
-      setRemaining((r) => Math.max(0, r - 1));
-    }, 1000);
-    const done = setTimeout(onAdvance, AUTO_ADVANCE_MS);
-    return () => {
-      clearInterval(tick);
-      clearTimeout(done);
-    };
-  }, [onAdvance]);
+function ReceiptScreen({
+  orderNumber,
+  nextLabel,
+  onAdvance,
+}: ReceiptScreenProps) {
+  const displayNumber = orderNumber ?? 47;
 
   return (
     <section
-      className="flex flex-col items-center gap-5 py-4 text-center"
-      aria-live="polite"
+      className="flex flex-col items-center gap-6 py-6 text-center"
+      aria-labelledby="receipt-title"
     >
-      <h2 className="text-4xl font-bold text-primary md:text-5xl">
-        주문 완료!
-      </h2>
-      <p className="text-2xl text-foreground/80 md:text-3xl">
-        주문번호 <strong>{orderNumber ?? 47}번</strong> 입니다.
-      </p>
-      <p className="text-xl text-foreground/70 md:text-2xl">
-        잠시 후 다음 단계 <strong>{nextLabel}</strong>로 넘어갈게요.
-      </p>
-      <p
-        className="text-lg text-foreground/60 md:text-xl"
-        aria-live="polite"
+      <h2
+        id="receipt-title"
+        className="text-3xl font-bold text-primary md:text-4xl"
       >
-        {remaining}초 후 자동 이동
+        주문이 완료되었어요
+      </h2>
+
+      {/* 메인 영수증 카드 — 매우 큰 주문번호. KS X 9211 시각 강조. */}
+      <div
+        role="status"
+        aria-live="assertive"
+        aria-label={`주문번호 ${displayNumber}번`}
+        className="flex flex-col items-center gap-3 rounded-3xl bg-accent/15 px-12 py-10 ring-2 ring-accent/40"
+      >
+        <p className="text-2xl text-foreground/70 md:text-3xl">주문번호</p>
+        <p className="text-7xl font-extrabold leading-none text-primary md:text-9xl">
+          {displayNumber}
+        </p>
+        <p className="text-2xl font-bold text-foreground md:text-3xl">
+          {displayNumber}번
+        </p>
+      </div>
+
+      <p className="text-xl text-foreground/80 md:text-2xl">
+        카운터에서 <strong>{displayNumber}번</strong>을 불러드릴게요. 잠시만
+        기다려 주세요.
       </p>
-      <button
-        type="button"
-        onClick={onAdvance}
-        aria-label={`바로 다음 단계 ${nextLabel}로 이동`}
-        className="mt-2 rounded-2xl bg-primary px-10 py-5 text-2xl font-bold text-primary-foreground shadow-md transition-all hover:-translate-y-0.5 hover:shadow-lg focus-visible:ring-4 focus-visible:ring-accent focus-visible:outline-none"
+
+      {/* 영수증 안내 자동 발화 — 단일 메시지(긴 한 문장)로 한 호흡에 들려준다. */}
+      <VoiceCoach
+        message={[
+          VOICE_SCRIPTS.payment.receipt(displayNumber),
+          VOICE_SCRIPTS.payment.receiptNext,
+        ]}
+      />
+
+      <VoiceButton
+        voiceLabel={`다음으로 버튼이에요. 두 번 두드리면 다음 단계 ${nextLabel}로 넘어가요.`}
+        onActivate={onAdvance}
+        className="mt-2 !px-10 !py-5 !text-2xl"
       >
         다음으로 ({nextLabel})
-      </button>
+      </VoiceButton>
     </section>
   );
 }

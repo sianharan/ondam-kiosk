@@ -3,11 +3,16 @@
 /**
  * PaymentDialog — 결제 시뮬레이션 다이얼로그
  *
- * Phase 3-B 음성 통합
- *   - select      : "결제 수단을 선택해주세요" 자동 발화 + 각 수단 VoiceButton
- *   - instruction : 수단별 안내 자동 발화 + "결제 시작" VoiceButton
- *   - processing  : "결제를 처리하고 있어요" 1회 발화
- *   - complete    : "결제 완료. 주문번호 47번" 자동 발화 + "확인" VoiceButton
+ * Phase 7 음성 안내 강화
+ *   - select      : "결제 단계예요. 어떤 방식으로…" 진입 멘트 → "결제 수단을 선택해주세요"
+ *                   각 수단 voiceLabel 단일 탭 청취 + 두 번 탭으로 선택
+ *   - instruction : 수단별 선택 직후 "OO로 결제할게요…" 발화 + 단말기 안내
+ *   - processing  : "잠시만요… 결제가 진행 중이에요" 자동 발화
+ *   - complete    : "결제가 완료되었어요" 짧은 마무리 — 영수증 화면은 다이얼로그 외부.
+ *
+ * Tutorial(autoSimulate)은 AutoDemo 에서 PaymentDialog 를 거치지 않으므로
+ * 본 다이얼로그는 Practice/Challenge/RealGuided/RealFree 4개 모드가 공유.
+ * 모드별 차별화는 ⟨mode⟩ prop 으로 들어와 진입 멘트와 즉시 피드백을 다르게 한다.
  *
  * ⚠️ 시뮬레이션 전용. 실제 결제 시스템 연동 금지.
  */
@@ -25,8 +30,14 @@ import { VoiceCoach } from "@/components/voice/VoiceCoach";
 import { VOICE_SCRIPTS } from "@/lib/tts/voiceScripts";
 import {
   PAYMENT_OPTIONS,
+  type LearningMode,
   type PaymentMethod,
 } from "@/lib/kiosk-data/payment";
+import {
+  generateFeedback,
+  shouldSpeakFeedback,
+} from "@/lib/learning/feedbackEngine";
+import { ttsManager } from "@/lib/tts/fallbackTTS";
 import { useOrderStore } from "@/stores/orderStore";
 import { cn } from "@/lib/utils";
 
@@ -35,16 +46,34 @@ type Stage = "select" | "instruction" | "processing" | "complete";
 const PROCESSING_DURATION_MS = 3000;
 const FAKE_ORDER_NUMBER = 47;
 
+const PAYMENT_LABEL: Record<PaymentMethod, string> = {
+  card: "카드",
+  "mobile-pay": "모바일 페이",
+  coupon: "쿠폰",
+};
+
+const CHOSEN_VOICE: Record<PaymentMethod, string> = {
+  card: VOICE_SCRIPTS.payment.chose.card,
+  "mobile-pay": VOICE_SCRIPTS.payment.chose.mobilePay,
+  coupon: VOICE_SCRIPTS.payment.chose.coupon,
+};
+
 export interface PaymentDialogProps {
   open: boolean;
   onClose: () => void;
   availablePayments: PaymentMethod[];
+  /**
+   * Phase 7 — 모드별 진입 멘트, 즉시 피드백, 영수증 흐름 차별화.
+   * 미지정 시 기본 진입 멘트만 발화 (하위호환).
+   */
+  mode?: LearningMode;
 }
 
 export function PaymentDialog({
   open,
   onClose,
   availablePayments,
+  mode,
 }: PaymentDialogProps) {
   const setPayment = useOrderStore((s) => s.setPayment);
   const startPayment = useOrderStore((s) => s.startPayment);
@@ -100,6 +129,19 @@ export function PaymentDialog({
     setChosen(method);
     setPayment(method);
     setStage("instruction");
+
+    // Phase 7 — Practice(Coaching) 모드는 결제 수단 선택에도 즉시 칭찬 피드백.
+    // Challenge/RealGuided/RealFree 는 silent/delayed 라 generateFeedback 이 null 반환.
+    if (mode && shouldSpeakFeedback(mode)) {
+      const feedback = generateFeedback(
+        { type: "payment_selected", method: PAYMENT_LABEL[method] },
+        mode,
+      );
+      if (feedback) {
+        // VoiceCoach 가 곧 자동 발화할 안내문보다 먼저 짧게 칭찬을 끼워 넣는다.
+        void ttsManager.speak(feedback);
+      }
+    }
   };
 
   const handleStart = () => {
@@ -118,6 +160,13 @@ export function PaymentDialog({
     onClose();
   };
 
+  // 진입 멘트 — 결제 수단 개수에 따라 짧은 버전/긴 버전 선택. 모드와 무관하게
+  // 결제 화면은 안전상 항상 음성 안내가 들린다 (Real Guided/Free 도 동일).
+  const openLine =
+    visiblePayments.length >= 3
+      ? VOICE_SCRIPTS.payment.open
+      : VOICE_SCRIPTS.payment.openShort;
+
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent
@@ -128,6 +177,7 @@ export function PaymentDialog({
           <SelectStage
             visiblePayments={visiblePayments}
             onPick={handlePick}
+            openLine={openLine}
           />
         )}
 
@@ -158,9 +208,11 @@ export function PaymentDialog({
 interface SelectStageProps {
   visiblePayments: typeof PAYMENT_OPTIONS;
   onPick: (method: PaymentMethod) => void;
+  /** 결제 단계 진입 안내 — 결제 수단 개수에 따라 다름 */
+  openLine: string;
 }
 
-function SelectStage({ visiblePayments, onPick }: SelectStageProps) {
+function SelectStage({ visiblePayments, onPick, openLine }: SelectStageProps) {
   return (
     <div className="flex flex-col gap-5 p-2">
       <div>
@@ -172,7 +224,7 @@ function SelectStage({ visiblePayments, onPick }: SelectStageProps) {
         </DialogDescription>
       </div>
 
-      <VoiceCoach message={VOICE_SCRIPTS.payment.selectMethod} />
+      <VoiceCoach message={[openLine, VOICE_SCRIPTS.payment.selectMethod]} />
 
       <div
         role="radiogroup"
@@ -224,7 +276,9 @@ function InstructionStage({
         </DialogDescription>
       </div>
 
-      <VoiceCoach message={option.voiceInstruction} />
+      <VoiceCoach
+        message={[CHOSEN_VOICE[option.id], option.voiceInstruction]}
+      />
 
       <div
         role="status"
@@ -273,7 +327,12 @@ function ProcessingStage({ progress, isProcessing }: ProcessingStageProps) {
         결제를 처리하고 있어요. 잠시만 기다려주세요.
       </DialogDescription>
 
-      <VoiceCoach message={VOICE_SCRIPTS.payment.processing} />
+      <VoiceCoach
+        message={[
+          VOICE_SCRIPTS.payment.processingStart,
+          VOICE_SCRIPTS.payment.processing,
+        ]}
+      />
 
       <p
         className="text-xl text-foreground/80 md:text-2xl"
@@ -317,7 +376,9 @@ function CompleteStage({ orderNumber, onDone }: CompleteStageProps) {
         결제가 완료되었어요. 주문번호 {orderNumber} 번입니다.
       </DialogDescription>
 
-      <VoiceCoach message={VOICE_SCRIPTS.payment.complete(orderNumber)} />
+      {/* 짧은 마무리 멘트만 — 큰 주문번호 발화는 영수증 화면(ReceiptScreen)이 담당.
+          여기서 길게 발화하면 다이얼로그 닫힘 직후 영수증 음성과 겹친다. */}
+      <VoiceCoach message={VOICE_SCRIPTS.payment.processingDone} />
 
       <div
         role="status"
@@ -333,16 +394,16 @@ function CompleteStage({ orderNumber, onDone }: CompleteStageProps) {
       </div>
 
       <p className="text-lg text-foreground/70 md:text-xl">
-        음료가 준비되면 알려드릴게요.
+        잠시 후 영수증 화면을 보여드릴게요.
       </p>
 
       <VoiceButton
-        voiceLabel="확인 버튼이에요. 두 번 두드리면 결제 화면이 닫혀요."
+        voiceLabel="영수증 보기 버튼이에요. 두 번 두드리면 주문번호가 큰 글씨로 보이는 영수증 화면으로 넘어가요."
         onActivate={onDone}
         variant="secondary"
         className="mt-2 !px-8 !py-4"
       >
-        확인
+        영수증 보기
       </VoiceButton>
     </div>
   );
