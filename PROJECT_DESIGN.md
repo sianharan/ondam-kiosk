@@ -850,9 +850,9 @@ ondam-kiosk/
 | | 9 | **Phase 4-AI-A** ⭐ v2.3 | **GPT 동적 대사 + Whisper 음성 입력 (마이크 버튼)** — 아래 상세 | ✅ 완료 |
 | | | **Phase 4-AI-B** ⭐ v2.3 | **5개 모드 통합 + Web Speech 폴백 + VAD + 청각 피드백** — 아래 상세 | ✅ 완료 |
 | | 10 | Phase 5 | 카페 소음 레이어 (Howler.js), 모드별 BGM 전환 | 계획 |
-| | 11 | Phase 6 | Articulation (Whisper + Gemini 분석) + Reflection (Gemini + GPT) | 계획 |
-| | 12 | Phase 7 | 결제 시뮬레이션 3종 + 통합 테스트 | 계획 |
-| | 13 | Phase 8 | 버그 수정, axe-core 접근성 검증, **API 폴백 시연 검증** | 계획 |
+| | 11 | Phase 6 | Articulation (Whisper + Gemini 분석) + Reflection (Gemini + GPT) | ✅ 완료 |
+| | 12 | Phase 7 | 결제 시뮬레이션 3종 + 가짜 승인 효과음 (Web Audio 합성) | ✅ 완료 |
+| | 13 | Phase 8 | **통합 테스트** + 버그 수정 + axe-core 접근성 검증 + **API 폴백 시연 검증** | 계획 |
 | | 14 | Phase 9 | 보고서 마무리, Vercel 환경변수 설정 + 최종 배포 | 계획 |
 
 ⭐ **여유 1일** 확보 (LLM 통합 부담으로 v2.0보다 여유 줄어듦, 폴백 스크립트 우선 구축으로 위험 분산)

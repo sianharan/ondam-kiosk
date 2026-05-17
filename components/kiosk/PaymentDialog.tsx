@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/dialog";
 import { VoiceButton } from "@/components/voice/VoiceButton";
 import { VoiceCoach } from "@/components/voice/VoiceCoach";
+import { playPaymentApprovalChime } from "@/lib/audio/paymentSounds";
 import { VOICE_SCRIPTS } from "@/lib/tts/voiceScripts";
 import {
   PAYMENT_OPTIONS,
@@ -44,6 +45,12 @@ import { cn } from "@/lib/utils";
 type Stage = "select" | "instruction" | "processing" | "complete";
 
 const PROCESSING_DURATION_MS = 3000;
+/**
+ * 승인 효과음 재생 시점 (processing 진입 후 1.5초).
+ * VoiceCoach 진입 안내(`processingStart`)가 약 1초 내외이므로
+ * 그 뒤에 톤이 떨어지도록 배치 — 안내 음성과 겹치지 않게.
+ */
+const APPROVAL_CHIME_DELAY_MS = 1500;
 const FAKE_ORDER_NUMBER = 47;
 
 const PAYMENT_LABEL: Record<PaymentMethod, string> = {
@@ -106,6 +113,12 @@ export function PaymentDialog({
       setProgress(Math.min(100, Math.round((elapsed / steps) * 100)));
     }, tickMs);
 
+    // KS X 9211:2025 5.2.2 d) — 진행 상태를 청각 대체로 알리는 승인 효과음.
+    // VoiceCoach 안내 음성이 우선이므로 음량 0.5로 한 단 낮춰 재생.
+    const chime = setTimeout(() => {
+      playPaymentApprovalChime({ volume: 0.5 });
+    }, APPROVAL_CHIME_DELAY_MS);
+
     const done = setTimeout(() => {
       completePayment(FAKE_ORDER_NUMBER);
       setStage("complete");
@@ -113,6 +126,7 @@ export function PaymentDialog({
 
     return () => {
       clearInterval(interval);
+      clearTimeout(chime);
       clearTimeout(done);
     };
   }, [stage, completePayment]);
