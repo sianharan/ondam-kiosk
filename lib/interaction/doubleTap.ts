@@ -23,6 +23,10 @@
  *
  * 키보드 접근성
  *   - Enter / Space 키도 같은 핸들러로 라우팅: 한 번 → 안내, 빠르게 두 번 → 실행.
+ *   - Tab 으로 포커스가 도착하면 onFocus 가 단일 탭과 동일하게 voiceLabel 을 발화한다
+ *     (스크린리더 없는 시연 환경에서 키보드 사용 시각장애인이 현재 위치를 듣게).
+ *     실제 키보드 이동(Tab/화살표)으로 들어온 포커스에만 발화하고, 마우스·터치 클릭이
+ *     유발하는 포커스(클릭 발화와 중복)와 마운트 자동 포커스(연쇄 발화)는 무시한다.
  */
 
 "use client";
@@ -30,6 +34,48 @@
 import * as React from "react";
 
 const DOUBLE_TAP_WINDOW_MS = 600;
+
+// 같은 요소에 focus 발화 직후 click 발화가 또 들어오는 중복을 막는 짧은 가드(ms).
+// modality 게이트가 1차 방어이고, 이 타임스탬프 가드는 브라우저 차이에 대비한 2차 방어.
+const ANNOUNCE_DEDUP_MS = 250;
+
+// ── 입력 모달리티 추적 (focus 발화 게이트) ──────────────────────────────
+// :focus-visible 과 같은 휴리스틱.  마지막 입력이 키보드 내비게이션이었는지 전역으로
+// 기억한다.  키보드 이동으로 들어온 포커스에만 voiceLabel 을 발화하기 위함.
+//   - Tab/Shift+Tab/화살표 등 내비게이션 키 → 키보드 모달리티
+//   - 포인터(마우스/터치) 누름 → 포인터 모달리티 (focus 발화 안 함)
+// 마운트 자동 포커스는 직전에 키 입력이 없으므로 포인터(기본)로 남아 발화되지 않는다.
+let lastInputWasKeyboard = false;
+let modalityListenersAttached = false;
+
+const NAV_KEYS = new Set([
+  "Tab",
+  "ArrowUp",
+  "ArrowDown",
+  "ArrowLeft",
+  "ArrowRight",
+  "Home",
+  "End",
+]);
+
+function ensureModalityListeners(): void {
+  if (modalityListenersAttached || typeof window === "undefined") return;
+  modalityListenersAttached = true;
+  // capture 단계에서 듣는다 — focus 이벤트보다 먼저 플래그를 갱신해야 한다.
+  window.addEventListener(
+    "keydown",
+    (e) => {
+      if (NAV_KEYS.has(e.key)) lastInputWasKeyboard = true;
+    },
+    true,
+  );
+  const toPointer = () => {
+    lastInputWasKeyboard = false;
+  };
+  window.addEventListener("pointerdown", toPointer, true);
+  window.addEventListener("mousedown", toPointer, true);
+  window.addEventListener("touchstart", toPointer, true);
+}
 
 export type TapHandlers = {
   /** 한 번 터치: 정보 안내 (예: voiceLabel 발화) */
@@ -41,6 +87,11 @@ export type TapHandlers = {
 export type DoubleTapBindings = {
   onClick: (e: React.MouseEvent | React.KeyboardEvent) => void;
   onKeyDown: (e: React.KeyboardEvent) => void;
+  /**
+   * 키보드 Tab 이동으로 포커스가 도착했을 때 voiceLabel(=단일 탭 안내)을 발화한다.
+   * 버튼의 onFocus 에 그대로 연결하면 된다. 마우스/터치 포커스·자동 포커스는 무시된다.
+   */
+  onFocus: (e: React.FocusEvent) => void;
   /** 컴포넌트 언마운트 시 호출되어 보류 중인 단일 탭 타이머를 정리한다. */
   cleanup: () => void;
 };
@@ -64,6 +115,22 @@ export function useDoubleTap(handlers: TapHandlers): DoubleTapBindings {
 
   // 마지막 탭 시각(ms). 0 이면 "직전 탭 없음" → 다음 탭은 첫 탭으로 처리.
   const lastTapAtRef = React.useRef(0);
+  // 마지막 안내(onSingleTap) 발화 시각 — focus/click 중복 발화 가드(인스턴스별).
+  const lastAnnounceAtRef = React.useRef(0);
+
+  // 전역 입력 모달리티 리스너를 (한 번만) 부착.
+  React.useEffect(() => {
+    ensureModalityListeners();
+  }, []);
+
+  // 단일 탭 안내 발화 — 짧은 시간 내 같은 요소의 재발화는 무시(focus+click 중복 방지).
+  // 더블탭 상태(lastTapAtRef)는 호출부에서 따로 관리하므로 여기선 발화만 책임진다.
+  const announce = React.useCallback(() => {
+    const now = Date.now();
+    if (now - lastAnnounceAtRef.current < ANNOUNCE_DEDUP_MS) return;
+    lastAnnounceAtRef.current = now;
+    handlersRef.current.onSingleTap();
+  }, []);
 
   const trigger = React.useCallback(() => {
     const now = Date.now();
@@ -79,8 +146,15 @@ export function useDoubleTap(handlers: TapHandlers): DoubleTapBindings {
 
     // 첫 탭 — 지연 없이 즉시 안내하고, 더블탭 윈도우를 연다.
     lastTapAtRef.current = now;
-    handlersRef.current.onSingleTap();
-  }, []);
+    announce();
+  }, [announce]);
+
+  // 키보드 Tab 이동으로 포커스가 도착했을 때만 안내 발화.
+  // (마우스/터치 포커스, 마운트 자동 포커스는 modality 게이트로 무시 — 이벤트 인자 불필요)
+  const onFocus = React.useCallback(() => {
+    if (!lastInputWasKeyboard) return;
+    announce();
+  }, [announce]);
 
   const onClick = React.useCallback(
     (e: React.MouseEvent | React.KeyboardEvent) => {
@@ -111,13 +185,14 @@ export function useDoubleTap(handlers: TapHandlers): DoubleTapBindings {
   const cleanup = React.useCallback(() => {
     // 보류 중인 타이머는 더 이상 없으나(즉시 실행), 언마운트 시 상태만 초기화.
     lastTapAtRef.current = 0;
+    lastAnnounceAtRef.current = 0;
   }, []);
 
   React.useEffect(() => {
     return cleanup;
   }, [cleanup]);
 
-  return { onClick, onKeyDown, cleanup };
+  return { onClick, onKeyDown, onFocus, cleanup };
 }
 
 /** 컴포넌트 외부(예: 이벤트 핸들러 내부)에서 더블탭 윈도우를 알아야 할 때. */

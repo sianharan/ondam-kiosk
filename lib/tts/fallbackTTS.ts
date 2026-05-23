@@ -79,6 +79,25 @@ export class TTSManager {
     this.lastEngine = "webspeech";
   }
 
+  /**
+   * speakQuick — 내비게이션/버튼 라벨용 "즉시" 발화 (로컬 Web Speech 전용).
+   *
+   * Tab 포커스·단일 탭 안내처럼 즉각 반응이 중요한 짧은 라벨에 쓴다.  OpenAI(nova)
+   * 경로는 /api/tts 왕복 때문에 처음 듣는 라벨이 느리므로, 이 경로만 네트워크가
+   * 필요 없는 브라우저 내장 Web Speech 로 곧바로 발화한다 (지연 ≈ 0).
+   * 도담의 서사 안내(VoiceCoach)는 계속 speak() 로 nova 음색을 유지한다.
+   *
+   * 음성 속도/음량은 setSpeed()/setVolume() 으로 webSpeech 에 이미 반영돼 있다.
+   */
+  speakQuick(text: string): void {
+    const trimmed = text?.trim();
+    if (!trimmed) return;
+    // 진행 중이던 nova 발화가 있으면 끊고, 로컬 음성으로 즉시 안내.
+    this.openai.stop();
+    this.lastEngine = "webspeech";
+    void this.webSpeech.speak(trimmed, { interrupt: true });
+  }
+
   stop(): void {
     this.openai.stop();
     this.webSpeech.stop();

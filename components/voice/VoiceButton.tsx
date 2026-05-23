@@ -81,7 +81,9 @@ export function VoiceButton({
     ttsManager.setVoice(voice);
     ttsManager.setSpeed(speed);
     ttsManager.setVolume(VOLUME_TO_AUDIO[volume]);
-    void ttsManager.speak(voiceLabel, { interrupt: true });
+    // 포커스/단일 탭 안내는 즉각 반응이 중요 → 로컬 Web Speech 로 지연 없이 발화.
+    // (도담의 서사 안내는 VoiceCoach 가 speak() 로 nova 음색 유지)
+    ttsManager.speakQuick(voiceLabel);
   }, [isEnabled, voice, speed, volume, voiceLabel]);
 
   const handleDoubleTap = React.useCallback(() => {
@@ -90,7 +92,7 @@ export function VoiceButton({
     onActivate();
   }, [onActivate]);
 
-  const { onClick, onKeyDown } = useDoubleTap({
+  const { onClick, onKeyDown, onFocus } = useDoubleTap({
     onSingleTap: handleSingleTap,
     onDoubleTap: handleDoubleTap,
   });
@@ -102,6 +104,7 @@ export function VoiceButton({
       disabled={disabled}
       onClick={onClick}
       onKeyDown={onKeyDown}
+      onFocus={onFocus}
       aria-label={ariaLabel ?? voiceLabel}
       data-voice-label={voiceLabel}
       className={cn(

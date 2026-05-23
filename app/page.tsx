@@ -220,7 +220,8 @@ function ModeCard({
     ttsManager.setVoice(voice);
     ttsManager.setSpeed(speed);
     ttsManager.setVolume(VOLUME_TO_AUDIO[volume]);
-    void ttsManager.speak(voiceLabel, { interrupt: true });
+    // 포커스/단일 탭 안내 = 즉각 반응 우선 → 로컬 Web Speech 즉시 발화.
+    ttsManager.speakQuick(voiceLabel);
   }, [isEnabled, voice, speed, volume, voiceLabel]);
 
   const handleDouble = React.useCallback(() => {
@@ -230,7 +231,7 @@ function ModeCard({
     onActivate();
   }, [onActivate]);
 
-  const { onClick, onKeyDown } = useDoubleTap({
+  const { onClick, onKeyDown, onFocus } = useDoubleTap({
     onSingleTap: handleSingle,
     onDoubleTap: handleDouble,
   });
@@ -245,6 +246,7 @@ function ModeCard({
       data-mode={mode}
       onClick={onClick}
       onKeyDown={onKeyDown}
+      onFocus={onFocus}
       className={cn(
         "group/mode flex touch-manipulation flex-col items-center gap-4 rounded-3xl bg-background p-6 text-center",
         "ring-1 ring-foreground/15 shadow-md transition-all",

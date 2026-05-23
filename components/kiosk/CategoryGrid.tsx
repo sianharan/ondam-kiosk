@@ -172,7 +172,8 @@ function CategoryCard({ def, isSelected, onActivate }: CategoryCardProps) {
     ttsManager.setVoice(voice);
     ttsManager.setSpeed(speed);
     ttsManager.setVolume(VOLUME_TO_AUDIO[volume]);
-    void ttsManager.speak(def.voiceLabel, { interrupt: true });
+    // 포커스/단일 탭 안내 = 즉각 반응 우선 → 로컬 Web Speech 즉시 발화.
+    ttsManager.speakQuick(def.voiceLabel);
   }, [def.voiceLabel, isEnabled, voice, speed, volume]);
 
   const handleDouble = React.useCallback(() => {
@@ -180,7 +181,7 @@ function CategoryCard({ def, isSelected, onActivate }: CategoryCardProps) {
     onActivate();
   }, [onActivate]);
 
-  const { onClick, onKeyDown } = useDoubleTap({
+  const { onClick, onKeyDown, onFocus } = useDoubleTap({
     onSingleTap: handleSingle,
     onDoubleTap: handleDouble,
   });
@@ -196,6 +197,7 @@ function CategoryCard({ def, isSelected, onActivate }: CategoryCardProps) {
       data-voice-label={def.voiceLabel}
       onClick={onClick}
       onKeyDown={onKeyDown}
+      onFocus={onFocus}
       className={cn(
         "group/category relative flex aspect-[5/4] touch-manipulation flex-col items-stretch gap-4 overflow-hidden rounded-2xl p-5 text-white shadow-lg transition-transform md:gap-5 md:p-6",
         "ring-1 ring-foreground/10",

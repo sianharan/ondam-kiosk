@@ -47,7 +47,9 @@ export function ReplayButton({
     if (!isEnabled) return;
     ttsManager.setVoice(voice);
     ttsManager.setSpeed(speed);
-    void ttsManager.speak(voiceLabel, { interrupt: true });
+    // 단일 탭 = "다시 듣기 버튼이에요" 안내. 즉각 반응 우선 → 로컬 Web Speech.
+    // (더블 탭의 실제 재생(handleDouble)은 speak() 로 nova 음색 유지)
+    ttsManager.speakQuick(voiceLabel);
   }, [isEnabled, voice, speed, voiceLabel]);
 
   const handleDouble = React.useCallback(() => {
@@ -66,7 +68,7 @@ export function ReplayButton({
     })();
   }, [isEnabled, text, lastSequence]);
 
-  const { onClick, onKeyDown } = useDoubleTap({
+  const { onClick, onKeyDown, onFocus } = useDoubleTap({
     onSingleTap: handleSingle,
     onDoubleTap: handleDouble,
   });
@@ -80,6 +82,7 @@ export function ReplayButton({
         type="button"
         onClick={onClick}
         onKeyDown={onKeyDown}
+        onFocus={onFocus}
         disabled={disabled}
         aria-label={voiceLabel}
         title="다시 듣기 (두 번 두드리기)"
@@ -102,6 +105,7 @@ export function ReplayButton({
       type="button"
       onClick={onClick}
       onKeyDown={onKeyDown}
+      onFocus={onFocus}
       disabled={disabled}
       aria-label={voiceLabel}
       className={cn(

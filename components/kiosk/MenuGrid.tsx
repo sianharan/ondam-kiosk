@@ -134,7 +134,8 @@ function MenuCard({ item, onActivate }: MenuCardProps) {
     ttsManager.setVoice(voice);
     ttsManager.setSpeed(speed);
     ttsManager.setVolume(VOLUME_TO_AUDIO[volume]);
-    void ttsManager.speak(voiceLabel, { interrupt: true });
+    // 포커스/단일 탭 안내 = 즉각 반응 우선 → 로컬 Web Speech 즉시 발화.
+    ttsManager.speakQuick(voiceLabel);
   }, [isEnabled, voice, speed, volume, voiceLabel]);
 
   const handleDouble = React.useCallback(() => {
@@ -142,7 +143,7 @@ function MenuCard({ item, onActivate }: MenuCardProps) {
     onActivate();
   }, [onActivate]);
 
-  const { onClick, onKeyDown } = useDoubleTap({
+  const { onClick, onKeyDown, onFocus } = useDoubleTap({
     onSingleTap: handleSingle,
     onDoubleTap: handleDouble,
   });
@@ -152,6 +153,7 @@ function MenuCard({ item, onActivate }: MenuCardProps) {
       type="button"
       onClick={onClick}
       onKeyDown={onKeyDown}
+      onFocus={onFocus}
       aria-label={voiceLabel}
       data-voice-label={voiceLabel}
       className={cn(
@@ -210,7 +212,8 @@ function BackButton({ onBack }: { onBack: () => void }) {
     ttsManager.setVoice(voice);
     ttsManager.setSpeed(speed);
     ttsManager.setVolume(VOLUME_TO_AUDIO[volume]);
-    void ttsManager.speak(voiceLabel, { interrupt: true });
+    // 포커스/단일 탭 안내 = 즉각 반응 우선 → 로컬 Web Speech 즉시 발화.
+    ttsManager.speakQuick(voiceLabel);
   }, [isEnabled, voice, speed, volume]);
 
   const handleDouble = React.useCallback(() => {
@@ -218,7 +221,7 @@ function BackButton({ onBack }: { onBack: () => void }) {
     onBack();
   }, [onBack]);
 
-  const { onClick, onKeyDown } = useDoubleTap({
+  const { onClick, onKeyDown, onFocus } = useDoubleTap({
     onSingleTap: handleSingle,
     onDoubleTap: handleDouble,
   });
@@ -228,6 +231,7 @@ function BackButton({ onBack }: { onBack: () => void }) {
       type="button"
       onClick={onClick}
       onKeyDown={onKeyDown}
+      onFocus={onFocus}
       aria-label={voiceLabel}
       className="inline-flex touch-manipulation items-center gap-2 rounded-xl bg-muted px-5 py-3 text-lg font-medium text-foreground ring-1 ring-foreground/10 transition-colors hover:bg-muted/80 focus:ring-4 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background focus:outline-none"
     >
