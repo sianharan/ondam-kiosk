@@ -51,6 +51,11 @@ export const VOICE_DESCRIPTIONS: Record<
 
 interface VoiceState {
   isEnabled: boolean;
+  /**
+   * 카페 BGM(AmbientSound) 활성화 여부. 청각 과민 학습자 / 청각 보조기구 사용자가
+   * 음성 안내 청취를 위해 배경 소음을 끌 수 있도록 제공한다.  Phase 5 (PROJECT_DESIGN 5장).
+   */
+  ambientEnabled: boolean;
   voice: VoiceName;
   speed: VoiceSpeed;
   volume: VoiceVolume;
@@ -64,6 +69,7 @@ interface VoiceState {
 interface VoiceActions {
   toggle: () => void;
   setEnabled: (enabled: boolean) => void;
+  setAmbientEnabled: (enabled: boolean) => void;
   setVoice: (voice: VoiceName) => void;
   setSpeed: (speed: VoiceSpeed) => void;
   setVolume: (volume: VoiceVolume) => void;
@@ -80,6 +86,7 @@ type VoiceStore = VoiceState & VoiceActions;
 
 const DEFAULT_STATE: VoiceState = {
   isEnabled: true,
+  ambientEnabled: true,
   voice: "nova",
   speed: 1.0,
   volume: 1.0,
@@ -96,6 +103,8 @@ export const useVoiceStore = create<VoiceStore>()(
       toggle: () => set((s) => ({ isEnabled: !s.isEnabled })),
 
       setEnabled: (enabled) => set({ isEnabled: enabled }),
+
+      setAmbientEnabled: (enabled) => set({ ambientEnabled: enabled }),
 
       setVoice: (voice) => set({ voice }),
 
@@ -120,6 +129,7 @@ export const useVoiceStore = create<VoiceStore>()(
       // 설정 값만 영속화. 휘발성 필드는 매 세션 초기화.
       partialize: (state) => ({
         isEnabled: state.isEnabled,
+        ambientEnabled: state.ambientEnabled,
         voice: state.voice,
         speed: state.speed,
         volume: state.volume,

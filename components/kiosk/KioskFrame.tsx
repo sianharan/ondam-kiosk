@@ -20,6 +20,7 @@
 
 import * as React from "react";
 
+import { AmbientSound } from "@/components/ambient/AmbientSound";
 import { ReplayButton } from "@/components/voice/ReplayButton";
 import { cn } from "@/lib/utils";
 import { useLearningStore } from "@/stores/learningStore";
@@ -44,6 +45,7 @@ export function KioskFrame({
 }: KioskFrameProps) {
   const showStep = typeof currentStep === "number";
   const displayMode = useLearningStore((s) => s.displayMode);
+  const currentMode = useLearningStore((s) => s.currentMode);
 
   // 가로형 = 큰 매장 키오스크 폭 (1400px). 그 외 (null 포함) = 세로형 기본 (800px).
   const isHorizontal = displayMode === "horizontal";
@@ -117,6 +119,10 @@ export function KioskFrame({
           </button>
         </footer>
       </div>
+
+      {/* Phase 5 카페 BGM — currentMode 기반으로 자동 트랙 선택.
+          mode null 또는 tutorial 일 때는 AmbientSound 가 알아서 무음 처리. */}
+      <AmbientSound mode={currentMode} />
     </div>
   );
 }

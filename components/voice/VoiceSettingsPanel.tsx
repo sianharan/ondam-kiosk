@@ -38,10 +38,12 @@ function volumePercentLabel(v: VoiceVolume): string {
 
 export function VoiceSettingsPanel({ className }: VoiceSettingsPanelProps) {
   const isEnabled = useVoiceStore((s) => s.isEnabled);
+  const ambientEnabled = useVoiceStore((s) => s.ambientEnabled);
   const voice = useVoiceStore((s) => s.voice);
   const speed = useVoiceStore((s) => s.speed);
   const volume = useVoiceStore((s) => s.volume);
   const toggle = useVoiceStore((s) => s.toggle);
+  const setAmbientEnabled = useVoiceStore((s) => s.setAmbientEnabled);
   const setVoice = useVoiceStore((s) => s.setVoice);
   const setSpeed = useVoiceStore((s) => s.setSpeed);
   const setVolume = useVoiceStore((s) => s.setVolume);
@@ -93,6 +95,19 @@ export function VoiceSettingsPanel({ className }: VoiceSettingsPanelProps) {
     }
   };
 
+  const handleAmbientToggle = () => {
+    const willBeOn = !ambientEnabled;
+    setAmbientEnabled(willBeOn);
+    if (isEnabled) {
+      void ttsManager.speak(
+        willBeOn
+          ? "카페 배경 소리를 다시 들려드릴게요."
+          : "카페 배경 소리를 잠시 꺼둘게요.",
+        { interrupt: true },
+      );
+    }
+  };
+
   return (
     <div
       className={cn(
@@ -139,6 +154,39 @@ export function VoiceSettingsPanel({ className }: VoiceSettingsPanelProps) {
                 className={cn(
                   "absolute top-1 h-6 w-6 rounded-full bg-background transition-transform",
                   isEnabled ? "translate-x-7" : "translate-x-1",
+                )}
+              />
+            </button>
+          </div>
+
+          {/* ── 카페 배경 소리 On/Off (Phase 5) ──────────── */}
+          <div className="flex items-center justify-between">
+            <div className="flex flex-col">
+              <span className="text-base font-semibold text-foreground">
+                ☕ 카페 배경 소리
+              </span>
+              <span className="text-xs text-foreground/55">
+                안내를 듣기 어려우면 끄세요
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={handleAmbientToggle}
+              role="switch"
+              aria-checked={ambientEnabled}
+              aria-label={
+                ambientEnabled ? "카페 배경 소리 끄기" : "카페 배경 소리 켜기"
+              }
+              className={cn(
+                "relative h-8 w-14 rounded-full transition-colors focus-visible:ring-4 focus-visible:ring-primary focus-visible:outline-none",
+                ambientEnabled ? "bg-accent" : "bg-foreground/25",
+              )}
+            >
+              <span
+                aria-hidden="true"
+                className={cn(
+                  "absolute top-1 h-6 w-6 rounded-full bg-background transition-transform",
+                  ambientEnabled ? "translate-x-7" : "translate-x-1",
                 )}
               />
             </button>
