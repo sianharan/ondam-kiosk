@@ -10,6 +10,7 @@
 
 import * as React from "react";
 
+import { CategoryIllustration } from "@/components/kiosk/CategoryIllustration";
 import { VoiceCoach } from "@/components/voice/VoiceCoach";
 import { useDoubleTap } from "@/lib/interaction/doubleTap";
 import { CATEGORY_LABEL, type Category } from "@/lib/kiosk-data/menu";
@@ -28,7 +29,6 @@ interface CategoryDef {
   /** 음성/접근성 한 줄 설명 */
   voiceDesc: string;
   bgClass: string;
-  icon: React.ReactNode;
 }
 
 const CATEGORIES: CategoryDef[] = [
@@ -38,26 +38,6 @@ const CATEGORIES: CategoryDef[] = [
       "왼쪽 위, 커피 카테고리예요. 아메리카노, 카페라떼, 카푸치노가 있어요. 두 번 두드리면 선택돼요.",
     voiceDesc: "아메리카노, 카페라떼, 카푸치노 등 원두 음료",
     bgClass: "bg-category-coffee",
-    icon: (
-      <svg
-        viewBox="0 0 64 64"
-        aria-hidden="true"
-        className="size-20 md:size-24"
-      >
-        <g
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="3.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="M12 26h32v14a12 12 0 0 1-12 12h-8a12 12 0 0 1-12-12V26z" />
-          <path d="M44 30h6a6 6 0 1 1 0 12h-6" />
-          <path d="M22 10c0 3 3 3 3 6s-3 3-3 6" />
-          <path d="M32 10c0 3 3 3 3 6s-3 3-3 6" />
-        </g>
-      </svg>
-    ),
   },
   {
     id: "ade",
@@ -65,27 +45,6 @@ const CATEGORIES: CategoryDef[] = [
       "오른쪽 위, 에이드 카테고리예요. 레몬에이드, 자몽에이드가 있어요. 두 번 두드리면 선택돼요.",
     voiceDesc: "레몬에이드, 자몽에이드 등 상큼한 탄산 음료",
     bgClass: "bg-category-ade",
-    icon: (
-      <svg
-        viewBox="0 0 64 64"
-        aria-hidden="true"
-        className="size-20 md:size-24"
-      >
-        <g
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="3.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="M16 12h32l-5 40a6 6 0 0 1-6 5h-10a6 6 0 0 1-6-5L16 12z" />
-          <path d="M19 26h26" />
-          <circle cx="26" cy="36" r="2" />
-          <circle cx="36" cy="42" r="2" />
-          <circle cx="30" cy="48" r="1.5" />
-        </g>
-      </svg>
-    ),
   },
   {
     id: "tea",
@@ -93,26 +52,6 @@ const CATEGORIES: CategoryDef[] = [
       "왼쪽 아래, 티 카테고리예요. 캐모마일, 페퍼민트 차가 있어요. 두 번 두드리면 선택돼요.",
     voiceDesc: "캐모마일, 페퍼민트 등 따뜻한 허브차",
     bgClass: "bg-category-tea",
-    icon: (
-      <svg
-        viewBox="0 0 64 64"
-        aria-hidden="true"
-        className="size-20 md:size-24"
-      >
-        <g
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="3.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="M14 28h28v12a12 12 0 0 1-12 12h-4a12 12 0 0 1-12-12V28z" />
-          <path d="M42 32h6a6 6 0 1 1 0 12h-6" />
-          <path d="M24 10c0 4 3 4 3 8" />
-          <path d="M32 10c0 4 3 4 3 8" />
-        </g>
-      </svg>
-    ),
   },
   {
     id: "dessert",
@@ -120,26 +59,6 @@ const CATEGORIES: CategoryDef[] = [
       "오른쪽 아래, 디저트 카테고리예요. 크로와상이 있어요. 두 번 두드리면 선택돼요.",
     voiceDesc: "크로와상 등 빵·디저트류",
     bgClass: "bg-category-dessert",
-    icon: (
-      <svg
-        viewBox="0 0 64 64"
-        aria-hidden="true"
-        className="size-20 md:size-24"
-      >
-        <g
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="3.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="M8 44c6-18 22-30 38-28 3 0 5 .5 8 1.5-3 3-6 5-9 5.5-8 1.5-16 6-22 14-4 5-8 8-15 7z" />
-          <path d="M18 38l5 3" />
-          <path d="M28 30l5 3" />
-          <path d="M36 24l5 3" />
-        </g>
-      </svg>
-    ),
   },
 ];
 
@@ -278,7 +197,7 @@ function CategoryCard({ def, isSelected, onActivate }: CategoryCardProps) {
       onClick={onClick}
       onKeyDown={onKeyDown}
       className={cn(
-        "group/category relative flex aspect-[5/3] flex-col items-center justify-center gap-3 overflow-hidden rounded-2xl text-white shadow-lg transition-transform",
+        "group/category relative flex aspect-[5/4] flex-col items-stretch gap-4 overflow-hidden rounded-2xl p-5 text-white shadow-lg transition-transform md:gap-5 md:p-6",
         "ring-1 ring-foreground/10",
         "hover:-translate-y-1 hover:shadow-xl",
         "focus-visible:ring-4 focus-visible:ring-accent focus-visible:outline-none",
@@ -287,7 +206,12 @@ function CategoryCard({ def, isSelected, onActivate }: CategoryCardProps) {
         def.id === "dessert" && "text-[#3D2F1B]",
       )}
     >
-      <span aria-hidden="true">{def.icon}</span>
+      <div className="flex flex-1 items-center justify-center">
+        <CategoryIllustration
+          category={def.id}
+          className="h-28 w-28 md:h-32 md:w-32"
+        />
+      </div>
       <span className="text-3xl font-bold md:text-4xl">{label}</span>
     </button>
   );
