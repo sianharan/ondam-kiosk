@@ -16,6 +16,7 @@ import * as React from "react";
 
 import { useDoubleTap } from "@/lib/interaction/doubleTap";
 import { ttsManager } from "@/lib/tts/fallbackTTS";
+import { usePrefetchVoiceLabels } from "@/lib/tts/usePrefetchVoiceLabels";
 import { VOLUME_TO_AUDIO, useVoiceStore } from "@/stores/voiceStore";
 import { cn } from "@/lib/utils";
 
@@ -76,14 +77,16 @@ export function VoiceButton({
   const speed = useVoiceStore((s) => s.speed);
   const volume = useVoiceStore((s) => s.volume);
 
+  // 라벨 오디오를 마운트 시 미리 받아 두면(prefetch), Tab/단일 탭 시 nova 가 캐시
+  // 적중으로 즉시 재생된다. (음색은 nova 유지)
+  usePrefetchVoiceLabels(React.useMemo(() => [voiceLabel], [voiceLabel]));
+
   const handleSingleTap = React.useCallback(() => {
     if (!isEnabled) return;
     ttsManager.setVoice(voice);
     ttsManager.setSpeed(speed);
     ttsManager.setVolume(VOLUME_TO_AUDIO[volume]);
-    // 포커스/단일 탭 안내는 즉각 반응이 중요 → 로컬 Web Speech 로 지연 없이 발화.
-    // (도담의 서사 안내는 VoiceCoach 가 speak() 로 nova 음색 유지)
-    ttsManager.speakQuick(voiceLabel);
+    void ttsManager.speak(voiceLabel, { interrupt: true });
   }, [isEnabled, voice, speed, volume, voiceLabel]);
 
   const handleDoubleTap = React.useCallback(() => {

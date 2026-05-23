@@ -16,7 +16,8 @@
  */
 
 const TTS_ENDPOINT = "/api/tts";
-const CACHE_LIMIT = 32; // 충분히 작은 학습 스크립트 수
+// 학습 스크립트 + 화면별 버튼/카드 라벨 prefetch 분까지 담아야 하므로 넉넉히.
+const CACHE_LIMIT = 64;
 
 export type OpenAIVoice =
   | "alloy"
@@ -80,6 +81,28 @@ export class OpenAITTSManager {
       this.queue.push({ text: trimmed, voice, speed, resolve, reject });
       if (!this.currentItem) this.advance();
     });
+  }
+
+  /**
+   * prefetch — 재생하지 않고 (voice, speed, text) 오디오를 미리 받아 캐시에 채운다.
+   * 화면 진입 시 호출해 두면 이후 speak() 가 캐시 적중으로 즉시 재생된다(왕복 지연 흡수).
+   * 이미 캐시에 있으면 네트워크 호출 없이 끝난다. 실패는 조용히 무시한다.
+   */
+  async prefetch(
+    text: string,
+    voiceOverride?: OpenAIVoice,
+    speedOverride?: number,
+  ): Promise<void> {
+    if (typeof window === "undefined" || !this.audio) return;
+    const trimmed = text?.trim();
+    if (!trimmed) return;
+    const voice = voiceOverride ?? this.voice;
+    const speed = clamp(speedOverride ?? this.speed, 0.5, 2.0);
+    try {
+      await this.getOrFetchAudioUrl(trimmed, voice, speed);
+    } catch {
+      /* 프리페치 실패는 무시 — 실제 speak 때 재시도/폴백 */
+    }
   }
 
   pause(): void {

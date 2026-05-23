@@ -80,22 +80,19 @@ export class TTSManager {
   }
 
   /**
-   * speakQuick — 내비게이션/버튼 라벨용 "즉시" 발화 (로컬 Web Speech 전용).
+   * prefetch — 진행 버튼/카드 라벨(nova) 오디오를 화면 진입 시 미리 받아 캐시에 채운다.
    *
-   * Tab 포커스·단일 탭 안내처럼 즉각 반응이 중요한 짧은 라벨에 쓴다.  OpenAI(nova)
-   * 경로는 /api/tts 왕복 때문에 처음 듣는 라벨이 느리므로, 이 경로만 네트워크가
-   * 필요 없는 브라우저 내장 Web Speech 로 곧바로 발화한다 (지연 ≈ 0).
-   * 도담의 서사 안내(VoiceCoach)는 계속 speak() 로 nova 음색을 유지한다.
-   *
-   * 음성 속도/음량은 setSpeed()/setVolume() 으로 webSpeech 에 이미 반영돼 있다.
+   * Tab/단일 탭 시 첫 발화도 캐시 적중으로 즉시 재생되도록 OpenAI 왕복 지연을
+   * 사용자 조작 전에 흡수한다.  음색은 nova 로 일관 유지된다.
+   * OpenAI 가 폴백으로 고정된 상태(연속 실패)면 prefetch 가 의미 없으므로 건너뛴다.
    */
-  speakQuick(text: string): void {
-    const trimmed = text?.trim();
-    if (!trimmed) return;
-    // 진행 중이던 nova 발화가 있으면 끊고, 로컬 음성으로 즉시 안내.
-    this.openai.stop();
-    this.lastEngine = "webspeech";
-    void this.webSpeech.speak(trimmed, { interrupt: true });
+  prefetch(
+    texts: string | readonly string[],
+    opts?: { voice?: OpenAIVoice; speed?: number },
+  ): void {
+    if (!this.preferOpenAI) return;
+    const list = Array.isArray(texts) ? texts : [texts as string];
+    for (const t of list) void this.openai.prefetch(t, opts?.voice, opts?.speed);
   }
 
   stop(): void {

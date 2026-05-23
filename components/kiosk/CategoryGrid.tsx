@@ -16,6 +16,7 @@ import { useDoubleTap } from "@/lib/interaction/doubleTap";
 import { CATEGORY_LABEL, type Category } from "@/lib/kiosk-data/menu";
 import { getModeConfig } from "@/lib/learning/modeConfigs";
 import { ttsManager } from "@/lib/tts/fallbackTTS";
+import { usePrefetchVoiceLabels } from "@/lib/tts/usePrefetchVoiceLabels";
 import { VOICE_SCRIPTS } from "@/lib/tts/voiceScripts";
 import { cn } from "@/lib/utils";
 import { useLearningStore } from "@/stores/learningStore";
@@ -68,6 +69,9 @@ const ENTRY_SEQUENCE = [
   VOICE_SCRIPTS.category.instruction,
 ] as const;
 
+// 카드 단일 탭 안내(nova) prefetch 대상 — 모듈 상수라 매 렌더 안정.
+const CATEGORY_VOICE_LABELS = CATEGORIES.map((c) => c.voiceLabel);
+
 export interface CategoryGridProps {
   onSelect: (category: Category) => void;
   /**
@@ -114,6 +118,9 @@ export function CategoryGrid({ onSelect, prependVoice }: CategoryGridProps) {
     }
     return intro.length > 0 ? [...intro, ...ENTRY_SEQUENCE] : ENTRY_SEQUENCE;
   }, [prependVoice, verbosity]);
+
+  // 4개 카테고리 카드 단일 탭 안내를 미리 받아 둔다(Tab/단일 탭 즉시 재생).
+  usePrefetchVoiceLabels(CATEGORY_VOICE_LABELS);
 
   return (
     <section className="flex flex-col gap-6">
@@ -172,8 +179,7 @@ function CategoryCard({ def, isSelected, onActivate }: CategoryCardProps) {
     ttsManager.setVoice(voice);
     ttsManager.setSpeed(speed);
     ttsManager.setVolume(VOLUME_TO_AUDIO[volume]);
-    // 포커스/단일 탭 안내 = 즉각 반응 우선 → 로컬 Web Speech 즉시 발화.
-    ttsManager.speakQuick(def.voiceLabel);
+    void ttsManager.speak(def.voiceLabel, { interrupt: true });
   }, [def.voiceLabel, isEnabled, voice, speed, volume]);
 
   const handleDouble = React.useCallback(() => {

@@ -22,6 +22,7 @@ import {
 } from "@/lib/kiosk-data/menu";
 import { getModeConfig } from "@/lib/learning/modeConfigs";
 import { ttsManager } from "@/lib/tts/fallbackTTS";
+import { usePrefetchVoiceLabels } from "@/lib/tts/usePrefetchVoiceLabels";
 import { VOICE_SCRIPTS } from "@/lib/tts/voiceScripts";
 import { cn } from "@/lib/utils";
 import { useLearningStore } from "@/stores/learningStore";
@@ -67,6 +68,11 @@ export function MenuGrid({ category, onSelect, onBack }: MenuGridProps) {
       ...items.map((it) => `${it.voiceLabel}, ${formatPrice(it.basePrice)}.`),
     ],
     [category, items],
+  );
+
+  // 각 메뉴 카드의 단일 탭 안내(nova)를 미리 받아 둬 Tab/단일 탭 시 즉시 재생되게 한다.
+  usePrefetchVoiceLabels(
+    React.useMemo(() => items.map(buildMenuVoiceLabel), [items]),
   );
 
   // 가로형: 큰 매장 키오스크답게 3열까지 확장. 세로형: 1~2열 기본.
@@ -134,8 +140,7 @@ function MenuCard({ item, onActivate }: MenuCardProps) {
     ttsManager.setVoice(voice);
     ttsManager.setSpeed(speed);
     ttsManager.setVolume(VOLUME_TO_AUDIO[volume]);
-    // 포커스/단일 탭 안내 = 즉각 반응 우선 → 로컬 Web Speech 즉시 발화.
-    ttsManager.speakQuick(voiceLabel);
+    void ttsManager.speak(voiceLabel, { interrupt: true });
   }, [isEnabled, voice, speed, volume, voiceLabel]);
 
   const handleDouble = React.useCallback(() => {
@@ -207,13 +212,14 @@ function BackButton({ onBack }: { onBack: () => void }) {
   const voiceLabel =
     "카테고리 화면으로 돌아가기 버튼이에요. 두 번 두드리면 처음 카테고리 선택 화면으로 가요.";
 
+  usePrefetchVoiceLabels(React.useMemo(() => [voiceLabel], [voiceLabel]));
+
   const handleSingle = React.useCallback(() => {
     if (!isEnabled) return;
     ttsManager.setVoice(voice);
     ttsManager.setSpeed(speed);
     ttsManager.setVolume(VOLUME_TO_AUDIO[volume]);
-    // 포커스/단일 탭 안내 = 즉각 반응 우선 → 로컬 Web Speech 즉시 발화.
-    ttsManager.speakQuick(voiceLabel);
+    void ttsManager.speak(voiceLabel, { interrupt: true });
   }, [isEnabled, voice, speed, volume]);
 
   const handleDouble = React.useCallback(() => {

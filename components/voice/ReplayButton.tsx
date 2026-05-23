@@ -15,6 +15,7 @@ import * as React from "react";
 
 import { useDoubleTap } from "@/lib/interaction/doubleTap";
 import { ttsManager } from "@/lib/tts/fallbackTTS";
+import { usePrefetchVoiceLabels } from "@/lib/tts/usePrefetchVoiceLabels";
 import { useVoiceStore } from "@/stores/voiceStore";
 import { cn } from "@/lib/utils";
 
@@ -43,13 +44,13 @@ export function ReplayButton({
   const voice = useVoiceStore((s) => s.voice);
   const speed = useVoiceStore((s) => s.speed);
 
+  usePrefetchVoiceLabels(React.useMemo(() => [voiceLabel], [voiceLabel]));
+
   const handleSingle = React.useCallback(() => {
     if (!isEnabled) return;
     ttsManager.setVoice(voice);
     ttsManager.setSpeed(speed);
-    // 단일 탭 = "다시 듣기 버튼이에요" 안내. 즉각 반응 우선 → 로컬 Web Speech.
-    // (더블 탭의 실제 재생(handleDouble)은 speak() 로 nova 음색 유지)
-    ttsManager.speakQuick(voiceLabel);
+    void ttsManager.speak(voiceLabel, { interrupt: true });
   }, [isEnabled, voice, speed, voiceLabel]);
 
   const handleDouble = React.useCallback(() => {

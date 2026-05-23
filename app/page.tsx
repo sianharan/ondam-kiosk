@@ -25,6 +25,7 @@ import { PROGRESS_BUTTON_CLASS, VoiceButton } from "@/components/voice/VoiceButt
 import { VoiceCoach } from "@/components/voice/VoiceCoach";
 import { useDoubleTap } from "@/lib/interaction/doubleTap";
 import { ttsManager } from "@/lib/tts/fallbackTTS";
+import { usePrefetchVoiceLabels } from "@/lib/tts/usePrefetchVoiceLabels";
 import { VOICE_SCRIPTS } from "@/lib/tts/voiceScripts";
 import { cn } from "@/lib/utils";
 import {
@@ -34,6 +35,12 @@ import {
 import { VOLUME_TO_AUDIO, useVoiceStore } from "@/stores/voiceStore";
 
 type Stage = "intro" | "mode-select";
+
+// 모드 카드 단일 탭 안내(nova) prefetch 대상 — 모듈 상수라 안정.
+const MODE_VOICE_LABELS = [
+  VOICE_SCRIPTS.welcome.modeSelect.vertical,
+  VOICE_SCRIPTS.welcome.modeSelect.horizontal,
+];
 
 export default function Home() {
   const router = useRouter();
@@ -125,6 +132,9 @@ function ModeSelectStage({
 }: {
   onSelect: (mode: DisplayMode) => void;
 }) {
+  // 세로형/가로형 카드 단일 탭 안내를 미리 받아 둔다(Tab/단일 탭 즉시 재생).
+  usePrefetchVoiceLabels(MODE_VOICE_LABELS);
+
   return (
     <section
       className="flex flex-col gap-7 py-2"
@@ -220,8 +230,7 @@ function ModeCard({
     ttsManager.setVoice(voice);
     ttsManager.setSpeed(speed);
     ttsManager.setVolume(VOLUME_TO_AUDIO[volume]);
-    // 포커스/단일 탭 안내 = 즉각 반응 우선 → 로컬 Web Speech 즉시 발화.
-    ttsManager.speakQuick(voiceLabel);
+    void ttsManager.speak(voiceLabel, { interrupt: true });
   }, [isEnabled, voice, speed, volume, voiceLabel]);
 
   const handleDouble = React.useCallback(() => {
