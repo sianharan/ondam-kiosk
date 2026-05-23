@@ -72,6 +72,16 @@ const TRACK_SRC: Record<TrackKey, string> = {
   loud: "/sounds/ambient-loud.mp3",
 };
 
+/**
+ * 주어진 모드가 실제로 소음을 내는지 — MODE_RAMP 단일 출처를 그대로 사용한다.
+ * (ramp 가 null 인 tutorial / mode=null 은 무음.)  재생 조건과 "소음 적용 중" 배지
+ * 조건이 항상 일치하도록 KioskFrame 이 이 함수를 재사용한다.
+ * 실제 재생 여부는 여기에 voiceStore.ambientEnabled 까지 AND 로 곱해야 한다.
+ */
+export function hasAmbientSound(mode: LearningMode | null): boolean {
+  return mode !== null && MODE_RAMP[mode] !== null;
+}
+
 const FADE_OUT_MS = 1000;
 const TICK_INTERVAL_MS = 100;
 

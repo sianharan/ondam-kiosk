@@ -20,10 +20,11 @@
 
 import * as React from "react";
 
-import { AmbientSound } from "@/components/ambient/AmbientSound";
+import { AmbientSound, hasAmbientSound } from "@/components/ambient/AmbientSound";
 import { ReplayButton } from "@/components/voice/ReplayButton";
 import { cn } from "@/lib/utils";
 import { useLearningStore } from "@/stores/learningStore";
+import { useVoiceStore } from "@/stores/voiceStore";
 
 export interface KioskFrameProps {
   children: React.ReactNode;
@@ -53,6 +54,20 @@ export function KioskFrame({
   const showStep = typeof currentStep === "number";
   const displayMode = useLearningStore((s) => s.displayMode);
   const currentMode = useLearningStore((s) => s.currentMode);
+
+  // 카페 BGM 모드 — articulation(8)·reflection(9)·complete(10) 단계는 소음이 없어야 한다.
+  // 이 세 페이지는 setMode 를 부르지 않아 currentMode 에 직전 realFree/realGuided 가
+  // 남으므로, currentMode 대신 KioskFrame 이 아는 currentStep 으로 판단해 null 을 넘긴다.
+  // (AmbientSound 는 mode=null 이면 기존 로직대로 1초 페이드아웃 후 무음.)
+  const isSilentStep =
+    currentStep === 8 || currentStep === 9 || currentStep === 10;
+  const ambientMode = isSilentStep ? null : currentMode;
+
+  // "카페 소음 적용 중" 배지 — 재생 조건과 동일한 기준으로만 노출.
+  // (ambientMode 는 step 8·9 무음 처리를 이미 반영, hasAmbientSound 는 MODE_RAMP 단일
+  //  출처를 재사용. 여기에 ambientEnabled 토글까지 AND → 실제 재생과 항상 일치.)
+  const ambientEnabled = useVoiceStore((s) => s.ambientEnabled);
+  const ambientPlaying = ambientEnabled && hasAmbientSound(ambientMode);
 
   // 가로형 = 큰 매장 키오스크 폭 (1400px). 그 외 (null 포함) = 세로형 기본 (800px).
   // 단 fixedWidth(모드 선택 전 화면)면 displayMode 와 무관하게 800px 로 고정.
@@ -108,6 +123,17 @@ export function KioskFrame({
           )}
         </header>
 
+        {/* 카페 소음이 실제 재생 중일 때만 노출되는 보조 안내 바.
+            전맹 학습자는 음성 예고로 커버되므로 aria-hidden, 저시력용 시각 단서. */}
+        {ambientPlaying && (
+          <div
+            aria-hidden="true"
+            className="flex items-center justify-center gap-2 border-b border-foreground/10 bg-muted/50 px-6 py-2 text-support text-foreground/70 md:px-10"
+          >
+            🔊 카페 소음 적용 중 · 음성 설정에서 끌 수 있어요
+          </div>
+        )}
+
         {/* ── 본문: 모든 화면이 이 안에 렌더링됨 ───────────────── */}
         <main
           className="flex-1 px-6 py-8 text-[1.5rem] leading-relaxed text-foreground animate-in fade-in slide-in-from-bottom-2 duration-300 md:px-10 md:py-10"
@@ -119,8 +145,9 @@ export function KioskFrame({
       </div>
 
       {/* Phase 5 카페 BGM — currentMode 기반으로 자동 트랙 선택.
+          단 articulation·reflection(step 8·9)은 ambientMode=null 로 강제 무음.
           mode null 또는 tutorial 일 때는 AmbientSound 가 알아서 무음 처리. */}
-      <AmbientSound mode={currentMode} />
+      <AmbientSound mode={ambientMode} />
     </div>
   );
 }
