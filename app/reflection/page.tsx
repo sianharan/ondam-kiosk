@@ -208,7 +208,7 @@ export default function ReflectionPage() {
       {/* 학습자가 자기 답변을 한 번 더 확인할 수 있도록 미리보기 */}
       <section
         aria-label="내 답변 요약"
-        className="mt-2 grid gap-3 rounded-2xl border border-foreground/15 bg-background p-5 md:p-6"
+        className="mt-2 grid gap-3 rounded-2xl bg-background p-5 shadow-sm ring-1 ring-foreground/15 md:p-6"
       >
         <h3 className="text-xl font-bold text-foreground md:text-2xl">
           내 답변
@@ -225,7 +225,7 @@ export default function ReflectionPage() {
       {loadState === "error" && errorDetail && (
         <div
           role="status"
-          className="mt-6 rounded-2xl border border-amber-300 bg-amber-50 p-5 text-lg text-amber-900 md:text-xl"
+          className="mt-6 rounded-2xl bg-amber-50 p-5 text-lg text-amber-900 shadow-sm ring-1 ring-amber-300 md:text-xl"
         >
           분석 중에 잠시 문제가 있었어요. 학습 정리는 도담이 준비한 기본 안내로
           보여드릴게요.
@@ -269,7 +269,7 @@ function LoadingBlock() {
     <div
       role="status"
       aria-live="polite"
-      className="mt-6 flex items-center gap-4 rounded-2xl border border-foreground/15 bg-background p-6"
+      className="mt-6 flex items-center gap-4 rounded-2xl bg-background p-6 shadow-sm ring-1 ring-foreground/15"
     >
       <span
         aria-hidden="true"

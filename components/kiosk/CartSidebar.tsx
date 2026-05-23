@@ -16,6 +16,7 @@ import {
   CATEGORY_LABEL,
   EXTRA_OPTIONS,
   SIZE_OPTIONS,
+  type Category,
 } from "@/lib/kiosk-data/menu";
 import { getModeConfig } from "@/lib/learning/modeConfigs";
 import { VOICE_SCRIPTS } from "@/lib/tts/voiceScripts";
@@ -116,9 +117,14 @@ export function CartSidebar({
       {/* ── 요약 카드 ─────────────────────────────────────── */}
       <dl
         aria-live="polite"
-        className="flex flex-col divide-y divide-foreground/10 rounded-2xl border border-foreground/15 bg-background"
+        className="flex flex-col divide-y divide-foreground/10 overflow-hidden rounded-2xl bg-background shadow-sm ring-1 ring-foreground/15"
       >
-        <SummaryRow label="메뉴" value={selectedItem.name} highlight />
+        <SummaryRow
+          label="메뉴"
+          value={selectedItem.name}
+          highlight
+          accent={selectedItem.category}
+        />
 
         {tempText && <SummaryRow label="온도" value={tempText} />}
 
@@ -184,11 +190,35 @@ interface SummaryRowProps {
   value: string;
   highlight?: boolean;
   muted?: boolean;
+  /** highlight 행에 카테고리 컬러 좌측 액센트 바를 추가 (메뉴 카드 톤과 통일) */
+  accent?: Category;
 }
 
-function SummaryRow({ label, value, highlight, muted }: SummaryRowProps) {
+const ACCENT_CLASS: Record<Category, string> = {
+  coffee: "bg-category-coffee",
+  ade: "bg-category-ade",
+  tea: "bg-category-tea",
+  dessert: "bg-category-dessert",
+};
+
+function SummaryRow({
+  label,
+  value,
+  highlight,
+  muted,
+  accent,
+}: SummaryRowProps) {
   return (
-    <div className="flex items-baseline justify-between gap-3 px-6 py-4">
+    <div className="relative flex items-baseline justify-between gap-3 px-6 py-4">
+      {accent && (
+        <span
+          aria-hidden="true"
+          className={cn(
+            "absolute inset-y-2 left-0 w-1.5 rounded-r-full",
+            ACCENT_CLASS[accent],
+          )}
+        />
+      )}
       <dt className="text-lg text-foreground/70 md:text-xl">{label}</dt>
       <dd
         className={cn(

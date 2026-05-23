@@ -80,7 +80,7 @@ export default function SpatialMapPage() {
               {STRUCTURE_ITEMS.map((item) => (
                 <li
                   key={item.area}
-                  className="flex flex-col gap-1 rounded-2xl border border-foreground/15 bg-background p-5"
+                  className="flex flex-col gap-1 rounded-2xl bg-background p-5 shadow-sm ring-1 ring-foreground/15"
                 >
                   <span className="text-lg font-bold text-accent md:text-xl">
                     {item.area}
@@ -114,7 +114,7 @@ export default function SpatialMapPage() {
 function KioskDiagram() {
   return (
     <figure
-      className="flex flex-col items-center gap-3 rounded-2xl border border-foreground/15 bg-muted/40 p-5"
+      className="flex flex-col items-center gap-3 rounded-2xl bg-muted/40 p-5 shadow-sm ring-1 ring-foreground/15"
       aria-label="키오스크 구조 다이어그램"
     >
       <svg

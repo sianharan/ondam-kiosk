@@ -241,7 +241,12 @@ function ModeCard({
     >
       <div
         aria-hidden="true"
-        className="flex h-32 w-full items-center justify-center rounded-2xl bg-muted/60 md:h-36"
+        className={cn(
+          "flex h-40 w-full items-center justify-center rounded-2xl p-3 transition-colors md:h-44",
+          "bg-gradient-to-b from-muted/60 to-muted/30",
+          "ring-1 ring-foreground/10",
+          "group-hover/mode:from-primary/10 group-hover/mode:to-accent/10 group-hover/mode:ring-primary/20",
+        )}
       >
         {diagram}
       </div>
@@ -259,35 +264,91 @@ function ModeCard({
         {description}
       </p>
 
-      <span className="mt-1 text-base text-foreground/55 md:text-lg">
-        한 번 두드리면 설명 · 두 번 두드리면 선택
+      <span className="mt-1 inline-flex items-center gap-2 rounded-full bg-muted/50 px-3 py-1 text-sm text-foreground/65 md:text-base">
+        <span aria-hidden="true" className="text-accent">👆</span>
+        <span>한 번 두드리면 설명 · 두 번 두드리면 선택</span>
       </span>
     </button>
   );
 }
 
-// ── 간단한 SVG 미리보기 ─────────────────────────────────────
+// ── 키오스크 실루엣 미리보기 ────────────────────────────────
+// PROJECT_DESIGN 5.2 #1-B — 학습자가 시각적으로도 두 형태의 물리적 차이
+// (세로 카운터형 vs 가로 매장 입구형)를 한눈에 알아볼 수 있도록, 단순 영역
+// 분할 사각형이 아니라 스탠드 · 스피커 · 카드 투입구까지 그린 실루엣을 둔다.
+// spatial-map 의 KioskDiagram 과 동일한 시각 언어.
 function VerticalDiagram() {
   return (
     <svg
-      viewBox="0 0 60 90"
-      className="h-24 w-auto md:h-28"
+      viewBox="0 0 80 110"
+      className="h-28 w-auto md:h-32"
       role="img"
       aria-label="세로형 키오스크 미리보기"
     >
+      {/* 베이스 */}
       <rect
-        x="6"
-        y="4"
-        width="48"
-        height="82"
+        x="14"
+        y="100"
+        width="52"
+        height="6"
+        rx="2"
+        fill="var(--color-primary)"
+        opacity="0.85"
+      />
+      {/* 본체 */}
+      <rect
+        x="14"
+        y="6"
+        width="52"
+        height="96"
         rx="6"
         fill="var(--color-background)"
         stroke="var(--color-primary)"
         strokeWidth="2"
       />
-      <rect x="12" y="14" width="36" height="14" rx="2" fill="var(--color-category-coffee)" opacity="0.75" />
-      <rect x="12" y="32" width="36" height="34" rx="2" fill="var(--color-muted)" stroke="var(--color-foreground)" strokeOpacity="0.15" />
-      <rect x="12" y="70" width="36" height="10" rx="2" fill="var(--color-accent)" opacity="0.7" />
+      {/* 스피커 — 좌상단 / 우상단 */}
+      <circle cx="22" cy="14" r="1.6" fill="var(--color-primary)" />
+      <circle cx="58" cy="14" r="1.6" fill="var(--color-primary)" />
+      {/* 카테고리 영역 (상단) */}
+      <rect
+        x="20"
+        y="22"
+        width="40"
+        height="16"
+        rx="2"
+        fill="var(--color-category-coffee)"
+        opacity="0.75"
+      />
+      {/* 메뉴 영역 (중단) */}
+      <rect
+        x="20"
+        y="42"
+        width="40"
+        height="36"
+        rx="2"
+        fill="var(--color-muted)"
+        stroke="var(--color-foreground)"
+        strokeOpacity="0.15"
+      />
+      {/* 결제 영역 (하단) */}
+      <rect
+        x="20"
+        y="82"
+        width="40"
+        height="12"
+        rx="2"
+        fill="var(--color-accent)"
+        opacity="0.7"
+      />
+      {/* 카드 투입구 */}
+      <rect
+        x="44"
+        y="96"
+        width="14"
+        height="2"
+        rx="1"
+        fill="var(--color-primary)"
+      />
     </svg>
   );
 }
@@ -295,24 +356,75 @@ function VerticalDiagram() {
 function HorizontalDiagram() {
   return (
     <svg
-      viewBox="0 0 110 70"
-      className="h-24 w-auto md:h-28"
+      viewBox="0 0 130 90"
+      className="h-28 w-auto md:h-32"
       role="img"
       aria-label="가로형 키오스크 미리보기"
     >
+      {/* 베이스 */}
       <rect
-        x="4"
-        y="6"
+        x="14"
+        y="80"
         width="102"
-        height="58"
+        height="6"
+        rx="2"
+        fill="var(--color-primary)"
+        opacity="0.85"
+      />
+      {/* 본체 */}
+      <rect
+        x="6"
+        y="6"
+        width="118"
+        height="76"
         rx="6"
         fill="var(--color-background)"
         stroke="var(--color-primary)"
         strokeWidth="2"
       />
-      <rect x="10" y="14" width="44" height="42" rx="2" fill="var(--color-category-coffee)" opacity="0.75" />
-      <rect x="58" y="14" width="42" height="28" rx="2" fill="var(--color-muted)" stroke="var(--color-foreground)" strokeOpacity="0.15" />
-      <rect x="58" y="46" width="42" height="10" rx="2" fill="var(--color-accent)" opacity="0.7" />
+      {/* 스피커 */}
+      <circle cx="14" cy="14" r="1.6" fill="var(--color-primary)" />
+      <circle cx="116" cy="14" r="1.6" fill="var(--color-primary)" />
+      {/* 좌측 메뉴/카테고리 영역 */}
+      <rect
+        x="12"
+        y="20"
+        width="50"
+        height="54"
+        rx="2"
+        fill="var(--color-category-coffee)"
+        opacity="0.75"
+      />
+      {/* 우측 상단: 옵션 */}
+      <rect
+        x="68"
+        y="20"
+        width="50"
+        height="34"
+        rx="2"
+        fill="var(--color-muted)"
+        stroke="var(--color-foreground)"
+        strokeOpacity="0.15"
+      />
+      {/* 우측 하단: 장바구니/결제 */}
+      <rect
+        x="68"
+        y="58"
+        width="50"
+        height="16"
+        rx="2"
+        fill="var(--color-accent)"
+        opacity="0.7"
+      />
+      {/* 카드 투입구 */}
+      <rect
+        x="92"
+        y="76"
+        width="20"
+        height="2"
+        rx="1"
+        fill="var(--color-primary)"
+      />
     </svg>
   );
 }

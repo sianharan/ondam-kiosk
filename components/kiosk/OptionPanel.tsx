@@ -129,7 +129,7 @@ export function OptionPanel({ onComplete }: OptionPanelProps) {
 
       {/* ── 온도 선택 ─────────────────────────────────────── */}
       {showTemperature && (
-        <fieldset className="rounded-2xl border border-foreground/15 bg-background p-6">
+        <fieldset className="rounded-2xl bg-background p-6 shadow-sm ring-1 ring-foreground/15">
           <legend className="px-2 text-xl font-bold text-foreground md:text-2xl">
             온도
           </legend>
@@ -162,7 +162,7 @@ export function OptionPanel({ onComplete }: OptionPanelProps) {
 
       {/* ── 사이즈 선택 ───────────────────────────────────── */}
       {showSize && (
-        <fieldset className="rounded-2xl border border-foreground/15 bg-background p-6">
+        <fieldset className="rounded-2xl bg-background p-6 shadow-sm ring-1 ring-foreground/15">
           <legend className="px-2 text-xl font-bold text-foreground md:text-2xl">
             사이즈
           </legend>
@@ -197,7 +197,7 @@ export function OptionPanel({ onComplete }: OptionPanelProps) {
 
       {/* ── 추가 옵션 (Checkbox) ───────────────────────────── */}
       {showExtras && (
-        <fieldset className="rounded-2xl border border-foreground/15 bg-background p-6">
+        <fieldset className="rounded-2xl bg-background p-6 shadow-sm ring-1 ring-foreground/15">
           <legend className="px-2 text-xl font-bold text-foreground md:text-2xl">
             추가
           </legend>

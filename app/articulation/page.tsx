@@ -364,7 +364,7 @@ export default function ArticulationPage() {
 
         <VoiceCoach message={voiceSequence} sequenceGapMs={800} />
 
-        <div className="rounded-2xl border border-accent/30 bg-accent/10 p-6">
+        <div className="rounded-2xl bg-accent/10 p-6 shadow-sm ring-1 ring-accent/30">
           <p className="text-xl text-foreground md:text-2xl">
             💭 {currentQuestion.hint}
           </p>
@@ -388,7 +388,7 @@ export default function ArticulationPage() {
 
         {/* ── 마이크 입력 영역 ──────────────────────────────────── */}
         <div
-          className="flex flex-col items-center gap-4 rounded-2xl border border-foreground/15 bg-background p-6"
+          className="flex flex-col items-center gap-4 rounded-2xl bg-background p-6 shadow-sm ring-1 ring-foreground/15"
           role="group"
           aria-label="음성 답변 입력 영역"
         >
@@ -417,7 +417,7 @@ export default function ArticulationPage() {
 
           {hasAnswer && (
             <div
-              className="w-full rounded-xl border border-emerald-200 bg-emerald-50 p-4"
+              className="w-full rounded-xl bg-emerald-50 p-4 shadow-sm ring-1 ring-emerald-200"
               aria-label="내 답변"
             >
               <p className="text-sm font-bold uppercase tracking-wider text-emerald-700">
@@ -432,7 +432,7 @@ export default function ArticulationPage() {
           {errorMessage && (
             <div
               role="alert"
-              className="w-full rounded-xl border border-amber-300 bg-amber-50 p-4 text-lg text-amber-900 md:text-xl"
+              className="w-full rounded-xl bg-amber-50 p-4 text-lg text-amber-900 shadow-sm ring-1 ring-amber-300 md:text-xl"
             >
               {errorMessage}
             </div>
