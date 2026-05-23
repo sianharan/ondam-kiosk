@@ -169,8 +169,11 @@ export default function ReflectionPage() {
 
   const voiceSequence = React.useMemo<string[]>(() => {
     if (loadState === "loading" || loadState === "idle") {
+      // 분석이 길어질 때 첫 문장 뒤 침묵을 메운다. 결과가 도착하면 voiceSequence 가
+      // 결과 시퀀스로 바뀌며 VoiceCoach 가 곧바로 결과 발화로 이어간다(이 안심 멘트는 끊김).
       return [
         "지금부터 오늘 학습을 정리해드릴게요. 도담이 답변을 분석하고 있어요.",
+        "조금만 더 기다려 주세요. 거의 다 됐어요.",
       ];
     }
     if (!reflectionResult) {
@@ -193,6 +196,10 @@ export default function ReflectionPage() {
       for (const n of reflectionResult.nextSteps) lines.push(n);
     }
     lines.push("오늘 정말 수고하셨어요.");
+    // 결과를 다 들은 뒤 다음 행동을 분명히 — 화면을 못 보는 학습자가 멈추지 않도록.
+    lines.push(
+      "다 들으셨으면, 화면 아래 완료 버튼을 두 번 두드려 마무리해 주세요.",
+    );
     return lines;
   }, [loadState, reflectionResult]);
 
