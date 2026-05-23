@@ -363,7 +363,7 @@ export function MicButton({
       return;
     }
     void speak(
-      "마이크 버튼이에요. 두 번 두드리면 도담에게 말을 걸 수 있어요.",
+      "도담이에요. 두 번 두드려 무엇이든 물어보세요. 안내는 해드리지만, 선택과 결제는 직접 해주셔야 해요.",
     );
   }, [finishRecording, speak]);
 
@@ -393,7 +393,7 @@ export function MicButton({
         ? "녹음 중이에요. 한 번 더 두드리면 끝나요."
         : status === "processing"
           ? "도담이 답을 준비하고 있어요."
-          : "마이크 버튼이에요. 두 번 두드리면 도담에게 말을 걸 수 있어요.";
+          : "도담이에요. 두 번 두드려 무엇이든 물어보세요. 안내는 해드리지만, 선택과 결제는 직접 해주셔야 해요.";
 
   const isBusy = status === "preparing" || status === "processing";
 
