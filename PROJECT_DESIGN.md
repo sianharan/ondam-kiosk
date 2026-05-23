@@ -4,7 +4,9 @@
 > **연구 토대**: 상황학습이론(Lave & Wenger, 1991) + 인지적 도제이론(Collins, 2006)
 > **표준 기반**: KS X 9211:2025 무인정보단말기 접근성 지침
 > **개발 기간**: 2주 (학기 과제)
-> **버전**: 2.5 (저시력 사용자 기준 진행 버튼·헤더·화면 폭 통일)
+> **버전**: 2.6 (음성 길안내 강화 + Tutorial 다이어그램 동기화 + 카페 소음 정합성)
+>
+> **v2.6 변경 사유** — v2.5 의 시각(저시력) 정리에 이어, **전맹·시각장애 학습자가 화면을 보지 않고도 음성만으로 막힘없이 진행**하도록 길안내를 전면 보강한다.  ① **음성 길안내 보강** — Articulation·Reflection 에서 (가) 마이크 위치("화면 가운데 동그란 마이크 버튼"), (나) 전사·Gemini 분석 대기 중 침묵을 메우는 안내("도담이 답변을 살펴보고 있어요" / "조금만 더 기다려 주세요"), (다) 답변·결과 청취 후 다음에 누를 버튼("다음 질문" / "분석 보러 가기" / "완료")을 음성으로 분명히 짚어 준다. Real Guided 진입 멘트도 카페 소음·뒷사람 예고 + 안심으로 교체.  ② **키보드 포커스 발화** — 스크린리더 없는 시연 환경을 위해, Tab 으로 버튼에 포커스가 가면 voiceLabel 을 발화한다(useDoubleTap 의 onFocus + 입력 모달리티 게이트로 마우스·자동 포커스 중복 방지).  ③ **발화 즉시성(prefetch)** — nova 음색을 유지하면서 첫 발화 지연을 없애기 위해 화면 진입 시 라벨 오디오를 미리 받아 캐시에 채운다(OpenAITTSManager.prefetch + in-flight 공유).  ④ **Tutorial 시연 강화** — 공용 KioskDiagram 을 분리해 AutoDemo 단계에 맞춰 해당 영역을 펄스 강조(대본↔그림 동기화), 7단계 대본·타이밍 보강, 진입 첫 단계 발화 끊김(부모 리렌더로 effect 재시작) 수정.  ⑤ **카페 소음 정합성** — Articulation·Reflection·완료(step 8·9·10)는 직전 모드 소음이 남지 않게 무음 처리하고, 소음이 실제 재생 중일 때만 "🔊 카페 소음 적용 중" 보조 배지를 노출.  ⑥ **카테고리 위치 안내**를 배치(2×2/1×4)에 흔들리지 않는 순서 기반("첫 번째 커피 …")으로 통일.  자세한 설계는 5.2 #3·#6·#8·#9 / 4.5.4 / 8.2절 / 부록 A v2.6 참조.
 >
 > **v2.5 변경 사유** — v2.4 의 명도 대비·타이포그래피 토큰 작업에 이어, **저시력 사용자의 화면 탐색 부담을 줄이기 위해 진행 동선을 통일**한다.  ① **진행 버튼 통일** — "다음 단계로" 단일 진행 버튼(환영·공간 지도·영수증·Reflection)을 전 화면 동일 위치·크기(본문 하단 전폭 + 최소 64px 높이 + 주황 primary action)로 맞추고, 본문이 길어 버튼이 화면 밖으로 밀리는 화면(공간 지도·Challenge·Reflection)은 **sticky 하단 고정**으로 스크롤 없이도 항상 보이게 한다.  버튼 2개 이상 화면(완료·Articulation)은 한 줄로 합치지 않고 세로 스택하되 진행 주 버튼만 주황으로 강조한다.  ② **헤더 단순화** — 로고에 병기되던 한자 "溫談" 을 제거하고 "온담 카페" 만 노출한다.  ③ **모드 선택 전 폭 고정** — displayMode 가 확정되기 전 화면(환영·모드 선택)은 이전 세션에 남은 모드와 무관하게 항상 기본 폭(800px)으로 고정하여 폭이 들쭉날쭉해 보이는 문제를 없앴다(displayMode 폭 분기 자체는 공간 지도부터 그대로 적용).  자세한 설계는 3.3절(진행 버튼 통일 — 신규 블록) / 3.5.3절(모드 선택 전 폭 고정) / 5.2 #1 / 부록 A v2.5 참조.
 >
@@ -22,10 +24,10 @@
 2. 학술적 토대
 3. 시뮬레이터 정체성과 설계 원칙 *(3.5 디스플레이 다양성 — v2.2 / 3.6 양방향 음성 — v2.3 / 3.3 일러스트 시스템 — v2.4 보강 / 3.3 진행 버튼 통일 — v2.5 신규)*
 4. 교수설계 — Collins 4차원 *(4.5 카페 소음 점진 증가 모델 — v2.4 신규)*
-5. 화면 흐름 — 10단계 *(5.2 #1 환영 + 모드 선택 — v2.2 확장 / 모드 선택 전 폭 고정 — v2.5)*
+5. 화면 흐름 — 10단계 *(5.2 #1 환영 + 모드 선택 — v2.2 확장 / 모드 선택 전 폭 고정 — v2.5 / #3·#6·#8·#9 음성 길안내 보강 + Tutorial 다이어그램 동기화 — v2.6)*
 6. KS X 9211:2025 충족 매트릭스 *(§5.2.2 d) 양방향 확장 — v2.3 보강 / ambient ON·OFF 토글 — v2.4 보강)*
 7. 데이터 모델 *(7.0 학습 세션 상태 + `displayMode` — v2.2 확장 / `voiceStore.ambientEnabled` — v2.4 추가)*
-8. 기술 스택과 아키텍처 *(Whisper STT · Web Speech 폴백 · VAD — v2.3 / Howler.js 실구현 + Vercel 라이브 배포 — v2.4)*
+8. 기술 스택과 아키텍처 *(Whisper STT · Web Speech 폴백 · VAD — v2.3 / Howler.js 실구현 + Vercel 라이브 배포 — v2.4 / KioskDiagram 공용화 + TTS prefetch + Tab 포커스 발화 — v2.6)*
 9. 폴더 구조 *(MenuIllustration · CategoryIllustration · AmbientSound 추가 — v2.4)*
 10. Phase별 개발 계획 (2주) *(Phase 3-C — v2.2 / Phase 4-AI-A·4-AI-B — v2.3 / Phase 5 ✅ + 디자인 리뉴얼 + Phase 9 배포 ✅ — v2.4)*
 11. Claude Code 워크플로우 프롬프트
@@ -33,7 +35,7 @@
 13. 검토자·참고문헌
 14. 한계와 후속 연구 *(14.3 음성 인터페이스 한계 — v2.3 신규 / 14.4 ramp 캘리브레이션 한계 — v2.4 신규)*
 **15. AI API 통합 — GPT × Gemini × Whisper 역할 분담** ⭐ *(Whisper 적용 범위 전면 확장 — v2.3)*
-부록 A. 변경 이력 *(v2.5 추가)*
+부록 A. 변경 이력 *(v2.6 추가)*
 
 ---
 
@@ -412,6 +414,8 @@ final_volume = base_volume(ramp 보간값) × VOLUME_TO_AUDIO[user_volume]
 
 청각 과민 학습자 / 보조 청력 기구 사용자를 위해 우측 상단 음성 설정 패널의 **"☕ 카페 배경 소리"** 스위치로 즉시 OFF 가능 (`voiceStore.ambientEnabled`, localStorage 영속).  음성 안내(TTS) 는 그대로 작동하므로 KS X 9211:2025 §5.2.2 d) 청각 대체 의무에는 영향 없음.
 
+⭐ **v2.6 — 단계 정합성 + 적용 배지**: Articulation·Reflection·완료(step 8·9·10)는 주문 단계가 아니므로 소음이 없어야 한다. 그러나 이 페이지들은 `setMode` 를 호출하지 않아 직전 Real Guided/Free 의 `currentMode` 가 남는다.  이를 막기 위해 **`KioskFrame` 이 `currentStep` 으로 판단해 8·9·10 에서는 `AmbientSound` 에 `mode=null` 을 넘겨** 1초 페이드아웃 후 무음 처리한다(`AmbientSound` 의 ramp 로직 자체는 불변).  또한 소음이 **실제로 재생 중일 때만**("소음 나는 모드 + `ambientEnabled`") 헤더 아래에 보조 배지 **"🔊 카페 소음 적용 중 · 음성 설정에서 끌 수 있어요"** 를 노출한다 — 배지 조건과 재생 조건이 `hasAmbientSound()` 단일 출처를 공유해 항상 일치한다(저시력 시각 단서, 전맹은 음성 예고로 커버되어 `aria-hidden`).
+
 ---
 
 ## 5. 화면 흐름 — 10단계
@@ -461,6 +465,7 @@ final_volume = base_volume(ramp 보간값) × VOLUME_TO_AUDIO[user_volume]
 - 카페 소음: 0dB (조용)
 - 결제: 카드만
 - 학습자 입력: 0% (관찰만)
+- ⭐ v2.6 — `AutoDemo` 자동 시연(7단계 대본). 오른쪽에 공용 `KioskDiagram` 을 두고 **단계별 설명 영역을 펄스 강조**(카테고리→위, 메뉴/옵션→가운데, 결제→아래)하여 대본과 그림을 동기화. 진입 첫 단계 발화가 부모 리렌더로 끊기던 문제 수정(`onCompleteRef`/`onActiveAreaChangeRef`), 건너뛰기 버튼 확대(보조 위계 유지)
 
 ```
 도담의 사고 외현화 예시:
@@ -487,6 +492,7 @@ final_volume = base_volume(ramp 보간값) × VOLUME_TO_AUDIO[user_volume]
 - 카페 소음: 60dB (실세계)
 - 결제: 3종 + 무작위 등장
 - AI 도움: 10% (호출 시에만)
+- ⭐ v2.6 — 진입 멘트를 카페 소음·뒷사람 예고 + 안심으로 교체: "지금부터는 진짜 카페처럼 해볼게요. 곧 카페 소음이 들리고, 뒤에 다른 손님도 몇 분 계실 수 있어요. 그래도 괜찮아요… 제가 끝까지 같이 있을게요." (이 단계부터 ambient 소음 + "🔊 카페 소음 적용 중" 배지)
 
 #### 7. Real Free (Exploration) ⭐
 - **학습자가 자유롭게 메뉴 선택**
@@ -497,6 +503,8 @@ final_volume = base_volume(ramp 보간값) × VOLUME_TO_AUDIO[user_volume]
 #### 8. Articulation (명료화 — Bronze)
 4개 질문 음성+텍스트, 학습자 답변은 받지 않음 (회상 자체가 학습)
 
+> ⭐ v2.3 이후 구현: 3개 질문 + Whisper 음성 답변 수집(`articulationAnswers`). ⭐ v2.6 음성 길안내 보강 — (가) 마이크 위치 명시("화면 가운데에 동그란 마이크 버튼"), (나) 전사·coach-line 대기 2초 초과 시 침묵 메움("도담이 답변을 살펴보고 있어요"), (다) 답변 후 다음 행동 안내("다음 질문 버튼을 두 번 두드리세요" / 마지막은 "분석 보러 가기…"). 카페 소음은 무음(step 8).
+
 ```
 Q1. 방금 어떤 음료를 주문하셨나요? (30초 회상)
 Q2. 카테고리는 어떻게 찾으셨어요?
@@ -506,6 +514,8 @@ Q4. 오늘 주문, 어떠셨나요?
 
 #### 9. Reflection (성찰 — Silver)
 단계별 시간 비교 + 7개 피드백 템플릿 자동 선택
+
+> ⭐ v2.1 이후 구현: Gemini 분석(`/api/gemini`)으로 강점/약점/다음 단계 생성·발화. ⭐ v2.6 음성 길안내 보강 — 분석 대기 침묵을 안심 멘트로 메우고("조금만 더 기다려 주세요. 거의 다 됐어요"), 결과 청취 후 완료 안내("다 들으셨으면, 화면 아래 완료 버튼을 두 번 두드려 마무리해 주세요")를 결과 시퀀스 끝에 덧붙임. 카페 소음은 무음(step 9).
 
 ```
 ┌──────────────────────────────────┐
@@ -840,6 +850,12 @@ Deploy: ⭐ v2.4 라이브
     │ Router  │  그 외 → GPT-4o-mini ───┘
     └─────────┘     (CONTEXT_HINTS 주입)
 ```
+
+⭐ **v2.6 보강**
+- **KioskDiagram** (`components/kiosk/KioskDiagram.tsx`) — spatial-map 의 측면도 SVG 를 공용 컴포넌트로 분리. `activeArea` 강조 + 외곽선 펄스(1.8s, `prefers-reduced-motion` 시 정적), `pulseKey` 로 단계 전환 시 펄스 리셋. Tutorial 의 AutoDemo 가 현재 단계 영역을 넘겨 대본↔그림을 동기화.
+- **TTS prefetch** — `OpenAITTSManager.prefetch()` + in-flight 공유 캐시, `usePrefetchVoiceLabels` 훅이 화면 진입 시 라벨 오디오를 미리 받아 nova 첫 발화 지연 제거.
+- **Tab 포커스 발화** — `useDoubleTap.onFocus` + 입력 모달리티 게이트로, 스크린리더 없이 키보드만 쓰는 시각장애 학습자가 포커스 이동 시 voiceLabel 을 듣는다(마우스·자동 포커스 중복 발화는 차단).
+- **카페 소음 정합성** — `KioskFrame` 이 step 8·9·10 에서 `AmbientSound mode=null`(무음) + `hasAmbientSound()` 공유 판정으로 "🔊 카페 소음 적용 중" 배지 노출(재생 조건과 일치).
 
 ---
 
@@ -1797,6 +1813,38 @@ Articulation + Reflection AI 통합 구현.
 
 ## 부록 A. 변경 이력
 
+### v2.6 (2026-05-23) — 음성 길안내 강화 + Tutorial 다이어그램 동기화 + 카페 소음 정합성 ⭐
+
+v2.5 의 시각(저시력) 정리에 이어, **전맹·시각장애 학습자가 화면을 보지 않고 음성만으로 막힘없이 진행**하도록 길안내를 보강하고, 시연·소음·발화 즉시성을 정비.  메뉴 데이터·핵심 학습 로직(주문 흐름·Gemini/Whisper 호출)은 건드리지 않음.
+
+| 영역 | 변경 |
+|------|------|
+| 헤더 + 목차 | 버전 2.6 표기, v2.6 변경 사유 문단, 목차 5·8·부록 A 표기 |
+| 3.x / 4.5.4 | 4.5.4 에 step 8·9·10 무음 처리 + "🔊 카페 소음 적용 중" 배지 설명 추가 |
+| 5.2 #3 Tutorial | AutoDemo + KioskDiagram 단계 동기화 강조, 첫 단계 발화 끊김 수정, 건너뛰기 버튼 확대 |
+| 5.2 #6 Real Guided | 진입 멘트(카페 소음·뒷사람 예고 + 안심)로 교체 |
+| 5.2 #8 Articulation | 마이크 위치 명시 + 대기 침묵 메움 + 다음 행동 안내 음성 보강 |
+| 5.2 #9 Reflection | 분석 대기 침묵 안심 멘트 + 결과 후 완료 버튼 안내 |
+| 부록 A | 본 v2.6 엔트리 |
+
+**구현 산출물 (v2.6)**
+- `components/voice/VoiceCoach.tsx` — 음성바 상태 텍스트 "안내 끝 · 다시 듣기" → "안내 끝" (우측 버튼과 중복 제거), 비활성 버튼은 흐리게 유지(위치 학습)
+- `lib/interaction/doubleTap.ts` — `onFocus` 바인딩 추가: 키보드 Tab 포커스 시 voiceLabel 발화. 입력 모달리티 게이트(Tab/화살표=키보드, 포인터=마우스) + 250ms 중복 가드로 마우스 클릭 중복·마운트 자동 포커스 발화 차단
+- `lib/tts/openaiTTS.ts` — `prefetch()` + in-flight fetch 공유(`pending` 맵)로 prefetch↔speak 중복 호출 방지, 캐시 한도 32→64
+- `lib/tts/fallbackTTS.ts` — `prefetch(texts, {voice, speed})` (폴백 고정 시 skip)
+- `lib/tts/usePrefetchVoiceLabels.ts` (신규 훅) — 화면 진입 시 라벨 오디오 미리 받기. `VoiceButton`/`CategoryGrid`/`MenuGrid`/`ReplayButton`/환영 모드 카드에 연결 → Tab/단일 탭 첫 발화도 nova 캐시 적중으로 즉시
+- `components/voice/MicButton.tsx` — idle 안내·ariaLabel 을 한계 명시 문구로: "도담이에요. 두 번 두드려 무엇이든 물어보세요. 안내는 해드리지만, 선택과 결제는 직접 해주셔야 해요."
+- `components/kiosk/KioskDiagram.tsx` (신규, spatial-map 에서 분리) — `activeArea` 강조 + 외곽선 펄스(1.8s) + `pulseKey` 로 단계 전환 시 펄스 리셋, `prefers-reduced-motion` 시 정적. spatial-map 은 prop 없이 정적 사용(기존 모습 유지)
+- `app/globals.css` — `.kiosk-area`(opacity 전환) / `.kiosk-pulse`(breathing) 키프레임, reduced-motion 분기
+- `components/kiosk/AutoDemo.tsx` — 7단계 narration 교체, `STEP_DELAY_MS` 3s→1s + 음성 OFF 시 `SILENT_STEP_HOLD_MS` 2s, 나레이션 prefetch, `onActiveAreaChange(area, stepKey)` 로 다이어그램 동기화, `onComplete`/`onActiveAreaChange` 를 ref 로 분리해 진행 effect 재시작(첫 단계 끊김) 방지, 건너뛰기 버튼 확대(`min-h-12` + `touch-manipulation`, secondary 위계)
+- `app/tutorial/page.tsx` — 좌(시연)·우(`KioskDiagram`) 그리드, `activeArea`/`pulseKey` 끌어올림
+- `components/kiosk/CategoryGrid.tsx` + `lib/tts/voiceScripts.ts` — 카테고리 위치 안내를 순서 기반("첫 번째 커피 …")으로 통일(가로/세로 배치 무관)
+- `components/ambient/AmbientSound.tsx` — `hasAmbientSound(mode)` export(MODE_RAMP 단일 출처), ramp/ticker/캐시 로직은 불변
+- `components/kiosk/KioskFrame.tsx` — `isSilentStep`(8·9·10)→`ambientMode=null`, `ambientPlaying`(=`ambientEnabled && hasAmbientSound`) 일 때만 "🔊 카페 소음 적용 중" 배지
+- `app/real-guided/page.tsx` — `REAL_GUIDED_INTRO` 교체
+- `app/articulation/page.tsx` — 마이크 위치·대기 침묵 힌트·다음 행동 안내 발화 추가
+- `app/reflection/page.tsx` — 분석 대기 안심 멘트 + 완료 안내 발화 추가, effect 내 불필요한 `setLoadState` 제거(`react-hooks/set-state-in-effect` 경고 해소, 동작 동일)
+
 ### v2.5 (2026-05-23) — 저시력 사용자 진행 버튼·헤더·화면 폭 통일 ⭐
 
 v2.4 의 명도 대비·타이포그래피·focus 토큰 정리에 이어, 저시력 사용자의 화면 탐색 부담을 줄이기 위해 진행 동선을 통일.  메뉴/주문 정보·음성 스크립트·세로/가로 폭 분기 로직은 건드리지 않음.
@@ -1899,6 +1947,6 @@ v2.4 의 명도 대비·타이포그래피·focus 토큰 정리에 이어, 저�
 
 **END OF DOCUMENT**
 
-> *이 설계서(v2.5)는 KS X 9211:2025, 2026 NIA 가이드, Lave & Wenger(1991) 상황학습이론, Collins(2006) 인지적 도제이론을 통합 기반으로 작성되었으며, OpenAI GPT-4o-mini · Whisper-1 과 Google Gemini 2.5 Flash의 멀티 모델 아키텍처를 통해 인지적 도제의 AI 시대 확장형을 시도한 교육훈련 프로그램 개발용 문서입니다. v2.3에서 양방향 청각 인터페이스(네 번째 학술적 차별점) 를 도입한 데 이어, v2.4 에서는 Phase 5 카페 소음 레이어를 scaffolding 원리에 따라 모드별 60초 점진 증가(ramp) 모델로 실구현하여 Collins 의 scaffolding 을 환경 노출 차원으로도 동형 확장하였고, 메뉴/카테고리 SVG 일러스트 시스템과 표면 톤 통일로 시각 일관성을 강화하였으며, Vercel `https://ondam-kiosk.vercel.app/` 에 라이브 배포를 완료하였습니다. v2.5 에서는 저시력 사용자의 화면 탐색 부담을 줄이기 위해 "다음 단계로" 진행 버튼을 전 화면 동일 위치·크기(전폭 + 큰 높이 + 주황 primary action, 긴 본문에서는 sticky 하단 고정)로 통일하고, 헤더 한자 병기 제거 및 모드 선택 전 화면의 폭 고정으로 시각 일관성을 한층 정리하였습니다.*
+> *이 설계서(v2.6)는 KS X 9211:2025, 2026 NIA 가이드, Lave & Wenger(1991) 상황학습이론, Collins(2006) 인지적 도제이론을 통합 기반으로 작성되었으며, OpenAI GPT-4o-mini · Whisper-1 과 Google Gemini 2.5 Flash의 멀티 모델 아키텍처를 통해 인지적 도제의 AI 시대 확장형을 시도한 교육훈련 프로그램 개발용 문서입니다. v2.3에서 양방향 청각 인터페이스(네 번째 학술적 차별점) 를 도입한 데 이어, v2.4 에서는 Phase 5 카페 소음 레이어를 scaffolding 원리에 따라 모드별 60초 점진 증가(ramp) 모델로 실구현하여 Collins 의 scaffolding 을 환경 노출 차원으로도 동형 확장하였고, 메뉴/카테고리 SVG 일러스트 시스템과 표면 톤 통일로 시각 일관성을 강화하였으며, Vercel `https://ondam-kiosk.vercel.app/` 에 라이브 배포를 완료하였습니다. v2.5 에서는 저시력 사용자를 위해 "다음 단계로" 진행 버튼을 전 화면 동일 위치·크기로 통일하고 헤더·화면 폭을 정리하였으며, v2.6 에서는 전맹·시각장애 학습자가 화면을 보지 않고도 음성만으로 막힘없이 진행하도록 마이크 위치·대기 침묵·다음 행동 안내 등 음성 길안내를 보강하고, 키보드 Tab 포커스 발화와 nova prefetch 로 발화 즉시성을 확보했으며, Tutorial 시연을 KioskDiagram 단계 강조로 동기화하고 비주문 단계(8·9·10)의 카페 소음을 무음 처리하며 소음 적용 배지를 더해 청각 안내의 정합성을 완성하였습니다.*
 >
 > *본 시뮬레이터는 단순한 키오스크 시뮬레이터가 아닌, 시각장애인의 디지털 시민 정체성 회복을 위한 학습 환경(Learning Environment)임을 다시 한번 강조합니다.*

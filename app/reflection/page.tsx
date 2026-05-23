@@ -108,12 +108,10 @@ export default function ReflectionPage() {
   }, [setStep]);
 
   // 진입 시 분석 호출. 이미 결과가 있으면 (예: 뒤로갔다가 다시 들어옴) 건너뛴다.
+  // 이 경우 초기 state 가 이미 "done" 이라 effect 안에서 setState 할 필요가 없다.
   React.useEffect(() => {
     if (!ready) return;
-    if (reflectionResult) {
-      setLoadState("done");
-      return;
-    }
+    if (reflectionResult) return;
     let cancelled = false;
 
     async function runAnalysis() {
