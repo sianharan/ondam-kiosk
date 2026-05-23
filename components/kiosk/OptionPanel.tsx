@@ -212,7 +212,7 @@ export function OptionPanel({ onComplete }: OptionPanelProps) {
                   className={cn(
                     "flex cursor-pointer items-center gap-4 rounded-xl border-2 p-4 transition-colors",
                     "hover:bg-muted/60",
-                    "has-[:focus-visible]:ring-4 has-[:focus-visible]:ring-accent",
+                    "has-[:focus-visible]:ring-4 has-[:focus-visible]:ring-primary has-[:focus-visible]:ring-offset-2 has-[:focus-visible]:ring-offset-background",
                     isChecked
                       ? "border-primary bg-primary/5"
                       : "border-foreground/15 bg-background",

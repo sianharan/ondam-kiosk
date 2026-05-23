@@ -200,9 +200,9 @@ function CategoryCard({ def, isSelected, onActivate }: CategoryCardProps) {
         "group/category relative flex aspect-[5/4] flex-col items-stretch gap-4 overflow-hidden rounded-2xl p-5 text-white shadow-lg transition-transform md:gap-5 md:p-6",
         "ring-1 ring-foreground/10",
         "hover:-translate-y-1 hover:shadow-xl",
-        "focus-visible:ring-4 focus-visible:ring-accent focus-visible:outline-none",
+        "focus-visible:ring-4 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none",
         def.bgClass,
-        isSelected && "ring-4 ring-accent",
+        isSelected && "ring-4 ring-primary ring-offset-2 ring-offset-background",
         def.id === "dessert" && "text-[#3D2F1B]",
       )}
     >

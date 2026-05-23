@@ -68,11 +68,11 @@
   --secondary-foreground: #1A2A4A;
   --muted: oklch(0.97 0 0);
   --muted-foreground: oklch(0.45 0 0);
-  --accent: #E07856;
+  --accent: #A84A28;
   --accent-foreground: #ffffff;
   --category-coffee: #6B4423;
   --category-ade: #2D8C8C;
-  --category-tea: #88B04B;
+  --category-tea: #5A7A2E;
   --category-dessert: #E8D5B7;
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.922 0 0);

@@ -214,7 +214,7 @@ function SummaryRow({
         <span
           aria-hidden="true"
           className={cn(
-            "absolute inset-y-2 left-0 w-1.5 rounded-r-full",
+            "absolute inset-y-2 left-0 w-1.5 rounded-r-full ring-1 ring-foreground/20",
             ACCENT_CLASS[accent],
           )}
         />
@@ -224,7 +224,7 @@ function SummaryRow({
         className={cn(
           "text-xl md:text-2xl",
           highlight ? "font-bold text-foreground" : "text-foreground/90",
-          muted && "text-foreground/50",
+          muted && "text-foreground/70",
         )}
       >
         {value}

@@ -158,7 +158,7 @@ function MenuCard({ item, onActivate }: MenuCardProps) {
         "flex h-full w-full flex-col items-stretch gap-3 rounded-2xl bg-background p-4 text-left",
         "ring-1 ring-foreground/15 shadow-sm transition-all",
         "hover:-translate-y-0.5 hover:shadow-md hover:ring-primary/40",
-        "focus-visible:ring-4 focus-visible:ring-accent focus-visible:outline-none",
+        "focus-visible:ring-4 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none",
       )}
     >
       <div
@@ -184,7 +184,7 @@ function MenuCard({ item, onActivate }: MenuCardProps) {
       </p>
 
       <div className="mt-auto flex w-full items-end justify-between gap-3">
-        <span className="text-base text-foreground/55 md:text-lg">
+        <span className="text-base text-foreground/70 md:text-lg">
           {getOptionSummary(item) || "옵션 없음"}
         </span>
         <span className="text-2xl font-bold text-primary md:text-3xl">
@@ -229,7 +229,7 @@ function BackButton({ onBack }: { onBack: () => void }) {
       onClick={onClick}
       onKeyDown={onKeyDown}
       aria-label={voiceLabel}
-      className="inline-flex items-center gap-2 rounded-xl bg-muted px-5 py-3 text-lg font-medium text-foreground ring-1 ring-foreground/10 transition-colors hover:bg-muted/80 focus-visible:ring-4 focus-visible:ring-accent focus-visible:outline-none"
+      className="inline-flex items-center gap-2 rounded-xl bg-muted px-5 py-3 text-lg font-medium text-foreground ring-1 ring-foreground/10 transition-colors hover:bg-muted/80 focus-visible:ring-4 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none"
     >
       <span aria-hidden="true">←</span>
       <span>카테고리</span>
