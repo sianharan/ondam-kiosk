@@ -4,7 +4,9 @@
 > **연구 토대**: 상황학습이론(Lave & Wenger, 1991) + 인지적 도제이론(Collins, 2006)
 > **표준 기반**: KS X 9211:2025 무인정보단말기 접근성 지침
 > **개발 기간**: 2주 (학기 과제)
-> **버전**: 2.4 (Phase 5 카페 소음 레이어 + 디자인 리뉴얼 + 프로덕션 배포)
+> **버전**: 2.5 (저시력 사용자 기준 진행 버튼·헤더·화면 폭 통일)
+>
+> **v2.5 변경 사유** — v2.4 의 명도 대비·타이포그래피 토큰 작업에 이어, **저시력 사용자의 화면 탐색 부담을 줄이기 위해 진행 동선을 통일**한다.  ① **진행 버튼 통일** — "다음 단계로" 단일 진행 버튼(환영·공간 지도·영수증·Reflection)을 전 화면 동일 위치·크기(본문 하단 전폭 + 최소 64px 높이 + 주황 primary action)로 맞추고, 본문이 길어 버튼이 화면 밖으로 밀리는 화면(공간 지도·Challenge·Reflection)은 **sticky 하단 고정**으로 스크롤 없이도 항상 보이게 한다.  버튼 2개 이상 화면(완료·Articulation)은 한 줄로 합치지 않고 세로 스택하되 진행 주 버튼만 주황으로 강조한다.  ② **헤더 단순화** — 로고에 병기되던 한자 "溫談" 을 제거하고 "온담 카페" 만 노출한다.  ③ **모드 선택 전 폭 고정** — displayMode 가 확정되기 전 화면(환영·모드 선택)은 이전 세션에 남은 모드와 무관하게 항상 기본 폭(800px)으로 고정하여 폭이 들쭉날쭉해 보이는 문제를 없앴다(displayMode 폭 분기 자체는 공간 지도부터 그대로 적용).  자세한 설계는 3.3절(진행 버튼 통일 — 신규 블록) / 3.5.3절(모드 선택 전 폭 고정) / 5.2 #1 / 부록 A v2.5 참조.
 >
 > **v2.4 변경 사유** — 본 단계에서 세 가지를 동시에 마무리한다.  ① **Phase 5 카페 소음 레이어**를 실제로 구현(Howler.js)하고, 설계서의 단순 모드별 dB 고정 모델 대신 **모드별 점진 증가(scaffolding ramp) 모델**로 도입한다.  각 모드 진입 시 거의 무음에서 시작해 60초에 걸쳐 해당 모드의 목표 dB 까지 차오르며, 다음 모드는 이전 모드의 종료점에서 이어받아 또 60초 ramp 한다.  이는 Collins(2006) 의 scaffolding 원리(지지대를 점진적으로 제거)를 환경 노출에도 동형으로 적용한 본 연구의 추가 기여이다.  ② **디자인 리뉴얼** — 메뉴/카테고리 카드에 일관된 시각 언어의 SVG 일러스트(MenuIllustration / CategoryIllustration) 도입, 주문 흐름·Articulation·Reflection·Spatial-map 패널의 표면 톤을 `ring + shadow` 로 통일.  ③ **프로덕션 배포 완료** — Vercel `https://ondam-kiosk.vercel.app/` 에 라이브, OpenAI/Gemini 환경변수 등록 검증.  자세한 설계는 3.3절(디자인) / 4.5절(ramp 모델 — 신규) / 8.1절(배포) / 10장 Phase 표 / 부록 A v2.4 참조.
 >
@@ -18,9 +20,9 @@
 
 1. 프로젝트 개요 *(1.3 네 번째 차별점 — 양방향 음성 인터페이스 — v2.3 신규)*
 2. 학술적 토대
-3. 시뮬레이터 정체성과 설계 원칙 *(3.5 디스플레이 다양성 — v2.2 / 3.6 양방향 음성 — v2.3 / 3.3 일러스트 시스템 — v2.4 보강)*
+3. 시뮬레이터 정체성과 설계 원칙 *(3.5 디스플레이 다양성 — v2.2 / 3.6 양방향 음성 — v2.3 / 3.3 일러스트 시스템 — v2.4 보강 / 3.3 진행 버튼 통일 — v2.5 신규)*
 4. 교수설계 — Collins 4차원 *(4.5 카페 소음 점진 증가 모델 — v2.4 신규)*
-5. 화면 흐름 — 10단계 *(5.2 #1 환영 + 모드 선택 — v2.2 확장)*
+5. 화면 흐름 — 10단계 *(5.2 #1 환영 + 모드 선택 — v2.2 확장 / 모드 선택 전 폭 고정 — v2.5)*
 6. KS X 9211:2025 충족 매트릭스 *(§5.2.2 d) 양방향 확장 — v2.3 보강 / ambient ON·OFF 토글 — v2.4 보강)*
 7. 데이터 모델 *(7.0 학습 세션 상태 + `displayMode` — v2.2 확장 / `voiceStore.ambientEnabled` — v2.4 추가)*
 8. 기술 스택과 아키텍처 *(Whisper STT · Web Speech 폴백 · VAD — v2.3 / Howler.js 실구현 + Vercel 라이브 배포 — v2.4)*
@@ -31,7 +33,7 @@
 13. 검토자·참고문헌
 14. 한계와 후속 연구 *(14.3 음성 인터페이스 한계 — v2.3 신규 / 14.4 ramp 캘리브레이션 한계 — v2.4 신규)*
 **15. AI API 통합 — GPT × Gemini × Whisper 역할 분담** ⭐ *(Whisper 적용 범위 전면 확장 — v2.3)*
-부록 A. 변경 이력 *(v2.4 추가)*
+부록 A. 변경 이력 *(v2.5 추가)*
 
 ---
 
@@ -170,6 +172,21 @@ Collins가 직접 강조한 가치:
   · 환영 페이지 모드 선택 카드: 다이어그램 영역에 muted → primary/10 그라데이션,
     키오스크 실루엣에 스탠드·스피커·카드투입구 포함
 
+[진행 버튼 — v2.5 저시력 통일]
+  · "다음 단계로" 단일 진행 버튼은 전 화면 동일 위치·크기:
+    본문 하단 전폭(w-full) + 최소 높이 64px(min-h-16) + 주황 primary action
+    (PROGRESS_BUTTON_CLASS, components/voice/VoiceButton.tsx)
+    - 적용: 환영 "다음으로" / 공간 지도 "이해했어요, 다음으로" /
+      OrderFlow 영수증 "다음으로(...)"(5개 주문 모드 공유) / Reflection "완료"
+  · 본문이 길어 버튼이 화면 밖으로 밀리는 화면(공간 지도·Challenge·Reflection)은
+    sticky 하단 고정(STICKY_PROGRESS_FOOTER) — 저시력자가 스크롤 없이 항상 버튼을 봄
+    - KioskFrame 프레임은 overflow-visible 유지(클리핑은 헤더 rounded-t-3xl 로 대체):
+      sticky 가 프레임이 아닌 창(window) 스크롤 기준으로 동작하게 하기 위함
+  · 버튼 2개 이상 화면(완료·Articulation)은 예외 — 한 줄 전폭으로 합치지 않고
+    세로로 같은 폭 스택, 진행에 해당하는 주 버튼만 주황(완료=다시 학습하기 /
+    Articulation=다음 질문), 보조 버튼은 ghost
+  · 헤더는 로고 "온담 카페" 만 노출(한자 병기 "溫談" 제거) — 시각 단서 단순화
+
 [컴포넌트]
   · shadcn/ui 기반 (Radix UI ARIA 자동)
   · 모든 인터랙티브 요소에 voiceLabel 부착
@@ -221,6 +238,8 @@ Collins가 직접 강조한 가치:
 ```
 
 선택된 디스플레이 모드는 `learningStore.displayMode` 에 저장되어 이후 모든 화면이 동일 모드로 렌더링된다. (7.0 절 상태 모델 참조.)
+
+⭐ **v2.5 — 모드 선택 전 폭 고정**: displayMode 가 확정되기 전 화면(환영·모드 선택)은 store 에 남아 있는 이전 세션 모드와 무관하게 항상 기본 폭 **800px** 으로 고정한다(`KioskFrame fixedWidth`). 폭 분기(세로 800 / 가로 1400)는 모드를 고른 뒤 **공간 지도(2/10)부터** 적용된다. 800px 에서도 모드 선택 카드 2개는 데스크톱 2열 / 좁은 폭 1열로 안전하게 배치된다.
 
 #### 3.5.4 학술적 정당성
 
@@ -429,6 +448,7 @@ final_volume = base_volume(ramp 보간값) × VOLUME_TO_AUDIO[user_volume]
   - 더블 탭: 선택 → `learningStore.setDisplayMode(...)` → `/spatial-map` 진입
 - 선택 직후 음성 안내: "세로형으로 시작할게요" / "가로형으로 시작할게요"
 - 선택은 학습 세션 동안 고정 — 전 단계(공간 지도 ~ 완료)가 동일 모드로 렌더됨
+- ⭐ v2.5 — 본 화면(환영·모드 선택)은 displayMode 확정 전이므로 항상 800px 고정(`fixedWidth`). 폭 분기는 공간 지도부터. 진행 버튼 "다음으로" 도 본문 하단 전폭 통일(3.3 진행 버튼 블록 참조)
 
 #### 2. 공간 지도 ⭐ 시각장애인 핵심
 - 키오스크 전체 구조 음성 안내
@@ -1777,6 +1797,28 @@ Articulation + Reflection AI 통합 구현.
 
 ## 부록 A. 변경 이력
 
+### v2.5 (2026-05-23) — 저시력 사용자 진행 버튼·헤더·화면 폭 통일 ⭐
+
+v2.4 의 명도 대비·타이포그래피·focus 토큰 정리에 이어, 저시력 사용자의 화면 탐색 부담을 줄이기 위해 진행 동선을 통일.  메뉴/주문 정보·음성 스크립트·세로/가로 폭 분기 로직은 건드리지 않음.
+
+| 영역 | 변경 |
+|------|------|
+| 헤더 + 목차 | 버전 2.5 표기, v2.5 변경 사유 문단 추가, 목차 3·5·부록 A 표기 |
+| 3.3 디자인 원칙 | **[진행 버튼 — v2.5 저시력 통일] 블록 신설** (전폭 + min-h-16 + 주황 primary action + 긴 본문 sticky + 다중 버튼 예외 + 헤더 한자 제거) |
+| 3.5.3 모드 선택 흐름 | 모드 선택 전 화면 800px 고정(`fixedWidth`) 설명 추가 |
+| 5.2 #1 환영 + 모드 선택 | `fixedWidth` + 진행 버튼 전폭 통일 항목 추가 |
+| 부록 A | 본 v2.5 엔트리 |
+
+**구현 산출물 (v2.5 완료 시점)**
+- `components/voice/VoiceButton.tsx` — `PROGRESS_BUTTON_CLASS`(w-full min-h-16 text-2xl md:text-3xl) + `STICKY_PROGRESS_FOOTER`(sticky bottom-0 + 불투명 배경) export 신설
+- `components/kiosk/KioskFrame.tsx` — 헤더 "溫談" span 제거 / `fixedWidth` prop 추가(모드 선택 전 800px 고정) / 프레임 `overflow-hidden` → 제거(sticky 가 window 기준 동작하도록) + 헤더 `rounded-t-3xl` 로 모서리 클리핑 대체
+- `app/page.tsx` — `<KioskFrame fixedWidth>` + 환영 "다음으로" 전폭화
+- `app/spatial-map/page.tsx` — "이해했어요, 다음으로" 우측 정렬 → 본문 하단 전폭 sticky
+- `components/kiosk/OrderFlow.tsx` — 영수증 "다음으로(...)" 전폭 sticky (5개 주문 모드 공유 → Challenge 포함 일괄 통일)
+- `app/reflection/page.tsx` — "완료" 남색 secondary → 주황 primary + 전폭 sticky
+- `app/complete/page.tsx` — 버튼 2개 항상 세로 스택(동일 폭, max-w-md 중앙) + min-h-16, 주 버튼(다시 학습하기) 위
+- `app/articulation/page.tsx` — 변경 없음(주 진행 버튼 "다음 질문"이 이미 기본 주황 primary, 보조만 ghost — 규칙 충족)
+
 ### v2.4 (2026-05-23) — Phase 5 카페 소음 + 디자인 리뉴얼 + 프로덕션 배포 ⭐
 
 세 갈래 작업을 한 버전에 통합:  ① Phase 5 실구현, ② 디자인 시각 리뉴얼, ③ Vercel 라이브 배포.
@@ -1857,6 +1899,6 @@ Articulation + Reflection AI 통합 구현.
 
 **END OF DOCUMENT**
 
-> *이 설계서(v2.4)는 KS X 9211:2025, 2026 NIA 가이드, Lave & Wenger(1991) 상황학습이론, Collins(2006) 인지적 도제이론을 통합 기반으로 작성되었으며, OpenAI GPT-4o-mini · Whisper-1 과 Google Gemini 2.5 Flash의 멀티 모델 아키텍처를 통해 인지적 도제의 AI 시대 확장형을 시도한 교육훈련 프로그램 개발용 문서입니다. v2.3에서 양방향 청각 인터페이스(네 번째 학술적 차별점) 를 도입한 데 이어, v2.4 에서는 Phase 5 카페 소음 레이어를 scaffolding 원리에 따라 모드별 60초 점진 증가(ramp) 모델로 실구현하여 Collins 의 scaffolding 을 환경 노출 차원으로도 동형 확장하였고, 메뉴/카테고리 SVG 일러스트 시스템과 표면 톤 통일로 시각 일관성을 강화하였으며, Vercel `https://ondam-kiosk.vercel.app/` 에 라이브 배포를 완료하였습니다.*
+> *이 설계서(v2.5)는 KS X 9211:2025, 2026 NIA 가이드, Lave & Wenger(1991) 상황학습이론, Collins(2006) 인지적 도제이론을 통합 기반으로 작성되었으며, OpenAI GPT-4o-mini · Whisper-1 과 Google Gemini 2.5 Flash의 멀티 모델 아키텍처를 통해 인지적 도제의 AI 시대 확장형을 시도한 교육훈련 프로그램 개발용 문서입니다. v2.3에서 양방향 청각 인터페이스(네 번째 학술적 차별점) 를 도입한 데 이어, v2.4 에서는 Phase 5 카페 소음 레이어를 scaffolding 원리에 따라 모드별 60초 점진 증가(ramp) 모델로 실구현하여 Collins 의 scaffolding 을 환경 노출 차원으로도 동형 확장하였고, 메뉴/카테고리 SVG 일러스트 시스템과 표면 톤 통일로 시각 일관성을 강화하였으며, Vercel `https://ondam-kiosk.vercel.app/` 에 라이브 배포를 완료하였습니다. v2.5 에서는 저시력 사용자의 화면 탐색 부담을 줄이기 위해 "다음 단계로" 진행 버튼을 전 화면 동일 위치·크기(전폭 + 큰 높이 + 주황 primary action, 긴 본문에서는 sticky 하단 고정)로 통일하고, 헤더 한자 병기 제거 및 모드 선택 전 화면의 폭 고정으로 시각 일관성을 한층 정리하였습니다.*
 >
 > *본 시뮬레이터는 단순한 키오스크 시뮬레이터가 아닌, 시각장애인의 디지털 시민 정체성 회복을 위한 학습 환경(Learning Environment)임을 다시 한번 강조합니다.*
