@@ -54,6 +54,8 @@ export class OpenAITTSManager {
 
   /** blob URL 캐시: 키 = `${voice}|${speed}|${text}` */
   private cache = new Map<string, string>();
+  /** 진행 중 fetch: 같은 키를 prefetch 와 speak 가 동시에 요청할 때 한 번만 받는다. */
+  private pending = new Map<string, Promise<string>>();
 
   constructor() {
     if (typeof window === "undefined") return;
@@ -199,37 +201,49 @@ export class OpenAITTSManager {
       return cached;
     }
 
-    const res = await fetch(TTS_ENDPOINT, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text, voice, speed }),
-    });
-    if (!res.ok) {
-      let detail = "";
-      try {
-        const data = await res.json();
-        detail =
-          (data as { error?: string }).error ?? `HTTP ${res.status}`;
-      } catch {
-        detail = `HTTP ${res.status}`;
-      }
-      throw new TTSError(detail, res.status);
-    }
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
+    // 이미 같은 키를 받는 중이면(예: prefetch 가 먼저 시작) 그 fetch 를 공유한다.
+    const inflight = this.pending.get(key);
+    if (inflight) return inflight;
 
-    // LRU 삽입 (한도 초과 시 가장 오래된 항목 폐기)
-    if (this.cache.size >= CACHE_LIMIT) {
-      const oldestKey = this.cache.keys().next().value;
-      if (oldestKey !== undefined) {
-        const oldUrl = this.cache.get(oldestKey);
-        if (oldUrl) URL.revokeObjectURL(oldUrl);
-        this.cache.delete(oldestKey);
+    const fetchPromise = (async (): Promise<string> => {
+      const res = await fetch(TTS_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text, voice, speed }),
+      });
+      if (!res.ok) {
+        let detail = "";
+        try {
+          const data = await res.json();
+          detail =
+            (data as { error?: string }).error ?? `HTTP ${res.status}`;
+        } catch {
+          detail = `HTTP ${res.status}`;
+        }
+        throw new TTSError(detail, res.status);
       }
-    }
-    this.cache.set(key, url);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
 
-    return url;
+      // LRU 삽입 (한도 초과 시 가장 오래된 항목 폐기)
+      if (this.cache.size >= CACHE_LIMIT) {
+        const oldestKey = this.cache.keys().next().value;
+        if (oldestKey !== undefined) {
+          const oldUrl = this.cache.get(oldestKey);
+          if (oldUrl) URL.revokeObjectURL(oldUrl);
+          this.cache.delete(oldestKey);
+        }
+      }
+      this.cache.set(key, url);
+      return url;
+    })();
+
+    this.pending.set(key, fetchPromise);
+    try {
+      return await fetchPromise;
+    } finally {
+      this.pending.delete(key);
+    }
   }
 
   private playUrl(url: string): Promise<void> {

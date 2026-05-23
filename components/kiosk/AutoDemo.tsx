@@ -9,7 +9,8 @@
  * 음성으로 외현화한다.
  *
  * 동작 흐름
- *   3초 대기 → 음성 안내 + orderStore 상태 변경 → 다음 단계로
+ *   1초 대기 → 음성 안내(발화가 끝날 때까지) → orderStore 상태 변경 → 다음 단계로
+ *   (음성 OFF 인 학습자는 발화 대신 단계마다 최소 머무름 시간을 둔다)
  *
  *   1. 카테고리 (커피)
  *   2. 메뉴 (아메리카노)
@@ -32,7 +33,7 @@ import { getMenuItem, type MenuItem } from "@/lib/kiosk-data/menu";
 import { ttsManager } from "@/lib/tts/fallbackTTS";
 import { cn } from "@/lib/utils";
 import { useOrderStore } from "@/stores/orderStore";
-import { useVoiceStore } from "@/stores/voiceStore";
+import { VOLUME_TO_AUDIO, useVoiceStore } from "@/stores/voiceStore";
 
 type StepKey =
   | "category"
@@ -51,13 +52,17 @@ interface DemoStep {
   apply: () => void;
 }
 
-const STEP_DELAY_MS = 3000;
+// 발화 전 짧은 "준비" 대기. 대본이 길어 3초 고정 대기는 어색하므로 1초로 단축.
+const STEP_DELAY_MS = 1000;
+// 음성 안내가 꺼진 학습자용: 발화가 없으니 단계가 순식간에 지나가지 않도록
+// 단계마다 최소한 화면에 머무는 시간(저시력 학습자가 인디케이터·주문 카드를 눈으로 따라갈 여유).
+const SILENT_STEP_HOLD_MS = 2000;
 const DEMO_ORDER_NUMBER = 47;
 
 export interface AutoDemoProps {
   /** 어떤 시나리오를 시연할지 식별자 — 현재는 'S1-americano-hot' 만 지원 */
   scenarioId?: string;
-  /** 시연 단계 사이 간격 (기본 3초) */
+  /** 발화 전 "준비" 대기 (기본 1초) */
   stepDelayMs?: number;
   /** 학습자가 [건너뛰기] 눌렀을 때.  부모는 onComplete 와 동일 처리해도 OK */
   onSkip?: () => void;
@@ -79,6 +84,16 @@ export function AutoDemo({
   const completePayment = useOrderStore((s) => s.completePayment);
 
   const isVoiceEnabled = useVoiceStore((s) => s.isEnabled);
+  const voice = useVoiceStore((s) => s.voice);
+  const speed = useVoiceStore((s) => s.speed);
+  const volume = useVoiceStore((s) => s.volume);
+
+  // 최신 음성 설정을 ref 로 — 발화 직전에 읽되, 설정 변경이 시연 진행 effect 를
+  // 재시작시키지 않게(주 effect deps 에서 제외).
+  const settingsRef = React.useRef({ voice, speed, volume });
+  React.useEffect(() => {
+    settingsRef.current = { voice, speed, volume };
+  }, [voice, speed, volume]);
 
   const [stepIndex, setStepIndex] = React.useState(0);
   const [stepStatus, setStepStatus] = React.useState<"waiting" | "speaking" | "applied">(
@@ -98,50 +113,64 @@ export function AutoDemo({
         key: "category",
         label: "카테고리 선택",
         narration:
-          "먼저 메뉴 카테고리에서 커피를 골라볼게요. 화면 왼쪽 위 커피 카테고리예요.",
+          "처음 보는 키오스크에선, 저는 먼저 전체를 들어봐요. 음료 종류가 맨 위에 네 개 있어요. 커피, 에이드, 티, 디저트요. 틀려도 되돌릴 수 있으니 편하게요. 아메리카노는 커피니까, 커피를 두 번 두드릴게요.",
         apply: () => setCategory("coffee"),
       },
       {
         key: "menu",
         label: "메뉴 선택",
         narration:
-          "이번엔 아메리카노를 선택할게요. 커피 메뉴 맨 위에 보통 있어요.",
+          "커피 안으로 들어왔어요. 이제 화면 가운데에 커피 메뉴들이 위에서 아래로 펼쳐져요. 아메리카노는 보통 맨 위에 있어요. 한 번 두드리면 설명을 들려주고, 두 번 두드리면 골라져요. 아메리카노를 두 번 두드릴게요.",
         apply: () => setItem(americano),
       },
       {
         key: "temperature",
         label: "온도 선택",
         narration:
-          "따뜻하게 마실 거라 따뜻하게를 선택할게요.",
+          "메뉴를 고르면 옵션이 나와요. 먼저 온도예요. 따뜻하게와 차갑게 둘 중 하나죠. 아메리카노는 둘 다 되는데, 저는 오늘 따뜻한 걸로 할게요. 따뜻하게를 두 번 두드릴게요.",
         apply: () => setTemperature("hot"),
       },
       {
         key: "size",
         label: "사이즈 선택",
-        narration: "사이즈는 톨로 할게요.",
+        narration:
+          "다음은 사이즈예요. 톨과 그란데가 있어요. 그란데는 오백 원이 더 붙어요. 저는 기본인 톨로 할게요. 톨을 두 번 두드릴게요.",
         apply: () => setSize("tall"),
       },
       {
         key: "checkout",
         label: "결제 화면",
-        narration: "이제 결제하기를 눌러볼게요.",
+        narration:
+          "고를 건 다 골랐어요. 이제 거의 끝났어요. 화면 아래쪽에 결제하기 버튼이 있어요. 그걸 두 번 두드려 결제로 넘어갈게요.",
         // 결제 진입 자체는 별도 store 변경이 필요 없다. 다음 단계에서 setPayment.
         apply: () => {},
       },
       {
         key: "payment",
         label: "결제 수단",
-        narration: "카드로 결제할게요. 카드를 단말기 아래쪽 투입구에 꽂아주세요.",
+        narration:
+          "결제 방법을 고르는 곳이에요. 카드, 모바일페이가 있어요. 저는 카드로 할게요. 카드를 두 번 두드린 다음, 카드를 화면 아래 오른쪽 투입구에 천천히 꽂으면 돼요.",
         apply: () => setPayment("card"),
       },
       {
         key: "complete",
         label: "주문 완료",
-        narration: `결제가 완료되었어요. 주문번호 ${DEMO_ORDER_NUMBER}번이에요.`,
+        narration: `결제가 끝났어요. 주문번호는 ${DEMO_ORDER_NUMBER}번이에요. 음료가 준비되면 ${DEMO_ORDER_NUMBER}번으로 불러줘요. 자, 이렇게 한 잔이 완성됐어요. 처음엔 낯설어도, 한 번 흐름을 들어두면 다음엔 훨씬 쉬워요. 이제 직접 해보실 거예요.`,
         apply: () => completePayment(DEMO_ORDER_NUMBER),
       },
     ];
   }, [americano, setCategory, setItem, setTemperature, setSize, setPayment, completePayment]);
+
+  // 나레이션 오디오를 마운트 시 미리 받아 둔다(nova).  특히 가장 긴 첫 단계가
+  // fetch 지연으로 첫 재생 시점이 자동재생 허용 창을 넘겨 차단되는 문제를 예방 —
+  // 미리 캐시에 있으면 1초 대기 직후 즉시 재생된다. (음성 OFF 면 의미 없어 생략)
+  React.useEffect(() => {
+    if (!isVoiceEnabled || steps.length === 0) return;
+    ttsManager.prefetch(
+      steps.map((s) => s.narration),
+      { voice, speed },
+    );
+  }, [steps, isVoiceEnabled, voice, speed]);
 
   // ── 시연 진행 — 한 단계씩 await ───────────────────────────
   // generation 으로 unmount/재마운트 시 이전 setTimeout 이 store 를 건드리지 않게.
@@ -172,14 +201,26 @@ export function AutoDemo({
       });
       if (cancelledRef.current || generationRef.current !== myGen) return;
 
-      // 2) 발화 — 음성 안내 켜진 학습자에게만.  꺼져 있어도 시연 자체는 진행한다.
+      // 2) 발화 — 음성 안내 켜진 학습자에게만.  발화가 끝날 때까지 await 하므로
+      //    대본 길이에 맞춰 자연스럽게 다음 단계로 넘어간다.
+      //    음성이 꺼진 학습자는 발화가 없으니, 단계가 순식간에 지나가지 않도록
+      //    최소 머무름 시간을 둔다 (저시력 학습자가 화면을 눈으로 따라갈 여유).
       setStepStatus("speaking");
       if (isVoiceEnabled) {
+        // 학습자가 고른 음성/속도/음량을 반영 (prefetch 와 같은 키로 캐시 적중).
+        const { voice: v, speed: sp, volume: vol } = settingsRef.current;
+        ttsManager.setVoice(v);
+        ttsManager.setSpeed(sp);
+        ttsManager.setVolume(VOLUME_TO_AUDIO[vol]);
         try {
           await ttsManager.speak(step.narration);
         } catch {
           // TTS 실패해도 시연 흐름은 끊지 않는다 — 시각 + aria-live 로 보완됨.
         }
+      } else {
+        await new Promise<void>((resolve) => {
+          timeoutId = setTimeout(resolve, SILENT_STEP_HOLD_MS);
+        });
       }
       if (cancelledRef.current || generationRef.current !== myGen) return;
 
