@@ -4,7 +4,9 @@
 > **연구 토대**: 상황학습이론(Lave & Wenger, 1991) + 인지적 도제이론(Collins, 2006)
 > **표준 기반**: KS X 9211:2025 무인정보단말기 접근성 지침
 > **개발 기간**: 2주 (학기 과제)
-> **버전**: 2.3 (양방향 음성 인터페이스 — Whisper STT 전면 도입)
+> **버전**: 2.4 (Phase 5 카페 소음 레이어 + 디자인 리뉴얼 + 프로덕션 배포)
+>
+> **v2.4 변경 사유** — 본 단계에서 세 가지를 동시에 마무리한다.  ① **Phase 5 카페 소음 레이어**를 실제로 구현(Howler.js)하고, 설계서의 단순 모드별 dB 고정 모델 대신 **모드별 점진 증가(scaffolding ramp) 모델**로 도입한다.  각 모드 진입 시 거의 무음에서 시작해 60초에 걸쳐 해당 모드의 목표 dB 까지 차오르며, 다음 모드는 이전 모드의 종료점에서 이어받아 또 60초 ramp 한다.  이는 Collins(2006) 의 scaffolding 원리(지지대를 점진적으로 제거)를 환경 노출에도 동형으로 적용한 본 연구의 추가 기여이다.  ② **디자인 리뉴얼** — 메뉴/카테고리 카드에 일관된 시각 언어의 SVG 일러스트(MenuIllustration / CategoryIllustration) 도입, 주문 흐름·Articulation·Reflection·Spatial-map 패널의 표면 톤을 `ring + shadow` 로 통일.  ③ **프로덕션 배포 완료** — Vercel `https://ondam-kiosk.vercel.app/` 에 라이브, OpenAI/Gemini 환경변수 등록 검증.  자세한 설계는 3.3절(디자인) / 4.5절(ramp 모델 — 신규) / 8.1절(배포) / 10장 Phase 표 / 부록 A v2.4 참조.
 >
 > **v2.3 변경 사유** — 본 시뮬레이터의 청각 모달리티를 **단방향(도담 → 학습자)에서 양방향(도담 ↔ 학습자)으로 확장**한다. v2.2까지의 단방향 TTS 안내(nova 발화)에 더해, OpenAI Whisper STT를 5개 학습 모드 전 구간에 통합하여 학습자가 도담을 음성으로 호출하고 자연어로 도움을 요청할 수 있도록 한다. Whisper 적용 범위를 v2.2의 Articulation 단계 한정에서 전체 학습 흐름으로 확장한 것이며, KS X 9211:2025 §5.2.2 d) "청각적 대체 콘텐츠"의 양방향 구현이라는 학술적 의의를 갖는다. Collins(2006) 인지적 도제의 **개별화된 스캐폴딩(individualized scaffolding)** 을 학습자 주도 호출 채널까지 확장한 본 연구의 네 번째 차별점이다. (자세한 설계는 1.3절 네 번째 차별점, 3.6절 양방향 음성 인터페이스, 15장 AI 통합 참조.)
 >
@@ -16,20 +18,20 @@
 
 1. 프로젝트 개요 *(1.3 네 번째 차별점 — 양방향 음성 인터페이스 — v2.3 신규)*
 2. 학술적 토대
-3. 시뮬레이터 정체성과 설계 원칙 *(3.5 디스플레이 모드 다양성 — v2.2 / 3.6 양방향 음성 인터페이스 — v2.3 신규)*
-4. 교수설계 — Collins 4차원
+3. 시뮬레이터 정체성과 설계 원칙 *(3.5 디스플레이 다양성 — v2.2 / 3.6 양방향 음성 — v2.3 / 3.3 일러스트 시스템 — v2.4 보강)*
+4. 교수설계 — Collins 4차원 *(4.5 카페 소음 점진 증가 모델 — v2.4 신규)*
 5. 화면 흐름 — 10단계 *(5.2 #1 환영 + 모드 선택 — v2.2 확장)*
-6. KS X 9211:2025 충족 매트릭스 *(§5.2.2 d) 양방향 확장 — v2.3 보강)*
-7. 데이터 모델 *(7.0 학습 세션 상태 + `displayMode` — v2.2 확장)*
-8. 기술 스택과 아키텍처 *(Whisper STT · Web Speech 폴백 · VAD — v2.3 추가)*
-9. 폴더 구조
-10. Phase별 개발 계획 (2주) *(Phase 3-C — v2.2 / Phase 4-AI-A·4-AI-B — v2.3 신규)*
+6. KS X 9211:2025 충족 매트릭스 *(§5.2.2 d) 양방향 확장 — v2.3 보강 / ambient ON·OFF 토글 — v2.4 보강)*
+7. 데이터 모델 *(7.0 학습 세션 상태 + `displayMode` — v2.2 확장 / `voiceStore.ambientEnabled` — v2.4 추가)*
+8. 기술 스택과 아키텍처 *(Whisper STT · Web Speech 폴백 · VAD — v2.3 / Howler.js 실구현 + Vercel 라이브 배포 — v2.4)*
+9. 폴더 구조 *(MenuIllustration · CategoryIllustration · AmbientSound 추가 — v2.4)*
+10. Phase별 개발 계획 (2주) *(Phase 3-C — v2.2 / Phase 4-AI-A·4-AI-B — v2.3 / Phase 5 ✅ + 디자인 리뉴얼 + Phase 9 배포 ✅ — v2.4)*
 11. Claude Code 워크플로우 프롬프트
 12. KS X 9211:2025 체크리스트
 13. 검토자·참고문헌
-14. 한계와 후속 연구 *(14.3 음성 인터페이스 한계 — v2.3 신규)*
+14. 한계와 후속 연구 *(14.3 음성 인터페이스 한계 — v2.3 신규 / 14.4 ramp 캘리브레이션 한계 — v2.4 신규)*
 **15. AI API 통합 — GPT × Gemini × Whisper 역할 분담** ⭐ *(Whisper 적용 범위 전면 확장 — v2.3)*
-부록 A. 변경 이력 *(v2.3 신규)*
+부록 A. 변경 이력 *(v2.4 추가)*
 
 ---
 
@@ -152,10 +154,21 @@ Collins가 직접 강조한 가치:
   · 본문 크기: KS X 9211 7.25mm 이상 환산 → 화면상 약 24px 이상
   · 명도 대비: WCAG AAA (7:1) 기본 유지
 
-[이미지]
+[이미지] ⭐ v2.4 리뉴얼
   · 실사 사진 X (저작권 + 본 연구 정체성)
-  · 단순 SVG 아이콘 + 카테고리 색상 블록
-  · 메뉴명 텍스트가 시각적 주역
+  · 일관된 시각 언어의 SVG 일러스트 시스템:
+    - MenuIllustration (8 메뉴 — 잔/유리잔/접시 + 카테고리 컬러 액센트)
+    - CategoryIllustration (4 카테고리 — currentColor 스트로크로
+      카드 배경색에 자동 적응, MenuIllustration 과 같은 곡선/스팀/잎 모티프)
+  · 카테고리 색상 블록은 카드 배경 + CartSidebar 메뉴 행 좌측 세로 띠로 재사용
+  · 메뉴명 텍스트가 여전히 시각적 주역, 일러스트는 보조 단서
+
+[표면 톤 — v2.4 통일]
+  · 모든 카드/패널: rounded-2xl + bg-background +
+    ring-1 ring-foreground/15 + shadow-sm (1px border 대신)
+  · 인터랙티브 카드는 호버 시 -translate-y-0.5 + shadow-md + ring-primary/40
+  · 환영 페이지 모드 선택 카드: 다이어그램 영역에 muted → primary/10 그라데이션,
+    키오스크 실루엣에 스탠드·스피커·카드투입구 포함
 
 [컴포넌트]
   · shadcn/ui 기반 (Radix UI ARIA 자동)
@@ -288,15 +301,17 @@ OpenAI 키 누락·네트워크 장애·브라우저 미지원 어떤 경우에�
 
 각 단계의 핵심 특성:
 
-| # | Collins 단계 | 시뮬레이터 모드 | 카페 소음 | AI 도움 | 학습자 자율성 |
+| # | Collins 단계 | 시뮬레이터 모드 | 카페 소음 (v2.4 ramp) | AI 도움 | 학습자 자율성 |
 |---|------------|---------------|---------|--------|----------|
-| 1 | **Modeling** | Tutorial | 0dB | 100% | 0% |
-| 2 | **Coaching** | Practice | 20~30dB | 80% | 20% |
-| 3 | **Scaffolding** | Challenge | 40~50dB | 40% | 60% |
-| 4 | **(Fading)** | Real Guided | 60dB | 10% | 90% |
-| 5 | **Exploration** | Real Free | 60dB | 호출만 | 100% |
+| 1 | **Modeling** | Tutorial | 무음 | 100% | 0% |
+| 2 | **Coaching** | Practice | 0.06 → 0.18 (60s ramp) | 80% | 20% |
+| 3 | **Scaffolding** | Challenge | 0.18 → 0.40 (60s ramp) | 40% | 60% |
+| 4 | **(Fading)** | Real Guided | 0.40 → 0.62 (60s ramp) | 10% | 90% |
+| 5 | **Exploration** | Real Free | 0.62 유지 | 호출만 | 100% |
 | 6 | **Articulation** | (모드 후) | — | 질문만 | — |
 | 7 | **Reflection** | (모드 후) | — | 비교 안내 | — |
+
+> **v2.4 — "카페 소음" 컬럼 갱신**.  설계서 v2.3 까지는 모드별 고정 dB(0/30/50/60) 였으나, 실제 구현(4.5절) 에서는 각 모드 진입 직후 거의 무음에서 시작해 60초에 걸쳐 ramp 하는 모델로 바뀌었다.  종료값(0.18 / 0.40 / 0.62) 이 곧 다음 모드의 시작값이 되어 인지 음량은 연속적이고, 한 모드 안에서도 환경에 점진 적응할 수 있다.  값은 학습자 음량 설정(`voice.volume` 5단) 과 곱해지는 base 0~1 스케일.
 
 ```
 AI 도움  ████████████ → █████████ → ████ → █ → 호출만 → 질문 → 분석
@@ -311,7 +326,7 @@ AI 도움  ████████████ → █████████ 
 Collins의 3원칙 적용:
 
 **① 복잡성 증가 (Complexity)**
-- 카페 소음: 0dB → 30dB → 50dB → 60dB
+- 카페 소음: 무음 → 0.18 → 0.40 → 0.62 (각 모드 안에서도 60초 ramp — 4.5절)
 - 결제 수단: 1종 → 2종 → 3종 → 무작위
 - 시간 압박: 없음 → 약함 → 보통 → 실전
 
@@ -328,7 +343,7 @@ Collins의 3원칙 적용:
 
 | 요소 | 본 연구 적용 |
 |------|---------|
-| **Situated Learning** | 카페 소음 레이어 (Howler.js로 모드별 BGM 전환) |
+| **Situated Learning** | 카페 소음 레이어 (Howler.js로 모드별 BGM, v2.4 부터 60초 ramp — 4.5절) |
 | **Community of Practice** | "당당한 일반 소비자" 정체성 부여, 도담의 친근한 말투 |
 | **Intrinsic Motivation** | 외재 보상 X, "스스로 주문 완수" 자체가 보상 |
 | **낙인 효과 해소** ⭐ | "비판 없는 코치", 실수 무한 허용, 뒷사람 시선 없음 |
@@ -340,6 +355,43 @@ PPT Level 1 인터뷰의 핵심 발화:
 - "소비자로서 권리가 없다 느껴요." → 낙인 효과
 
 → AI 시뮬레이터 = 낙인 효과 해소 장치
+
+### 4.5 카페 소음 점진 증가 모델 — Scaffolding Ramp ⭐ v2.4 신규
+
+설계서 v2.3 까지의 Sociology 차원은 "모드별 dB 고정"(Tutorial 0 / Practice 30 / Challenge 50 / Real-* 60) 이라는 단순 step 모델을 가정했다.  v2.4 Phase 5 실제 구현 단계에서, 학습자가 새 모드로 진입할 때마다 환경 음량이 갑자기 차오르는 단절감이 발생할 수 있다는 점이 드러났고, Collins(2006) 의 scaffolding 원리(지지대를 점진적으로 제거) 가 **AI 도움뿐 아니라 환경 노출에도 동형으로 적용 가능하다**는 통찰을 반영해 다음과 같이 재설계했다.
+
+#### 4.5.1 설계
+
+| 모드 | 트랙 파일 | 진입 직후 (start) | 60초 후 (end) | ramp 시간 |
+|------|---------|------------------|--------------|----------|
+| Tutorial   | (없음)         | 무음 | 무음 | — |
+| Practice   | `quiet.mp3`    | **0.06** (거의 무음) | 0.18 | 60s |
+| Challenge  | `medium.mp3`   | 0.18 (Practice end) | 0.40 | 60s |
+| Real Guided| `loud.mp3`     | 0.40 (Challenge end) | 0.62 | 60s |
+| Real Free  | `loud.mp3`     | 0.62 유지 | 0.62 | — (탐색 단계 고정) |
+
+종료값과 다음 모드의 시작값이 동일하므로 **인지 음량은 모드 경계를 넘어 연속**된다.  트랙 파일은 바뀌므로 음색은 살짝 달라지지만, 학습자에게는 "환경이 다음 단계로 익숙해진" 자연스러운 감각으로 인식된다.
+
+#### 4.5.2 학습자 음량 통제 (Voice Volume Multiplier)
+
+ramp 진행 중에도 학습자가 우측 상단 음성 설정에서 음량을 바꾸면 **100ms 이내에 즉시 반영**된다.  ticker 가 매 tick 마다 store 를 직접 읽기 때문에 ramp 자체는 처음부터 다시 시작되지 않는다.  최종 음량 공식:
+
+```
+final_volume = base_volume(ramp 보간값) × VOLUME_TO_AUDIO[user_volume]
+```
+
+#### 4.5.3 학술적 정당성
+
+| 근거 | 적용 |
+|------|------|
+| **Collins(2006) Scaffolding 동형 확장** | scaffolding 은 AI 도움의 점진 제거뿐 아니라, 환경 노출의 점진 증가에도 같은 곡선으로 적용 가능. 양방향의 "지지 → 자율" 전이가 음향 채널에서도 일어남 |
+| **Lave & Wenger(1991) 합법적 주변 참여(LPP)** | 학습자는 모드 진입 시점에 "거의 무음" 으로 환경 주변에 있다가 60초 동안 점차 "환경 중심" 으로 이동 — 환경 적응의 미시 버전 |
+| **점진적 노출(Gradual Exposure) 원리** | 임상 심리학의 체계적 둔감화(systematic desensitization) 와 동일 — 큰 자극을 작게 쪼개어 적응 강화 |
+| **인지 부하 분산** | 모드 전환 직후엔 학습자가 새 화면에 적응해야 하므로 환경 부하를 최소화하고, 화면에 익숙해진 뒤 점차 환경 부하를 추가 |
+
+#### 4.5.4 해제 (ambient OFF)
+
+청각 과민 학습자 / 보조 청력 기구 사용자를 위해 우측 상단 음성 설정 패널의 **"☕ 카페 배경 소리"** 스위치로 즉시 OFF 가능 (`voiceStore.ambientEnabled`, localStorage 영속).  음성 안내(TTS) 는 그대로 작동하므로 KS X 9211:2025 §5.2.2 d) 청각 대체 의무에는 영향 없음.
 
 ---
 
@@ -480,6 +532,7 @@ Q4. 오늘 주문, 어떠셨나요?
 | 8.2.2 | 시간 제한 + 연장 기능 | 20초 전 알림 + 연장 |
 | 광과민성 | 3Hz 미만 깜빡임 | CSS 애니메이션 검증 |
 | 8.3.2 | 충분한 시간 제공 | 학습자 음성 속도 조절 + VAD 무음 2초 자동 종료(Grace 1.5초)로 학습자 발화 페이스 보호 ⭐ v2.3 |
+| 5.3.3 c) | 음소거 옵션 (배경음) | 우측 상단 음성 설정의 **"☕ 카페 배경 소리"** 토글 → `voiceStore.ambientEnabled` 즉시 OFF + localStorage 영속 ⭐ v2.4 |
 
 #### 6.1 §5.2.2 d) 양방향 확장 ⭐ v2.3
 
@@ -534,6 +587,32 @@ interface LearningActions {
 **가드 정책**
 - `displayMode === null` 인 채로 `/spatial-map` 이후 페이지에 직접 접근하면 `useRequireLearningSession` 이 환영(`/`)으로 안전 리다이렉트.
 - `resetSession()` 호출 시 `displayMode` 도 `null` 로 초기화 (학습자가 다음 세션에서 다시 선택할 수 있도록).
+
+#### 7.0.1 음성/배경음 설정 (stores/voiceStore.ts) — v2.4 확장
+
+학습자 음성 설정과 더불어 **카페 배경음 활성화 여부**를 영속 보관한다.  `ambientEnabled` 가 false 면 `AmbientSound` 컴포넌트가 트랙을 재생하지 않고, true 로 다시 켜면 현재 모드의 ramp 가 처음부터 다시 시작된다.
+
+```typescript
+interface VoiceState {
+  isEnabled: boolean;          // TTS 안내 ON/OFF
+  ambientEnabled: boolean;     // v2.4 — 카페 BGM ON/OFF
+  voice: VoiceName;            // nova / shimmer / echo
+  speed: VoiceSpeed;           // 0.8 / 1.0 / 1.25 / 1.5
+  volume: VoiceVolume;         // 5단계, BGM 에도 곱해짐
+  /* ...휘발성 필드 생략 */
+}
+
+interface VoiceActions {
+  toggle(): void;                              // TTS On/Off
+  setAmbientEnabled(enabled: boolean): void;   // v2.4 — 배경음 토글
+  setVoice(v: VoiceName): void;
+  setSpeed(s: VoiceSpeed): void;
+  setVolume(v: VoiceVolume): void;
+  /* ... */
+}
+```
+
+영속화 대상: `isEnabled / ambientEnabled / voice / speed / volume` (localStorage 키 `ondam-voice-settings`).
 
 ### 7.1 메뉴 데이터 (lib/kiosk-data/menu.ts)
 
@@ -654,7 +733,10 @@ Audio (출력 — 도담 → 학습자):
   · OpenAI TTS (nova, 주)
   · Web Speech API (폴백)
   · TTSManager 싱글톤 (자동 폴백 라우팅, 연속 실패 N회 후 세션 고정)
-  · Howler.js (카페 BGM)
+  · Howler.js (카페 BGM, AmbientSound 컴포넌트) ⭐ v2.4 실구현 완료
+    - 모듈 캐시 + 100ms ticker 기반 ramp (4.5절)
+    - public/sounds/ambient-{quiet,medium,loud}.mp3 (CC0)
+    - 파일 부재 / autoplay 차단 시 silent fallback
 
 Audio (입력 — 학습자 → 도담) ⭐ v2.3 신규:
   · OpenAI Whisper-1 (한국어 우선, /api/whisper 프록시)
@@ -673,8 +755,13 @@ Storage:
   · localStorage (학습 로그)
   · 마이크 권한: 브라우저 Permissions API (사전 확인)
 
-Deploy:
-  · Vercel (환경변수로 API 키 관리)
+Deploy: ⭐ v2.4 라이브
+  · Vercel — 프로젝트 soo-yeon-s-projects/ondam-kiosk
+  · 프로덕션 URL: https://ondam-kiosk.vercel.app/
+  · 환경변수 (Preview + Production):
+    - OPENAI_API_KEY  → TTS / GPT / Whisper
+    - GEMINI_API_KEY  → 분석 (Reflection)
+  · 빌드: Next.js 16.2.6 (Turbopack), 정적 14 + 동적 5 라우트
 ```
 
 ### 8.2 핵심 컴포넌트 아키텍처
@@ -695,8 +782,14 @@ Deploy:
 │ │  - "다시 듣기" / "도움" 호출 대응         │ │
 │ └────────────────────────────────────────┘ │
 │                                            │
-│ ┌─ AmbientSound (카페 소음) ──────────────┐ │
-│ │  - 모드별 dB 자동 조절                   │ │
+│ ┌─ AmbientSound (카페 소음) ⭐ v2.4 실구현 ─┐ │
+│ │  - 모드별 60s ramp (4.5절):              │ │
+│ │      practice 0.06 → 0.18                │ │
+│ │      challenge 0.18 → 0.40               │ │
+│ │      guided    0.40 → 0.62               │ │
+│ │      free      0.62 유지                  │ │
+│ │  - voiceStore.ambientEnabled 로 즉시 OFF  │ │
+│ │  - 학습자 음량은 100ms ticker 즉시 반영   │ │
 │ └────────────────────────────────────────┘ │
 │                                            │
 └────────────────────────────────────────────┘
@@ -755,28 +848,31 @@ ondam-kiosk/
 │
 ├── components/
 │   ├── kiosk/
-│   │   ├── KioskFrame.tsx        # 키오스크 외관
-│   │   ├── CategoryGrid.tsx      # 카테고리 4개
-│   │   ├── MenuGrid.tsx          # 메뉴 그리드
-│   │   ├── OptionPanel.tsx       # 온도/사이즈/추가
-│   │   ├── CartSidebar.tsx       # 장바구니
-│   │   ├── PaymentDialog.tsx     # 결제
-│   │   ├── HintButton.tsx        # 힌트 (Challenge)
-│   │   └── AutoDemo.tsx          # Tutorial 자동 시연
+│   │   ├── KioskFrame.tsx          # 키오스크 외관 (+ AmbientSound 마운트 — v2.4)
+│   │   ├── CategoryGrid.tsx        # 카테고리 4개 (CategoryIllustration 사용)
+│   │   ├── CategoryIllustration.tsx# ⭐ v2.4 — 4 카테고리 SVG 일러스트
+│   │   ├── MenuGrid.tsx            # 메뉴 그리드 (MenuIllustration 사용)
+│   │   ├── MenuIllustration.tsx    # ⭐ v2.4 — 8 메뉴 SVG 일러스트
+│   │   ├── OptionPanel.tsx         # 온도/사이즈/추가
+│   │   ├── CartSidebar.tsx         # 장바구니 (메뉴 행 좌측 카테고리 컬러 띠 — v2.4)
+│   │   ├── PaymentDialog.tsx       # 결제
+│   │   ├── HintButton.tsx          # 힌트 (Challenge)
+│   │   ├── ModeBanner.tsx          # 모드 진입 배너
+│   │   └── AutoDemo.tsx            # Tutorial 자동 시연
 │   │
 │   ├── voice/
-│   │   ├── VoiceCoach.tsx        # 도담 발화 큐
-│   │   ├── VoiceButton.tsx       # voiceLabel 자동 부착
-│   │   ├── ReplayButton.tsx      # 다시 듣기
-│   │   ├── StopSpeakingButton.tsx# 발화 중지
-│   │   ├── VoiceSettingsPanel.tsx# 음성 설정 (음량 5단 등)
-│   │   ├── TimeoutWarning.tsx    # 시간 제한 경고
-│   │   └── MicButton.tsx         # ⭐ v2.3 양방향 음성 진입점 (4상태 머신)
+│   │   ├── VoiceCoach.tsx          # 도담 발화 큐
+│   │   ├── VoiceButton.tsx         # voiceLabel 자동 부착
+│   │   ├── ReplayButton.tsx        # 다시 듣기
+│   │   ├── StopSpeakingButton.tsx  # 발화 중지
+│   │   ├── VoiceSettingsPanel.tsx  # 음성 설정 + 카페 배경음 토글 (v2.4)
+│   │   ├── TimeoutWarning.tsx      # 시간 제한 경고
+│   │   └── MicButton.tsx           # ⭐ v2.3 양방향 음성 진입점 (4상태 머신)
 │   │
-│   ├── ambient/
-│   │   └── AmbientSound.tsx
+│   ├── ambient/                    # ⭐ v2.4 실구현
+│   │   └── AmbientSound.tsx        # Howler 기반 카페 BGM, 60s ramp (4.5절)
 │   │
-│   └── ui/                       # shadcn/ui
+│   └── ui/                         # shadcn/ui
 │
 ├── lib/
 │   ├── kiosk-data/
@@ -826,13 +922,14 @@ ondam-kiosk/
 │   # GEMINI_API_KEY=...
 │
 └── public/
-    ├── sounds/
-    │   ├── ambient-quiet.mp3
-    │   ├── ambient-medium.mp3
-    │   └── ambient-loud.mp3
-    └── icons/
-        └── menu/
+    └── sounds/                   # ⭐ v2.4 — 라이브 (CC0)
+        ├── README.md             # 파일 명세 + 라이선스 + 다운로드 출처
+        ├── ambient-quiet.mp3     # Practice ramp 트랙 (~638KB)
+        ├── ambient-medium.mp3    # Challenge ramp 트랙 (~1.9MB)
+        └── ambient-loud.mp3      # Real Guided/Free 트랙 (~354KB)
 ```
+
+> **v2.4 변경 요약**  ① `components/kiosk/` 에 `MenuIllustration.tsx` / `CategoryIllustration.tsx` / `ModeBanner.tsx` 추가, KioskFrame 이 `AmbientSound` 를 마운트, CartSidebar 가 카테고리 컬러 액센트 표시.  ② `components/ambient/AmbientSound.tsx` 실구현(Howler).  ③ `public/sounds/` 에 실제 mp3 3종 + README.  ④ 설계서 v2.3 의 (계획) 표시였던 `lib/llm/{openai,gemini,prompts,fallback}.ts` 와 `lib/learning/{logTypes,reflectionEngine,baseline}.ts` 는 여전히 (계획) — 학기 과제 범위 내 미생성, Phase E 리팩터에서 다룸.
 
 ---
 
@@ -849,13 +946,62 @@ ondam-kiosk/
 | | | Phase 4-B | Tutorial/Practice/Real-Free 모드 + 피드백/스캐폴딩 엔진 | ✅ 완료 |
 | | 9 | **Phase 4-AI-A** ⭐ v2.3 | **GPT 동적 대사 + Whisper 음성 입력 (마이크 버튼)** — 아래 상세 | ✅ 완료 |
 | | | **Phase 4-AI-B** ⭐ v2.3 | **5개 모드 통합 + Web Speech 폴백 + VAD + 청각 피드백** — 아래 상세 | ✅ 완료 |
-| | 10 | Phase 5 | 카페 소음 레이어 (Howler.js), 모드별 BGM 전환 | 계획 |
+| | 10 | **Phase 5** ⭐ v2.4 | **카페 소음 레이어 (Howler.js) + 모드별 60s ramp (4.5절)** — 아래 상세 | ✅ 완료 |
 | | 11 | Phase 6 | Articulation (Whisper + Gemini 분석) + Reflection (Gemini + GPT) | ✅ 완료 |
 | | 12 | Phase 7 | 결제 시뮬레이션 3종 + 가짜 승인 효과음 (Web Audio 합성) | ✅ 완료 |
+| | 12.5 | **Design Revamp** ⭐ v2.4 | 메뉴/카테고리 SVG 일러스트 + 카드 표면 톤 통일 + 환영 페이지 키오스크 실루엣 — 아래 상세 | ✅ 완료 |
 | | 13 | Phase 8 | **통합 테스트** + 버그 수정 + axe-core 접근성 검증 + **API 폴백 시연 검증** | 계획 |
-| | 14 | Phase 9 | 보고서 마무리, Vercel 환경변수 설정 + 최종 배포 | 계획 |
+| | 14 | **Phase 9** ⭐ v2.4 | **Vercel 라이브 배포 — `https://ondam-kiosk.vercel.app/`, 환경변수 검증** | ✅ 완료 |
 
 ⭐ **여유 1일** 확보 (LLM 통합 부담으로 v2.0보다 여유 줄어듦, 폴백 스크립트 우선 구축으로 위험 분산)
+
+#### Phase 5 — 카페 소음 레이어 + scaffolding ramp ⭐ v2.4 신규
+
+본 단계는 Sociology 차원(Situated Learning)의 실제 구현.  설계서 v2.3 까지의 "모드별 dB 고정" 모델 대신 4.5절의 ramp 모델로 재설계.
+
+| 단계 | 작업 | 산출물 |
+|------|------|--------|
+| 1 | `npm i howler @types/howler` | 의존성 추가 |
+| 2 | `components/ambient/AmbientSound.tsx` — Howler 싱글톤 + 모듈 캐시 + 100ms ticker ramp | 신규 |
+| 3 | `stores/voiceStore.ts` 에 `ambientEnabled` + `setAmbientEnabled` 추가, localStorage 영속 | 수정 |
+| 4 | `components/voice/VoiceSettingsPanel.tsx` 에 "☕ 카페 배경 소리" 토글 UI 추가 | 수정 |
+| 5 | `components/kiosk/KioskFrame.tsx` 에 `<AmbientSound mode={currentMode} />` 마운트 | 수정 |
+| 6 | `public/sounds/` 에 ambient-{quiet,medium,loud}.mp3 (CC0) + README.md | 신규 |
+| 검증 | 타입체크 + lint + `next build` + 모드별 ramp 청취 + ambient OFF 토글 + Vercel 배포 확인 | — |
+
+**산출물 검증 체크**
+- [x] Tutorial 진입 시 무음
+- [x] Practice 진입 0.06 → 1분 뒤 0.18
+- [x] Practice → Challenge 전환 시 인지 음량 연속 (0.18 → 0.40)
+- [x] 학습자 음량 변경 → 100ms 이내 반영 (ramp 처음부터 다시 시작 안 함)
+- [x] ambient OFF 토글 → 즉시 정지, ON 다시 켜면 처음부터 ramp
+- [x] 파일 부재 / autoplay 차단 시 콘솔 경고 1줄 + 학습 흐름 정상 진행
+- [x] 프로덕션 (`ondam-kiosk.vercel.app/sounds/ambient-*.mp3`) HTTP 200
+
+#### Design Revamp ⭐ v2.4 신규 (Phase 7 직후 1일)
+
+설계서 §3.3 의 "단순 SVG 아이콘 + 카테고리 색상 블록" 가이드를 일러스트 시스템으로 확장.  KS X 9211 인터랙션 로직(voiceLabel · 더블탭)은 무변경, 시각만 정비.
+
+| 단계 | 작업 | 산출물 |
+|------|------|--------|
+| 1 | `components/kiosk/MenuIllustration.tsx` — 8 메뉴 SVG (잔·유리잔·접시 + 카테고리 컬러) | 신규 |
+| 2 | `components/kiosk/CategoryIllustration.tsx` — 4 카테고리 SVG (`currentColor` 스트로크) | 신규 |
+| 3 | CartSidebar / OptionPanel / Articulation / Reflection / Spatial-map 표면 톤 `border` → `ring + shadow` 통일 | 수정 |
+| 4 | CartSidebar 메뉴 행 좌측에 카테고리 컬러 세로 액센트 띠 | 수정 |
+| 5 | 환영 페이지 모드 선택 카드: 스탠드/스피커/카드투입구 포함 실루엣 + 호버 그라데이션 | 수정 |
+| 6 | `design-revamp` 브랜치 → main fast-forward 머지 + GitHub push | — |
+| 검증 | 타입체크 + lint + dev 서버 풀 흐름 시각 점검 | — |
+
+#### Phase 9 — Vercel 라이브 배포 ⭐ v2.4 완료
+
+| 단계 | 작업 | 결과 |
+|------|------|------|
+| 1 | `vercel link` — 프로젝트 `soo-yeon-s-projects/ondam-kiosk` 연결 | `.vercel/` 생성 (gitignore) |
+| 2 | `OPENAI_API_KEY` / `GEMINI_API_KEY` 환경변수 등록 (Production + Preview) | 7일 전 사전 등록 확인 |
+| 3 | `vercel --prod --yes` 첫 production 배포 | `ondam-kiosk.vercel.app` alias 부여 |
+| 4 | `/api/tts` (audio/mpeg 200) + `/api/gpt` (200) 라이브 검증 | 환경변수 적용 확인 |
+| 5 | Phase 5 머지 후 재배포 (`vercel --prod`) | `/sounds/ambient-*.mp3` 200 검증 |
+| 검증 | https://ondam-kiosk.vercel.app/ HTTP 200, 정적 14 + 동적 5 라우트 모두 빌드 | — |
 
 #### Phase 4-AI-A — GPT 동적 대사 + Whisper 음성 입력 ⭐ v2.3 신규
 
@@ -1160,6 +1306,8 @@ docs/KS_X_9211_2025_체크리스트.md 작성:
 - **AI 음성 인식 고도화**: 자연어 주문 직결 ("따뜻한 아메리카노 한 잔이요" → 주문 상태 자동 채움) — v2.3 음성 인터페이스를 의도 분류에서 슬롯 채우기로 확장
 - **Wake-word 항상 듣기**: 더블탭 없이도 "도담아"로 호출 (Tutorial AutoDemo 중에도 응답 가능). 현재는 학습 흐름 보호를 위해 비활성
 - **VAD 적응형 임계값**: 카페 소음 BGM 진폭의 EWMA 기반 동적 임계값 (현재는 하드코딩 `8`)
+- **카페 소음 ramp 캘리브레이션**: ⭐ v2.4 — 학습 세션 초기 도담의 청취 캘리브레이션으로 학습자 환경별 base 볼륨 자동 보정 (14.4-1)
+- **카페 소음 누적 노출**: ⭐ v2.4 — 학습자가 모드를 재진입할 때 이전 종료점에서 ramp 이어받기 (14.4-5)
 - **학습 분석 대시보드**: 시각장애인 디지털 역량 패턴 연구 데이터 축적
 - **Articulation Silver/Gold**: 학습자 음성 녹음 및 분석
 - **Reflection Gold**: 동료 학습자 수행과의 비교
@@ -1180,6 +1328,18 @@ v2.3 양방향 음성 인터페이스는 학술적·기능적 의의에도 불�
 | 8 | **시연 시 OPENAI_API_KEY 노출 위험 없음 검증** | 모든 호출이 `/api/*` 서버사이드 라우트 경유 — 클라이언트 번들 검사로 키 노출 없음 확인 필요 | Phase 8 보안 점검에서 `npm run build` 산출물의 키 부재 자동 검증 추가 |
 
 위 한계는 모두 **시뮬레이터의 학습 효과를 본질적으로 훼손하지 않는** 수준이다. 핵심 학습 가치(Collins 6단계 + KS X 9211 + 낙인 효과 해소 + 디스플레이 다양성 + 양방향 음성)는 본 한계 안에서도 정상적으로 작동한다.
+
+### 14.4 카페 소음 ramp 한계 ⭐ v2.4 신규
+
+v2.4 의 scaffolding ramp 모델은 학술적 의의(4.5.3 절)에도 다음 한계가 있다.
+
+| # | 한계 | 영향 | 후속 연구 방향 |
+|---|------|------|---------------|
+| 1 | **dB 보정 불가** | base 볼륨 0~1 스케일은 실제 dB 와 1:1 매핑이 아니다.  학습자 스피커·헤드폰·기기 음량 설정에 따라 인지 음량이 달라진다. | 학습 세션 초기 캘리브레이션 단계 도입 (e.g., 도담이 "이 정도 소리가 들리시나요" 물어보고 학습자 응답으로 base 보정) |
+| 2 | **트랙 파일 음색 변화** | quiet → medium → loud 가 별도 파일이므로 트랙 전환 순간 음색이 살짝 달라진다.  ramp 로 음량은 매끄럽지만 음색 단절은 잔존. | 단일 마스터 트랙 + 동적 라우드네스 정규화로 cross-fade.  또는 두 트랙을 1.5초 overlap 시켜 cross-fade |
+| 3 | **자동재생 차단 대응 미시연 검증** | 모드 페이지 직접 URL 진입 시 브라우저 정책으로 첫 클릭 전 BGM 미재생.  `onplayerror` → `unlock` 재시도로 처리하지만 학습자에겐 침묵 구간이 생긴다. | 환영 페이지 클릭이 audio context 를 unlock 하므로 정상 흐름에선 문제 없음.  발표 시연 시 직접 URL 진입은 회피 |
+| 4 | **ramp 캘리브레이션 사용자 연구 부재** | 60초 ramp 길이 / 시작값(0.06) / 종료값 모두 설계자 직관에 기반.  실제 시각장애인 학습자 대상 사용성 평가 미실시. | Phase 8 통합 테스트 시 학습자 대상 짧은 청취 평가 (각 단계 적정 음량 인지) → 후속 연구로 정량 검증 |
+| 5 | **모드 재진입 시 ramp 재시작** | 학습자가 같은 모드 페이지를 두 번 방문하면 ramp 가 다시 처음부터.  실세계 카페에선 환경이 갑자기 조용해질 일이 없음. | 세션 단위 누적 노출 시간을 store 에 저장 → 모드 재진입 시 이전 종료점에서 이어받기 |
 
 ---
 
@@ -1617,6 +1777,41 @@ Articulation + Reflection AI 통합 구현.
 
 ## 부록 A. 변경 이력
 
+### v2.4 (2026-05-23) — Phase 5 카페 소음 + 디자인 리뉴얼 + 프로덕션 배포 ⭐
+
+세 갈래 작업을 한 버전에 통합:  ① Phase 5 실구현, ② 디자인 시각 리뉴얼, ③ Vercel 라이브 배포.
+
+| 영역 | 변경 |
+|------|------|
+| 헤더 + 목차 | v2.4 변경 사유 문단 추가, 각 절 v2.4 표기 |
+| 3.3 디자인 원칙 | [이미지] 섹션을 일러스트 시스템(MenuIllustration + CategoryIllustration) 으로 확장, [표면 톤 — v2.4 통일] 신설 (`ring + shadow`) |
+| 4.2 Method 표 | "카페 소음" 컬럼을 dB 고정값 → 60s ramp 모델로 갱신 + 4.5절 링크 |
+| 4.3 Sequencing | "복잡성 증가" 의 카페 소음 항목을 ramp 모델로 재기술 |
+| 4.4 Sociology | Howler.js + ramp 명시 |
+| **4.5 신설** | 카페 소음 점진 증가 모델 (scaffolding ramp) — 설계 표 + 학습자 음량 통제 + 학술적 정당성 4종 + ambient OFF 분기 |
+| 6장 KS X 9211 매트릭스 | §5.3.3 c) 음소거 옵션 행 추가 (ambient 토글) |
+| 7.0.1 신설 | `voiceStore.ambientEnabled` + `setAmbientEnabled` 데이터 모델 명시 |
+| 8.1 기술 스택 | Audio 출력에 Howler.js 실구현 세부 사항, Deploy 섹션에 라이브 URL · 환경변수 · 빌드 정보 |
+| 8.2 컴포넌트 아키텍처 | AmbientSound 박스를 ramp 세부 4종 설명으로 확장 |
+| 9장 폴더 구조 | `MenuIllustration.tsx` / `CategoryIllustration.tsx` / `ModeBanner.tsx` / `components/ambient/` 실구현 / `public/sounds/` README + 3 mp3 파일 명시.  v2.4 변경 요약 문단 추가 |
+| 10장 Phase 계획 | Phase 5 ✅ + 상세 절차 표 + 검증 체크 / Design Revamp 12.5 ⭐ 신규 절차 표 / Phase 9 ✅ + 배포 절차 표 |
+| 14.2 향후 확장 | ramp 캘리브레이션 + ramp 누적 노출 2 항목 추가 |
+| **14.4 신설** | 카페 소음 ramp 한계 5개 항목 + 후속 연구 방향 |
+| 부록 A | 본 v2.4 엔트리 |
+
+**구현 산출물 (v2.4 완료 시점)**
+- `components/ambient/AmbientSound.tsx` (Howler 싱글톤 + 100ms ticker ramp + 모듈 캐시)
+- `components/kiosk/MenuIllustration.tsx` (8 메뉴 SVG)
+- `components/kiosk/CategoryIllustration.tsx` (4 카테고리 SVG, `currentColor`)
+- `public/sounds/ambient-{quiet,medium,loud}.mp3` (CC0) + `README.md`
+- `stores/voiceStore.ts` `ambientEnabled` + `setAmbientEnabled` + localStorage 영속
+- `components/voice/VoiceSettingsPanel.tsx` "☕ 카페 배경 소리" 토글
+- `components/kiosk/KioskFrame.tsx` `<AmbientSound mode={currentMode} />` 마운트
+- CartSidebar / OptionPanel / Articulation / Reflection / Spatial-map 표면 톤 통일 (`ring-1 ring-foreground/15 + shadow-sm`)
+- 환영 페이지 모드 카드 다이어그램 리메이크 (스탠드/스피커/카드투입구 + 호버 그라데이션)
+- Vercel 라이브: `https://ondam-kiosk.vercel.app/` (READY · 빌드 22~23s · OpenAI/Gemini env 검증 완료)
+- main 브랜치 정렬: `c26d828` (chore: sounds) ← `3b25f93` (feat: Phase 5) ← `a76b393` (chore: .vercel)
+
 ### v2.3 (2026-05-16) — 양방향 음성 인터페이스 ⭐
 본 연구의 **네 번째 학술적 차별점** 도입.
 
@@ -1662,6 +1857,6 @@ Articulation + Reflection AI 통합 구현.
 
 **END OF DOCUMENT**
 
-> *이 설계서(v2.3)는 KS X 9211:2025, 2026 NIA 가이드, Lave & Wenger(1991) 상황학습이론, Collins(2006) 인지적 도제이론을 통합 기반으로 작성되었으며, OpenAI GPT-4o-mini · Whisper-1 과 Google Gemini 2.5 Flash의 멀티 모델 아키텍처를 통해 인지적 도제의 AI 시대 확장형을 시도한 교육훈련 프로그램 개발용 문서입니다. v2.3에서는 학습자가 도담을 음성으로 호출할 수 있는 양방향 청각 인터페이스를 5개 학습 모드 전 구간에 도입하여, KS X 9211:2025 §5.2.2 d) "청각적 대체 콘텐츠" 의무를 양방향으로 확장한 본 연구의 네 번째 학술적 차별점을 구현하였습니다.*
+> *이 설계서(v2.4)는 KS X 9211:2025, 2026 NIA 가이드, Lave & Wenger(1991) 상황학습이론, Collins(2006) 인지적 도제이론을 통합 기반으로 작성되었으며, OpenAI GPT-4o-mini · Whisper-1 과 Google Gemini 2.5 Flash의 멀티 모델 아키텍처를 통해 인지적 도제의 AI 시대 확장형을 시도한 교육훈련 프로그램 개발용 문서입니다. v2.3에서 양방향 청각 인터페이스(네 번째 학술적 차별점) 를 도입한 데 이어, v2.4 에서는 Phase 5 카페 소음 레이어를 scaffolding 원리에 따라 모드별 60초 점진 증가(ramp) 모델로 실구현하여 Collins 의 scaffolding 을 환경 노출 차원으로도 동형 확장하였고, 메뉴/카테고리 SVG 일러스트 시스템과 표면 톤 통일로 시각 일관성을 강화하였으며, Vercel `https://ondam-kiosk.vercel.app/` 에 라이브 배포를 완료하였습니다.*
 >
 > *본 시뮬레이터는 단순한 키오스크 시뮬레이터가 아닌, 시각장애인의 디지털 시민 정체성 회복을 위한 학습 환경(Learning Environment)임을 다시 한번 강조합니다.*
