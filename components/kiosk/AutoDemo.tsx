@@ -104,6 +104,16 @@ export function AutoDemo({
     settingsRef.current = { voice, speed, volume };
   }, [voice, speed, volume]);
 
+  // onComplete / onActiveAreaChange 는 부모가 매 렌더 새로 만들 수 있다. 진행 effect
+  // 의존성에 넣으면 발화 도중 effect 가 재시작돼 1단계 대본이 끊기거나 스킵된다.
+  // settingsRef 와 동일하게 ref 로 최신값만 참조하고 의존성에서는 제외한다.
+  const onCompleteRef = React.useRef(onComplete);
+  const onActiveAreaChangeRef = React.useRef(onActiveAreaChange);
+  React.useEffect(() => {
+    onCompleteRef.current = onComplete;
+    onActiveAreaChangeRef.current = onActiveAreaChange;
+  }, [onComplete, onActiveAreaChange]);
+
   const [stepIndex, setStepIndex] = React.useState(0);
   const [stepStatus, setStepStatus] = React.useState<"waiting" | "speaking" | "applied">(
     "waiting",
@@ -193,8 +203,8 @@ export function AutoDemo({
   // 단계 시작 시점(setStepIndex)에 바뀌므로, 도담이 그 영역을 말하는 동안 강조된다.
   React.useEffect(() => {
     const step = steps[stepIndex];
-    onActiveAreaChange?.(step?.activeArea ?? null, step?.key ?? "");
-  }, [stepIndex, steps, onActiveAreaChange]);
+    onActiveAreaChangeRef.current?.(step?.activeArea ?? null, step?.key ?? "");
+  }, [stepIndex, steps]);
 
   // ── 시연 진행 — 한 단계씩 await ───────────────────────────
   // generation 으로 unmount/재마운트 시 이전 setTimeout 이 store 를 건드리지 않게.
@@ -211,7 +221,7 @@ export function AutoDemo({
     const runStep = async (idx: number) => {
       if (cancelledRef.current || generationRef.current !== myGen) return;
       if (idx >= steps.length) {
-        onComplete();
+        onCompleteRef.current();
         return;
       }
 
@@ -269,8 +279,10 @@ export function AutoDemo({
       if (timeoutId) clearTimeout(timeoutId);
       ttsManager.stop();
     };
-    // steps / stepDelayMs / isVoiceEnabled / onComplete 가 바뀌면 처음부터.
-  }, [steps, stepDelayMs, isVoiceEnabled, onComplete]);
+    // 실제로 처음부터 다시 시작해야 하는 경우만 의존성에 둔다.
+    // (onComplete/onActiveAreaChange 는 ref 로 분리 — 부모 리렌더로 재시작되지 않음.
+    //  steps 는 useMemo deps 가 안정 참조[zustand 액션은 불변]라 재생성되지 않음.)
+  }, [steps, stepDelayMs, isVoiceEnabled]);
 
   const handleSkip = React.useCallback(() => {
     cancelledRef.current = true;
@@ -309,11 +321,13 @@ export function AutoDemo({
             들어주세요.
           </p>
         </div>
+        {/* 보조 버튼 위계(secondary 색) 유지하되, 시각장애인이 찾기 쉽게 크게.
+            진행 버튼(주황 전폭)만큼 키우진 않아 실수 클릭을 막는다. */}
         <button
           type="button"
           onClick={handleSkip}
           aria-label="시연 건너뛰고 직접 해보기로 이동"
-          className="shrink-0 rounded-xl bg-secondary px-4 py-2 text-support font-semibold text-secondary-foreground hover:bg-secondary/80 focus-visible:ring-4 focus-visible:ring-primary focus-visible:outline-none"
+          className="min-h-12 shrink-0 touch-manipulation rounded-xl bg-secondary px-6 py-3 text-lg font-semibold text-secondary-foreground hover:bg-secondary/80 focus-visible:ring-4 focus-visible:ring-primary focus-visible:outline-none md:text-xl"
         >
           건너뛰기
         </button>
