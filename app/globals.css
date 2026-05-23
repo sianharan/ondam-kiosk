@@ -84,6 +84,15 @@
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
   --radius: 0.625rem;
+
+  /* ── 글자 크기 토큰 (저시력 사용자 기준, KS X 9211 5.2.3) ──
+     화면 전체에서 제목·본문·보조 텍스트를 3단계로 통일하기 위한 토큰.
+     이 토큰들보다 작은 보조 텍스트 단계는 만들지 말 것 (18px 하한). */
+  --text-screen-title: clamp(1.875rem, 1.55rem + 1.4vw, 2rem); /* 화면 대제목 ~30–32px (기존 text-3xl 급) */
+  --text-card-body: max(1.5rem, 24px);                          /* 카드/버튼 핵심 텍스트 24px — KioskFrame 본문 바닥과 동일 */
+  --text-support: max(1.125rem, 18px);                          /* 보조 설명 18px — 최소 단계, 더 작게 두지 말 것 */
+  --text-emphasis-number: clamp(2rem, 1.5rem + 2.2vw, 2.5rem);  /* 강조 숫자(가격·주문번호) ~32–40px */
+
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
   --sidebar-primary: oklch(0.205 0 0);
@@ -137,5 +146,29 @@
   }
   html {
     @apply font-sans;
+  }
+}
+
+@layer utilities {
+  /* 3단계 글자 크기 유틸리티. 화면별 제각각인 text-2xl/3xl/4xl 대신 사용.
+     (이 단계에서는 토큰만 정의 — 컴포넌트 교체는 다음 단계에서.) */
+  .text-screen-title {
+    font-size: var(--text-screen-title);
+    line-height: 1.25;
+    font-weight: 700;
+  }
+  .text-card-body {
+    font-size: var(--text-card-body);
+    line-height: 1.5;
+  }
+  .text-support {
+    font-size: var(--text-support);
+    line-height: 1.5;
+  }
+  .text-emphasis-number {
+    font-size: var(--text-emphasis-number);
+    line-height: 1.15;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
   }
 }
