@@ -151,6 +151,16 @@ function ModeSelectStage({
         sequenceGapMs={500}
       />
 
+      {/* 탭 사용법은 카드마다 반복하지 않고 화면 상단에 한 번만 노출.
+          각 카드의 aria-label 이 같은 안내를 담고 있어 스크린리더 중복을 막기 위해 aria-hidden. */}
+      <p
+        aria-hidden="true"
+        className="inline-flex items-center justify-center gap-2 self-center rounded-full bg-muted/50 px-4 py-1.5 text-base text-foreground/65 md:text-lg"
+      >
+        <span aria-hidden="true" className="text-primary">👆</span>
+        한 번 두드리면 설명 · 두 번 두드리면 선택
+      </p>
+
       <div
         role="radiogroup"
         aria-labelledby="mode-select-title"
@@ -266,11 +276,6 @@ function ModeCard({
       <p className="text-lg leading-relaxed text-foreground/75 md:text-xl">
         {description}
       </p>
-
-      <span className="mt-1 inline-flex items-center gap-2 rounded-full bg-muted/50 px-3 py-1 text-sm text-foreground/65 md:text-base">
-        <span aria-hidden="true" className="text-accent">👆</span>
-        <span>한 번 두드리면 설명 · 두 번 두드리면 선택</span>
-      </span>
     </button>
   );
 }

@@ -199,7 +199,7 @@ export default function ReflectionPage() {
       <ModeBanner
         eyebrow="성찰 단계 — Collins 6단계 (마지막)"
         headline="오늘 학습을 정리해드릴게요."
-        detail="도담이 답변을 바탕으로 잘하신 점과 다음 단계를 알려드려요."
+        detail="잘하신 점과 다음 단계를 알려드려요."
         tone="primary"
       />
 

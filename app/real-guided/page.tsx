@@ -66,7 +66,7 @@ export default function RealGuidedPage() {
         <ModeBanner
           eyebrow={`${config.philosophy} 단계`}
           headline="이번엔 카페 소음도 들리는 환경이에요."
-          detail="정해진 시나리오로 한 번 더 연습해 봐요. 도담은 호출하실 때만 도와드려요. (3분 제한)"
+          detail="도담은 부르실 때만 도와드려요 · 3분"
           helpLevel={config.helpLevel}
         />
         <OrderFlow

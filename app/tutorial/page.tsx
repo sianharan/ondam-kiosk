@@ -53,7 +53,7 @@ export default function TutorialPage() {
         <ModeBanner
           eyebrow={`${config.philosophy} 단계`}
           headline="도담이 먼저 아메리카노 주문 과정을 보여드릴게요."
-          detail="지금은 도담이 시연해드릴게요. 천천히 들으면서 흐름을 익혀봐요."
+          detail="편하게 들으면서 흐름을 익혀보세요."
           helpLevel={config.helpLevel}
         />
         {config.enableAutoDemo ? (

@@ -345,7 +345,7 @@ export default function ArticulationPage() {
       <ModeBanner
         eyebrow="명료화 단계 — Collins 5단계"
         headline="방금 한 주문을 음성으로 함께 돌아봐요."
-        detail="마이크 버튼을 두 번 두드린 뒤 편하게 답해주세요. 정답은 없어요."
+        detail="정답은 없어요. 편하게 답해주세요."
         tone="primary"
       />
 

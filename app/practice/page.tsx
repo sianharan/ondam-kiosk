@@ -164,7 +164,7 @@ export default function PracticePage() {
         <ModeBanner
           eyebrow={`${config.philosophy} 단계`}
           headline="이번엔 직접 주문해 보세요."
-          detail="도담이 옆에서 도와드려요. 천천히 골라도 괜찮아요. (5분 제한)"
+          detail="천천히 골라도 괜찮아요 · 5분"
           helpLevel={config.helpLevel}
         />
         <OrderFlow

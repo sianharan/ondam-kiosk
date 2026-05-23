@@ -54,7 +54,7 @@ export default function RealFreePage() {
         <ModeBanner
           eyebrow={`${config.philosophy} 단계`}
           headline="오늘은 어떤 음료를 드시고 싶으세요? 직접 골라보세요."
-          detail="이번 주문은 학습자분이 메뉴부터 결제 수단까지 자유롭게 정하실 수 있어요."
+          detail="메뉴부터 결제까지 자유롭게 골라보세요."
           tone="primary"
           helpLevel={config.helpLevel}
         />

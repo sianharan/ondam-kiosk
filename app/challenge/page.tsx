@@ -82,7 +82,7 @@ export default function ChallengePage() {
         <ModeBanner
           eyebrow={`${config.philosophy} 단계`}
           headline="도담의 도움이 줄어들어요. 스스로 해보세요."
-          detail="결제 수단도 한 가지 늘어났어요. 카드와 모바일 페이 중에서 골라보세요. (4분 제한)"
+          detail="결제 수단도 한 가지 늘었어요 · 4분"
           helpLevel={config.helpLevel}
         />
         <OrderFlow

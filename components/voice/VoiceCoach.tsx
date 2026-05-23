@@ -167,7 +167,7 @@ export function VoiceCoach({
       aria-atomic="true"
       aria-label={isSpeaking ? "도담이 안내하고 있어요" : "도담 음성 안내"}
       className={cn(
-        "flex items-center gap-3 rounded-2xl border border-foreground/15 bg-background/95 px-4 py-3 shadow-sm",
+        "flex items-center gap-3 rounded-2xl border border-foreground/15 bg-background/95 px-4 py-2 shadow-sm",
         position === "top" ? "mb-4" : "mt-4",
         className,
       )}
@@ -175,21 +175,21 @@ export function VoiceCoach({
       <div
         aria-hidden="true"
         className={cn(
-          "flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-accent text-2xl text-accent-foreground",
+          "flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-xl text-primary-foreground",
           isSpeaking && "animate-[pulse_1.2s_ease-in-out_infinite]",
         )}
       >
         🌿
       </div>
 
-      <div className="flex flex-1 flex-col">
-        <span className="text-sm font-semibold text-accent">도담</span>
-        <span className="text-base leading-snug text-foreground md:text-lg">
+      <div className="flex flex-1 items-baseline gap-2">
+        <span className="text-sm font-semibold text-primary">도담</span>
+        <span className="text-sm leading-snug text-foreground/80 md:text-base">
           {isEnabled
             ? isSpeaking
-              ? "지금 안내하고 있어요…"
-              : "안내가 끝났어요. 다시 듣기로 들으실 수 있어요."
-            : "음성 안내가 꺼져 있어요."}
+              ? "안내 중"
+              : "안내 끝 · 다시 듣기"
+            : "음성 안내 꺼짐"}
         </span>
       </div>
 
