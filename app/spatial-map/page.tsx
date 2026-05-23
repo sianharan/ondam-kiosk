@@ -12,7 +12,11 @@ import { useRouter } from "next/navigation";
 
 import { KioskFrame } from "@/components/kiosk/KioskFrame";
 import { VoiceCoach } from "@/components/voice/VoiceCoach";
-import { VoiceButton } from "@/components/voice/VoiceButton";
+import {
+  PROGRESS_BUTTON_CLASS,
+  STICKY_PROGRESS_FOOTER,
+  VoiceButton,
+} from "@/components/voice/VoiceButton";
 import { useRequireLearningSession } from "@/lib/interaction/useRequireLearningSession";
 import { VOICE_SCRIPTS } from "@/lib/tts/voiceScripts";
 
@@ -90,10 +94,13 @@ export default function SpatialMapPage() {
             <KioskDiagram />
           </div>
 
-          <footer className="flex justify-end pt-2">
+          {/* 본문(텍스트 안내 + 큰 다이어그램)이 길어 버튼이 화면 밖으로 밀리므로
+              sticky 로 본문 하단에 고정 — 스크롤 없이도 항상 보이게 한다. */}
+          <footer className={STICKY_PROGRESS_FOOTER}>
             <VoiceButton
               voiceLabel={VOICE_SCRIPTS.spatialMap.next}
               onActivate={() => router.push("/tutorial")}
+              className={PROGRESS_BUTTON_CLASS}
             >
               이해했어요, 다음으로
             </VoiceButton>

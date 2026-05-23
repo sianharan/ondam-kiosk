@@ -24,7 +24,11 @@ import { useRouter } from "next/navigation";
 
 import { KioskFrame } from "@/components/kiosk/KioskFrame";
 import { ModeBanner } from "@/components/kiosk/ModeBanner";
-import { VoiceButton } from "@/components/voice/VoiceButton";
+import {
+  PROGRESS_BUTTON_CLASS,
+  STICKY_PROGRESS_FOOTER,
+  VoiceButton,
+} from "@/components/voice/VoiceButton";
 import { VoiceCoach } from "@/components/voice/VoiceCoach";
 import { useRequireLearningSession } from "@/lib/interaction/useRequireLearningSession";
 import {
@@ -236,12 +240,14 @@ export default function ReflectionPage() {
         <ResultBlocks result={reflectionResult} />
       )}
 
-      <footer className="mt-8 flex justify-end pt-2">
+      {/* 본문(답변 요약 + 결과 카드 3개)이 길어 버튼이 화면 밖으로 밀리므로 sticky.
+          다음 단계로 가는 진행 버튼이라 다른 화면과 같이 기본 주황 variant + 전폭으로 통일. */}
+      <footer className={STICKY_PROGRESS_FOOTER}>
         <VoiceButton
           voiceLabel="완료 버튼이에요. 두 번 두드리면 마지막 완료 화면으로 가요."
           onActivate={() => router.push("/complete")}
-          variant="secondary"
           disabled={loadState === "loading"}
+          className={PROGRESS_BUTTON_CLASS}
         >
           완료
         </VoiceButton>

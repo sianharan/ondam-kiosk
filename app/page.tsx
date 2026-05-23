@@ -21,7 +21,7 @@ import { useRouter } from "next/navigation";
 
 import { KioskFrame } from "@/components/kiosk/KioskFrame";
 import { MicButton } from "@/components/voice/MicButton";
-import { VoiceButton } from "@/components/voice/VoiceButton";
+import { PROGRESS_BUTTON_CLASS, VoiceButton } from "@/components/voice/VoiceButton";
 import { VoiceCoach } from "@/components/voice/VoiceCoach";
 import { useDoubleTap } from "@/lib/interaction/doubleTap";
 import { ttsManager } from "@/lib/tts/fallbackTTS";
@@ -59,7 +59,7 @@ export default function Home() {
   );
 
   return (
-    <KioskFrame currentStep={1} title="환영">
+    <KioskFrame currentStep={1} title="환영" fixedWidth>
       {stage === "intro" ? (
         <IntroStage onNext={() => setStage("mode-select")} />
       ) : (
@@ -100,10 +100,11 @@ function IntroStage({ onNext }: { onNext: () => void }) {
         먼저 어떤 종류의 키오스크로 연습할지 함께 골라볼게요.
       </p>
 
+      {/* 본문 하단 전폭 진행 버튼 — 다른 화면과 위치·크기 통일. 환영은 짧아 sticky 불필요. */}
       <VoiceButton
         voiceLabel={VOICE_SCRIPTS.welcome.startButton}
         onActivate={onNext}
-        className="mt-3 md:text-3xl"
+        className={cn("mt-4", PROGRESS_BUTTON_CLASS)}
       >
         다음으로
       </VoiceButton>

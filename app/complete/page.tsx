@@ -99,10 +99,13 @@ export default function CompletePage() {
           </div>
         </dl>
 
-        <div className="flex w-full flex-col items-stretch gap-3 pt-4 sm:flex-row sm:justify-center">
+        {/* 버튼 2개 화면 — 한 줄 전폭으로 합치지 않고 세로로 같은 폭으로 쌓는다.
+            주 버튼(다시 학습하기)을 위에, 보조(학습 종료)를 아래에. 높이는 진행 버튼과 통일. */}
+        <div className="flex w-full max-w-md flex-col items-stretch gap-3 pt-4">
           <VoiceButton
             voiceLabel="다시 학습하기 버튼이에요. 두 번 두드리면 처음 환영 화면으로 돌아가요."
             onActivate={handleRestart}
+            className="min-h-16"
           >
             다시 학습하기
           </VoiceButton>
@@ -110,6 +113,7 @@ export default function CompletePage() {
             voiceLabel="학습 종료 버튼이에요. 두 번 두드리면 학습을 마치고 환영 화면으로 돌아가요."
             onActivate={handleFinish}
             variant="ghost"
+            className="min-h-16"
           >
             학습 종료
           </VoiceButton>

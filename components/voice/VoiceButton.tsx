@@ -37,6 +37,21 @@ export interface VoiceButtonProps
   ariaLabel?: string;
 }
 
+/**
+ * 화면 하단 "다음 단계로" 단일 진행 버튼의 공통 크기.
+ * 저시력 사용자가 어느 화면에서나 같은 위치·크기로 진행 버튼을 찾도록 통일한다:
+ * 전폭(w-full) + 최소 64px 높이(min-h-16). 색은 호출부의 variant(기본 primary=주황) 유지.
+ */
+export const PROGRESS_BUTTON_CLASS = "w-full min-h-16 text-2xl md:text-3xl";
+
+/**
+ * 본문이 길어 진행 버튼이 화면 밖으로 밀리는 화면(spatial-map·영수증 등)용 sticky 푸터.
+ * 스크롤 위치와 무관하게 버튼을 항상 본문 하단에 고정해 저시력 사용자가 찾기 쉽게 한다.
+ * KioskFrame main 안에 두는 것을 전제로 한다(불투명 배경으로 뒤 콘텐츠를 가림).
+ */
+export const STICKY_PROGRESS_FOOTER =
+  "sticky bottom-0 z-10 w-full mt-4 border-t border-foreground/10 bg-background pt-4 pb-2";
+
 const VARIANT_STYLES: Record<Variant, string> = {
   primary:
     "bg-accent text-accent-foreground shadow-md hover:-translate-y-0.5 hover:shadow-lg",

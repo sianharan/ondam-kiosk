@@ -33,6 +33,12 @@ export interface KioskFrameProps {
   totalSteps?: number;
   /** 현재 학습 모드/화면 제목 (예: "Tutorial") */
   title?: string;
+  /**
+   * displayMode 가 아직 확정되기 전 화면(환영·모드 선택)용. true 면 store 에 남아 있는
+   * 이전 세션의 displayMode 와 무관하게 항상 기본 폭(800px)으로 고정한다.
+   * 모드를 고른 뒤(spatial-map 부터)에야 세로/가로 폭 분기가 적용된다.
+   */
+  fixedWidth?: boolean;
   className?: string;
 }
 
@@ -41,6 +47,7 @@ export function KioskFrame({
   currentStep,
   totalSteps = 10,
   title,
+  fixedWidth = false,
   className,
 }: KioskFrameProps) {
   const showStep = typeof currentStep === "number";
@@ -48,8 +55,10 @@ export function KioskFrame({
   const currentMode = useLearningStore((s) => s.currentMode);
 
   // 가로형 = 큰 매장 키오스크 폭 (1400px). 그 외 (null 포함) = 세로형 기본 (800px).
+  // 단 fixedWidth(모드 선택 전 화면)면 displayMode 와 무관하게 800px 로 고정.
   const isHorizontal = displayMode === "horizontal";
-  const widthClass = isHorizontal ? "max-w-[1400px]" : "max-w-[800px]";
+  const widthClass =
+    !fixedWidth && isHorizontal ? "max-w-[1400px]" : "max-w-[800px]";
 
   return (
     <div
@@ -60,22 +69,22 @@ export function KioskFrame({
     >
       <div
         className={cn(
-          "flex w-full flex-col overflow-hidden rounded-3xl bg-background shadow-[0_18px_60px_-15px_rgba(26,42,74,0.35)] ring-1 ring-foreground/10",
+          // overflow-visible 유지가 중요: 진행 버튼 sticky 가 frame 이 아닌 창(window)
+          // 스크롤 기준으로 동작하려면 frame 이 스크롤 컨테이너가 되면 안 된다.
+          // (rounded-3xl 모서리 클리핑은 header 의 rounded-t-3xl 로 대체.)
+          "flex w-full flex-col rounded-3xl bg-background shadow-[0_18px_60px_-15px_rgba(26,42,74,0.35)] ring-1 ring-foreground/10",
           widthClass,
           className,
         )}
       >
         {/* ── 헤더: 카페 카운터 상판 느낌의 진남색 띠 ───────────── */}
-        <header className="flex items-center justify-between gap-3 bg-primary px-6 py-5 text-primary-foreground md:px-8 md:py-6">
+        <header className="flex items-center justify-between gap-3 rounded-t-3xl bg-primary px-6 py-5 text-primary-foreground md:px-8 md:py-6">
           <div className="flex items-center gap-3">
             <span
               className="text-screen-title tracking-tight"
               aria-label="온담 카페 로고"
             >
               온담 카페
-            </span>
-            <span className="hidden text-base text-primary-foreground/70 md:inline">
-              溫談
             </span>
             {/* 헤더 좌측 다시 듣기 — KS X 9211 6.3.6 */}
             <ReplayButton position="header" className="ml-2" />

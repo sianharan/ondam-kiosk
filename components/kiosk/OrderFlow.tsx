@@ -20,7 +20,11 @@ import { CategoryGrid } from "@/components/kiosk/CategoryGrid";
 import { MenuGrid } from "@/components/kiosk/MenuGrid";
 import { OptionPanel } from "@/components/kiosk/OptionPanel";
 import { PaymentDialog } from "@/components/kiosk/PaymentDialog";
-import { VoiceButton } from "@/components/voice/VoiceButton";
+import {
+  PROGRESS_BUTTON_CLASS,
+  STICKY_PROGRESS_FOOTER,
+  VoiceButton,
+} from "@/components/voice/VoiceButton";
 import { VoiceCoach } from "@/components/voice/VoiceCoach";
 import {
   CATEGORY_LABEL,
@@ -310,13 +314,17 @@ function ReceiptScreen({
         ]}
       />
 
-      <VoiceButton
-        voiceLabel={`다음으로 버튼이에요. 두 번 두드리면 다음 단계 ${nextLabel}로 넘어가요.`}
-        onActivate={onAdvance}
-        className="mt-2 !px-10 !py-5 !text-2xl"
-      >
-        다음으로 ({nextLabel})
-      </VoiceButton>
+      {/* challenge 등 본문이 긴 모드에서도 스크롤 없이 보이도록 sticky 로 본문 하단 고정.
+          영수증 화면은 모든 주문 모드가 공유하므로 한 번의 변경으로 위치·크기가 통일된다. */}
+      <div className={STICKY_PROGRESS_FOOTER}>
+        <VoiceButton
+          voiceLabel={`다음으로 버튼이에요. 두 번 두드리면 다음 단계 ${nextLabel}로 넘어가요.`}
+          onActivate={onAdvance}
+          className={PROGRESS_BUTTON_CLASS}
+        >
+          다음으로 ({nextLabel})
+        </VoiceButton>
+      </div>
     </section>
   );
 }
