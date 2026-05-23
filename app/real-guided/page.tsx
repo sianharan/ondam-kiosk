@@ -28,7 +28,7 @@ import { useLearningStore } from "@/stores/learningStore";
 import { useOrderStore } from "@/stores/orderStore";
 
 const REAL_GUIDED_INTRO =
-  "이번엔 실전에 가깝게 해볼게요. 도담은 조용히 있을게요. 막히면 다시 듣기 버튼을 눌러주세요.";
+  "지금부터는 진짜 카페처럼 해볼게요. 곧 카페 소음이 들리고, 뒤에 다른 손님도 몇 분 계실 수 있어요. 그래도 괜찮아요. 서두르지 않아도 돼요. 천천히 하셔도 아무 문제 없어요. 제가 끝까지 같이 있을게요.";
 
 export default function RealGuidedPage() {
   const router = useRouter();
