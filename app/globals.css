@@ -172,3 +172,43 @@
     font-variant-numeric: tabular-nums;
   }
 }
+
+/* ── KioskDiagram 단계 강조 (tutorial 시연 동기화) ──────────────────────
+   강조 영역의 fill 은 부드럽게 밝아지고, 외곽선(overlay)이 느리게 breathing(펄스)한다.
+   pulseKey 가 바뀌면 overlay 가 remount 되어 같은 영역이 연속돼도 펄스가 리셋된다.
+   prefers-reduced-motion: reduce 면 전환·펄스 없이 정적 강조만 보인다.
+   색은 기존 토큰(--color-primary)만 사용. */
+.kiosk-area {
+  transition: opacity 0.45s ease;
+}
+
+.kiosk-pulse {
+  fill: none;
+  stroke: var(--color-primary);
+  stroke-width: 4;
+  stroke-opacity: 1;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .kiosk-pulse {
+    animation: kiosk-pulse 1.8s ease-in-out infinite;
+  }
+}
+
+@keyframes kiosk-pulse {
+  0%,
+  100% {
+    stroke-width: 5;
+    stroke-opacity: 1;
+  }
+  50% {
+    stroke-width: 3;
+    stroke-opacity: 0.55;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kiosk-area {
+    transition: none;
+  }
+}

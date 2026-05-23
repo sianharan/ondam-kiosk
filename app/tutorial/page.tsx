@@ -36,7 +36,19 @@ export default function TutorialPage() {
   const config = getModeConfig("tutorial");
 
   // AutoDemo 현재 단계가 설명하는 영역 → 오른쪽 KioskDiagram 강조 동기화.
-  const [activeArea, setActiveArea] = React.useState<DiagramArea | null>(null);
+  // stepKey 는 펄스 리셋용(같은 영역이 연속돼도 단계 전환을 느끼게).
+  const [demoFocus, setDemoFocus] = React.useState<{
+    area: DiagramArea | null;
+    stepKey: string;
+  }>({ area: null, stepKey: "" });
+
+  // 안정된 콜백 — AutoDemo 의 emit effect 가 매 렌더 재실행되지 않도록.
+  const handleActiveAreaChange = React.useCallback(
+    (area: DiagramArea | null, stepKey: string) => {
+      setDemoFocus({ area, stepKey });
+    },
+    [],
+  );
 
   const goPractice = React.useCallback(() => {
     router.push("/practice");
@@ -66,7 +78,7 @@ export default function TutorialPage() {
             <AutoDemo
               onComplete={goPractice}
               onSkip={goPractice}
-              onActiveAreaChange={setActiveArea}
+              onActiveAreaChange={handleActiveAreaChange}
             />
             {/* 음성 채널(나레이션)이 정보를 전달하므로 다이어그램은 시각 보조 —
                 스크린리더 중복을 피해 aria-hidden. 단계별 강조가 대본과 동기화된다. */}
@@ -74,7 +86,10 @@ export default function TutorialPage() {
               aria-hidden="true"
               className="flex justify-center md:sticky md:top-4 md:justify-start"
             >
-              <KioskDiagram activeArea={activeArea} />
+              <KioskDiagram
+                activeArea={demoFocus.area}
+                pulseKey={demoFocus.stepKey}
+              />
             </aside>
           </div>
         ) : (

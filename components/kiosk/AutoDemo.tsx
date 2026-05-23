@@ -71,8 +71,11 @@ export interface AutoDemoProps {
   onSkip?: () => void;
   /** 마지막 단계까지 완료되면 자동 호출 */
   onComplete: () => void;
-  /** 현재 단계가 설명하는 키오스크 영역이 바뀔 때 호출 (KioskDiagram 강조 동기화) */
-  onActiveAreaChange?: (area: DiagramArea | null) => void;
+  /**
+   * 현재 단계가 설명하는 키오스크 영역이 바뀔 때 호출 (KioskDiagram 강조 동기화).
+   * stepKey 는 단계마다 고유 — 같은 영역이 연속돼도 펄스를 리셋하는 키로 쓴다.
+   */
+  onActiveAreaChange?: (area: DiagramArea | null, stepKey: string) => void;
 }
 
 export function AutoDemo({
@@ -189,7 +192,8 @@ export function AutoDemo({
   // 현재 단계가 설명하는 영역을 부모에 알려 KioskDiagram 강조를 동기화.
   // 단계 시작 시점(setStepIndex)에 바뀌므로, 도담이 그 영역을 말하는 동안 강조된다.
   React.useEffect(() => {
-    onActiveAreaChange?.(steps[stepIndex]?.activeArea ?? null);
+    const step = steps[stepIndex];
+    onActiveAreaChange?.(step?.activeArea ?? null, step?.key ?? "");
   }, [stepIndex, steps, onActiveAreaChange]);
 
   // ── 시연 진행 — 한 단계씩 await ───────────────────────────
