@@ -29,6 +29,7 @@
 
 import * as React from "react";
 
+import { type DiagramArea } from "@/components/kiosk/KioskDiagram";
 import { getMenuItem, type MenuItem } from "@/lib/kiosk-data/menu";
 import { ttsManager } from "@/lib/tts/fallbackTTS";
 import { cn } from "@/lib/utils";
@@ -48,6 +49,8 @@ interface DemoStep {
   key: StepKey;
   label: string;
   narration: string;
+  /** 이 단계에서 도담이 설명하는 키오스크 영역 — KioskDiagram 강조에 사용 */
+  activeArea: DiagramArea | null;
   /** 발화 끝난 뒤 store 변경 — speak resolve 후 호출 */
   apply: () => void;
 }
@@ -68,6 +71,8 @@ export interface AutoDemoProps {
   onSkip?: () => void;
   /** 마지막 단계까지 완료되면 자동 호출 */
   onComplete: () => void;
+  /** 현재 단계가 설명하는 키오스크 영역이 바뀔 때 호출 (KioskDiagram 강조 동기화) */
+  onActiveAreaChange?: (area: DiagramArea | null) => void;
 }
 
 export function AutoDemo({
@@ -75,6 +80,7 @@ export function AutoDemo({
   stepDelayMs = STEP_DELAY_MS,
   onSkip,
   onComplete,
+  onActiveAreaChange,
 }: AutoDemoProps) {
   const setCategory = useOrderStore((s) => s.setCategory);
   const setItem = useOrderStore((s) => s.setItem);
@@ -114,6 +120,7 @@ export function AutoDemo({
         label: "카테고리 선택",
         narration:
           "처음 보는 키오스크에선, 저는 먼저 전체를 들어봐요. 음료 종류가 맨 위에 네 개 있어요. 커피, 에이드, 티, 디저트요. 틀려도 되돌릴 수 있으니 편하게요. 아메리카노는 커피니까, 커피를 두 번 두드릴게요.",
+        activeArea: "category",
         apply: () => setCategory("coffee"),
       },
       {
@@ -121,6 +128,7 @@ export function AutoDemo({
         label: "메뉴 선택",
         narration:
           "커피 안으로 들어왔어요. 이제 화면 가운데에 커피 메뉴들이 위에서 아래로 펼쳐져요. 아메리카노는 보통 맨 위에 있어요. 한 번 두드리면 설명을 들려주고, 두 번 두드리면 골라져요. 아메리카노를 두 번 두드릴게요.",
+        activeArea: "menu",
         apply: () => setItem(americano),
       },
       {
@@ -128,6 +136,7 @@ export function AutoDemo({
         label: "온도 선택",
         narration:
           "메뉴를 고르면 옵션이 나와요. 먼저 온도예요. 따뜻하게와 차갑게 둘 중 하나죠. 아메리카노는 둘 다 되는데, 저는 오늘 따뜻한 걸로 할게요. 따뜻하게를 두 번 두드릴게요.",
+        activeArea: "menu",
         apply: () => setTemperature("hot"),
       },
       {
@@ -135,6 +144,7 @@ export function AutoDemo({
         label: "사이즈 선택",
         narration:
           "다음은 사이즈예요. 톨과 그란데가 있어요. 그란데는 오백 원이 더 붙어요. 저는 기본인 톨로 할게요. 톨을 두 번 두드릴게요.",
+        activeArea: "menu",
         apply: () => setSize("tall"),
       },
       {
@@ -142,6 +152,7 @@ export function AutoDemo({
         label: "결제 화면",
         narration:
           "고를 건 다 골랐어요. 이제 거의 끝났어요. 화면 아래쪽에 결제하기 버튼이 있어요. 그걸 두 번 두드려 결제로 넘어갈게요.",
+        activeArea: "payment",
         // 결제 진입 자체는 별도 store 변경이 필요 없다. 다음 단계에서 setPayment.
         apply: () => {},
       },
@@ -150,12 +161,15 @@ export function AutoDemo({
         label: "결제 수단",
         narration:
           "결제 방법을 고르는 곳이에요. 카드, 모바일페이가 있어요. 저는 카드로 할게요. 카드를 두 번 두드린 다음, 카드를 화면 아래 오른쪽 투입구에 천천히 꽂으면 돼요.",
+        // payment 강조 시 KioskDiagram 이 카드 투입구도 함께 강조한다(결제 존).
+        activeArea: "payment",
         apply: () => setPayment("card"),
       },
       {
         key: "complete",
         label: "주문 완료",
         narration: `결제가 끝났어요. 주문번호는 ${DEMO_ORDER_NUMBER}번이에요. 음료가 준비되면 ${DEMO_ORDER_NUMBER}번으로 불러줘요. 자, 이렇게 한 잔이 완성됐어요. 처음엔 낯설어도, 한 번 흐름을 들어두면 다음엔 훨씬 쉬워요. 이제 직접 해보실 거예요.`,
+        activeArea: null,
         apply: () => completePayment(DEMO_ORDER_NUMBER),
       },
     ];
@@ -171,6 +185,12 @@ export function AutoDemo({
       { voice, speed },
     );
   }, [steps, isVoiceEnabled, voice, speed]);
+
+  // 현재 단계가 설명하는 영역을 부모에 알려 KioskDiagram 강조를 동기화.
+  // 단계 시작 시점(setStepIndex)에 바뀌므로, 도담이 그 영역을 말하는 동안 강조된다.
+  React.useEffect(() => {
+    onActiveAreaChange?.(steps[stepIndex]?.activeArea ?? null);
+  }, [stepIndex, steps, onActiveAreaChange]);
 
   // ── 시연 진행 — 한 단계씩 await ───────────────────────────
   // generation 으로 unmount/재마운트 시 이전 setTimeout 이 store 를 건드리지 않게.

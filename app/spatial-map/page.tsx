@@ -10,6 +10,7 @@
 
 import { useRouter } from "next/navigation";
 
+import { KioskDiagram } from "@/components/kiosk/KioskDiagram";
 import { KioskFrame } from "@/components/kiosk/KioskFrame";
 import { VoiceCoach } from "@/components/voice/VoiceCoach";
 import {
@@ -108,108 +109,5 @@ export default function SpatialMapPage() {
         </section>
       </KioskFrame>
     </>
-  );
-}
-
-// ── 단순 SVG 키오스크 다이어그램 ───────────────────────────
-function KioskDiagram() {
-  return (
-    <figure
-      className="flex flex-col items-center gap-3 rounded-2xl bg-muted/40 p-5 shadow-sm ring-1 ring-foreground/15"
-      aria-label="키오스크 구조 다이어그램"
-    >
-      <svg
-        viewBox="0 0 200 320"
-        role="img"
-        aria-labelledby="kiosk-diagram-title"
-        className="h-80 w-52 md:h-[30rem] md:w-80"
-      >
-        <title id="kiosk-diagram-title">
-          키오스크 측면도 — 상단 스피커, 중앙 화면 3영역, 우하단 카드 투입구
-        </title>
-
-        {/* 본체 외곽 */}
-        <rect
-          x="10"
-          y="10"
-          width="180"
-          height="300"
-          rx="14"
-          fill="var(--color-background)"
-          stroke="var(--color-primary)"
-          strokeWidth="3"
-        />
-
-        {/* 스피커 — 좌상단 / 우상단 */}
-        <circle cx="30" cy="34" r="6" fill="var(--color-primary)" />
-        <circle cx="170" cy="34" r="6" fill="var(--color-primary)" />
-
-        {/* 화면 영역 — 위/가운데/아래 3분할 */}
-        <rect
-          x="24"
-          y="58"
-          width="152"
-          height="56"
-          rx="6"
-          fill="var(--color-category-coffee)"
-          opacity="0.75"
-        />
-        <rect
-          x="24"
-          y="120"
-          width="152"
-          height="92"
-          rx="6"
-          fill="var(--color-muted)"
-          stroke="var(--color-foreground)"
-          strokeOpacity="0.15"
-        />
-        <rect
-          x="24"
-          y="218"
-          width="152"
-          height="40"
-          rx="6"
-          fill="var(--color-accent)"
-          opacity="0.7"
-        />
-
-        {/* 카드 투입구 — 우하단 */}
-        <rect
-          x="130"
-          y="280"
-          width="46"
-          height="6"
-          rx="3"
-          fill="var(--color-primary)"
-        />
-
-        {/* 라벨 */}
-        <g
-          fontFamily="inherit"
-          fontSize="9"
-          fill="var(--color-foreground)"
-          textAnchor="middle"
-        >
-          <text x="100" y="86">카테고리</text>
-          <text x="100" y="170">메뉴 목록</text>
-          <text x="100" y="240">결제·장바구니</text>
-        </g>
-
-        <g
-          fontFamily="inherit"
-          fontSize="8"
-          fill="var(--color-foreground)"
-          opacity="0.7"
-        >
-          <text x="44" y="36">스피커</text>
-          <text x="156" y="36" textAnchor="end">스피커</text>
-          <text x="124" y="296" textAnchor="end">카드 투입구 →</text>
-        </g>
-      </svg>
-      <figcaption className="text-base text-foreground/60 md:text-lg">
-        키오스크 구조 미리보기
-      </figcaption>
-    </figure>
   );
 }

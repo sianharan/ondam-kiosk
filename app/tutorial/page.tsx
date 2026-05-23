@@ -15,6 +15,7 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 
 import { AutoDemo } from "@/components/kiosk/AutoDemo";
+import { KioskDiagram, type DiagramArea } from "@/components/kiosk/KioskDiagram";
 import { KioskFrame } from "@/components/kiosk/KioskFrame";
 import { ModeBanner } from "@/components/kiosk/ModeBanner";
 import { OrderFlow } from "@/components/kiosk/OrderFlow";
@@ -33,6 +34,9 @@ export default function TutorialPage() {
   const { ready } = useRequireLearningSession({ requireDisplayMode: true });
 
   const config = getModeConfig("tutorial");
+
+  // AutoDemo 현재 단계가 설명하는 영역 → 오른쪽 KioskDiagram 강조 동기화.
+  const [activeArea, setActiveArea] = React.useState<DiagramArea | null>(null);
 
   const goPractice = React.useCallback(() => {
     router.push("/practice");
@@ -57,7 +61,22 @@ export default function TutorialPage() {
           helpLevel={config.helpLevel}
         />
         {config.enableAutoDemo ? (
-          <AutoDemo onComplete={goPractice} onSkip={goPractice} />
+          // 데스크톱: 왼쪽 시연(대본·단계) + 오른쪽 다이어그램. 좁은 화면: 세로 스택.
+          <div className="grid gap-6 md:grid-cols-[1fr_auto] md:items-start">
+            <AutoDemo
+              onComplete={goPractice}
+              onSkip={goPractice}
+              onActiveAreaChange={setActiveArea}
+            />
+            {/* 음성 채널(나레이션)이 정보를 전달하므로 다이어그램은 시각 보조 —
+                스크린리더 중복을 피해 aria-hidden. 단계별 강조가 대본과 동기화된다. */}
+            <aside
+              aria-hidden="true"
+              className="flex justify-center md:sticky md:top-4 md:justify-start"
+            >
+              <KioskDiagram activeArea={activeArea} />
+            </aside>
+          </div>
         ) : (
           <OrderFlow
             mode="tutorial"
