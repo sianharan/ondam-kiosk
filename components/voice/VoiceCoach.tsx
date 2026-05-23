@@ -185,10 +185,11 @@ export function VoiceCoach({
       <div className="flex flex-1 items-baseline gap-2">
         <span className="text-sm font-semibold text-primary">도담</span>
         <span className="text-sm leading-snug text-foreground/80 md:text-base">
+          {/* 상태만 표시. "다시 듣기"는 우측 버튼과 중복되므로 텍스트에서 뺀다. */}
           {isEnabled
             ? isSpeaking
               ? "안내 중"
-              : "안내 끝 · 다시 듣기"
+              : "안내 끝"
             : "음성 안내 꺼짐"}
         </span>
       </div>
