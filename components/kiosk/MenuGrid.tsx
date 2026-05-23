@@ -11,6 +11,7 @@
 
 import * as React from "react";
 
+import { MenuIllustration } from "@/components/kiosk/MenuIllustration";
 import { VoiceCoach } from "@/components/voice/VoiceCoach";
 import { useDoubleTap } from "@/lib/interaction/doubleTap";
 import {
@@ -154,47 +155,35 @@ function MenuCard({ item, onActivate }: MenuCardProps) {
       aria-label={voiceLabel}
       data-voice-label={voiceLabel}
       className={cn(
-        "flex h-full w-full flex-col items-start gap-3 rounded-2xl bg-background p-5 text-left",
+        "flex h-full w-full flex-col items-stretch gap-3 rounded-2xl bg-background p-4 text-left",
         "ring-1 ring-foreground/15 shadow-sm transition-all",
         "hover:-translate-y-0.5 hover:shadow-md hover:ring-primary/40",
         "focus-visible:ring-4 focus-visible:ring-accent focus-visible:outline-none",
       )}
     >
-      <div className="flex w-full items-start justify-between gap-3">
-        <span className="text-2xl font-bold text-foreground md:text-[1.75rem]">
-          {item.name}
-        </span>
-        <span
-          aria-hidden="true"
-          className={cn(
-            "flex size-12 shrink-0 items-center justify-center rounded-xl text-white",
-            item.category === "coffee" && "bg-category-coffee",
-            item.category === "ade" && "bg-category-ade",
-            item.category === "tea" && "bg-category-tea",
-            item.category === "dessert" && "bg-category-dessert text-[#3D2F1B]",
-          )}
-        >
-          <svg
-            viewBox="0 0 24 24"
-            className="size-7"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-            dangerouslySetInnerHTML={{
-              __html: item.iconSvg.replace(/<\/?svg[^>]*>/g, ""),
-            }}
-          />
-        </span>
+      <div
+        aria-hidden="true"
+        className={cn(
+          "flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-xl p-2",
+          "ring-1 ring-foreground/5",
+          item.category === "coffee" && "bg-category-coffee/10",
+          item.category === "ade" && "bg-category-ade/10",
+          item.category === "tea" && "bg-category-tea/10",
+          item.category === "dessert" && "bg-category-dessert/30",
+        )}
+      >
+        <MenuIllustration menuId={item.id} />
       </div>
+
+      <h3 className="text-2xl font-bold text-foreground md:text-[1.75rem]">
+        {item.name}
+      </h3>
 
       <p className="text-lg text-foreground/75 md:text-xl">
         {item.description}
       </p>
 
-      <div className="mt-1 flex w-full items-end justify-between gap-3">
+      <div className="mt-auto flex w-full items-end justify-between gap-3">
         <span className="text-base text-foreground/55 md:text-lg">
           {getOptionSummary(item) || "옵션 없음"}
         </span>
