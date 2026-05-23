@@ -84,8 +84,8 @@ export function ReplayButton({
         aria-label={voiceLabel}
         title="다시 듣기 (두 번 두드리기)"
         className={cn(
-          "inline-flex items-center gap-1.5 rounded-xl bg-primary-foreground/15 px-3 py-2 text-sm font-semibold text-primary-foreground transition-opacity hover:bg-primary-foreground/25",
-          "focus-visible:ring-4 focus-visible:ring-accent focus-visible:outline-none",
+          "inline-flex touch-manipulation items-center gap-1.5 rounded-xl bg-primary-foreground/15 px-3 py-2 text-sm font-semibold text-primary-foreground transition-opacity hover:bg-primary-foreground/25",
+          "focus:ring-4 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background focus:outline-none",
           "disabled:cursor-not-allowed disabled:opacity-40",
           className,
         )}
@@ -105,7 +105,7 @@ export function ReplayButton({
       disabled={disabled}
       aria-label={voiceLabel}
       className={cn(
-        "inline-flex items-center gap-2 rounded-2xl bg-primary px-6 py-3 text-lg font-semibold text-primary-foreground shadow-md transition-all",
+        "inline-flex touch-manipulation items-center gap-2 rounded-2xl bg-primary px-6 py-3 text-lg font-semibold text-primary-foreground shadow-md transition-all",
         "hover:-translate-y-0.5 hover:shadow-lg",
         "focus-visible:ring-4 focus-visible:ring-accent focus-visible:outline-none",
         "disabled:cursor-not-allowed disabled:opacity-50",

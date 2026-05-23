@@ -408,8 +408,8 @@ export function MicButton({
       disabled={isBusy}
       data-status={status}
       className={cn(
-        "flex items-center justify-center rounded-full shadow-lg transition-all",
-        "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-accent/50",
+        "flex touch-manipulation items-center justify-center rounded-full shadow-lg transition-all",
+        "focus:outline-none focus:ring-4 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background",
         "disabled:cursor-not-allowed",
         position === "floating"
           ? "fixed bottom-24 right-6 z-30 h-16 w-16 md:h-20 md:w-20"

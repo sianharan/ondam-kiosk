@@ -155,10 +155,10 @@ function MenuCard({ item, onActivate }: MenuCardProps) {
       aria-label={voiceLabel}
       data-voice-label={voiceLabel}
       className={cn(
-        "flex h-full w-full flex-col items-stretch gap-3 rounded-2xl bg-background p-4 text-left",
+        "flex h-full w-full touch-manipulation flex-col items-stretch gap-3 rounded-2xl bg-background p-4 text-left",
         "ring-1 ring-foreground/15 shadow-sm transition-all",
         "hover:-translate-y-0.5 hover:shadow-md hover:ring-primary/40",
-        "focus-visible:ring-4 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none",
+        "focus:ring-4 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background focus:outline-none",
       )}
     >
       <div
@@ -229,7 +229,7 @@ function BackButton({ onBack }: { onBack: () => void }) {
       onClick={onClick}
       onKeyDown={onKeyDown}
       aria-label={voiceLabel}
-      className="inline-flex items-center gap-2 rounded-xl bg-muted px-5 py-3 text-lg font-medium text-foreground ring-1 ring-foreground/10 transition-colors hover:bg-muted/80 focus-visible:ring-4 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none"
+      className="inline-flex touch-manipulation items-center gap-2 rounded-xl bg-muted px-5 py-3 text-lg font-medium text-foreground ring-1 ring-foreground/10 transition-colors hover:bg-muted/80 focus:ring-4 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background focus:outline-none"
     >
       <span aria-hidden="true">←</span>
       <span>카테고리</span>

@@ -90,8 +90,8 @@ export function VoiceButton({
       aria-label={ariaLabel ?? voiceLabel}
       data-voice-label={voiceLabel}
       className={cn(
-        "rounded-2xl px-10 py-5 text-2xl font-bold transition-all",
-        "focus-visible:ring-4 focus-visible:ring-primary focus-visible:outline-none",
+        "touch-manipulation rounded-2xl px-10 py-5 text-2xl font-bold transition-all",
+        "focus:ring-4 focus:ring-primary focus:outline-none",
         "disabled:cursor-not-allowed disabled:opacity-50",
         VARIANT_STYLES[variant],
         className,

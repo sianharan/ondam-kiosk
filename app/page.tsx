@@ -213,6 +213,9 @@ function ModeCard({
   }, [isEnabled, voice, speed, volume, voiceLabel]);
 
   const handleDouble = React.useCallback(() => {
+    // 즉시-안내 방식에서는 첫 탭 안내가 재생 중일 수 있으므로, 실행 전 끊어
+    // 다음 화면 음성과 겹치지 않게 한다 (다른 소비처와 동일 규칙).
+    ttsManager.stop();
     onActivate();
   }, [onActivate]);
 
@@ -232,10 +235,10 @@ function ModeCard({
       onClick={onClick}
       onKeyDown={onKeyDown}
       className={cn(
-        "group/mode flex flex-col items-center gap-4 rounded-3xl bg-background p-6 text-center",
+        "group/mode flex touch-manipulation flex-col items-center gap-4 rounded-3xl bg-background p-6 text-center",
         "ring-1 ring-foreground/15 shadow-md transition-all",
         "hover:-translate-y-1 hover:shadow-xl hover:ring-primary/40",
-        "focus-visible:ring-4 focus-visible:ring-accent focus-visible:outline-none",
+        "focus:ring-4 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background focus:outline-none",
         "md:p-7",
       )}
     >
