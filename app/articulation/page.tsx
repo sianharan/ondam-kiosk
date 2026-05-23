@@ -51,19 +51,19 @@ const QUESTIONS: readonly Question[] = [
   {
     label: "오늘 어떤 메뉴를 주문하셨어요?",
     voice:
-      "첫 번째 질문이에요. 오늘 어떤 메뉴를 주문하셨어요? 마이크 버튼을 두 번 두드린 다음 답해주세요.",
+      "첫 번째 질문이에요. 오늘 어떤 메뉴를 주문하셨어요? 화면 가운데 마이크 버튼을 두 번 두드린 다음 답해주세요.",
     hint: "메뉴 이름, 온도, 사이즈를 떠올려서 말해주세요.",
   },
   {
     label: "어떤 부분이 가장 쉬웠어요?",
     voice:
-      "두 번째 질문이에요. 어떤 부분이 가장 쉬웠어요? 마이크 버튼을 두 번 두드린 다음 편하게 말해주세요.",
+      "두 번째 질문이에요. 어떤 부분이 가장 쉬웠어요? 화면 가운데 마이크 버튼을 두 번 두드린 다음 편하게 말해주세요.",
     hint: "카테고리, 메뉴, 옵션, 결제 중에서 떠올려 보세요.",
   },
   {
     label: "어떤 부분이 가장 어려웠어요?",
     voice:
-      "마지막 질문이에요. 어떤 부분이 가장 어려웠어요? 마이크 버튼을 두 번 두드린 다음 솔직하게 말씀해주세요.",
+      "마지막 질문이에요. 어떤 부분이 가장 어려웠어요? 화면 가운데 마이크 버튼을 두 번 두드린 다음 솔직하게 말씀해주세요.",
     hint: "어려웠던 단계나 헷갈렸던 점을 떠올려 보세요.",
   },
 ] as const;
@@ -152,6 +152,7 @@ export default function ArticulationPage() {
     if (index === 0) {
       return [
         "잠시 함께 돌아볼게요. 방금 한 주문을 떠올리면서, 세 가지 질문에 음성으로 답해주세요. 정답은 없어요.",
+        "화면 가운데에 동그란 마이크 버튼이 있어요. 그 버튼을 두 번 두드리면 답을 녹음할 수 있어요.",
         currentQuestion.voice,
       ];
     }
@@ -181,6 +182,16 @@ export default function ArticulationPage() {
 
     await speak("잘 들었어요. 잠시만요.");
 
+    // 전사·분석을 기다리는 동안 침묵이 2초 넘게 이어지면 "멈췄나" 불안하지 않도록
+    // 안내로 메운다 (MicButton 처리 안내 패턴). 다음 발화 전에 해제한다.
+    const armProcessingHint = () => {
+      const t = setTimeout(() => {
+        void speak("도담이 답변을 살펴보고 있어요.");
+      }, 2_000);
+      return () => clearTimeout(t);
+    };
+    let clearHint = armProcessingHint();
+
     let text = "";
     let whisperFailed = false;
     if (blob && blob.size > 0) {
@@ -196,6 +207,8 @@ export default function ArticulationPage() {
     } else {
       whisperFailed = true;
     }
+
+    clearHint(); // 전사 대기 종료 — 힌트 해제
 
     if ((!text || whisperFailed) && isWebSpeechSupported()) {
       try {
@@ -223,6 +236,7 @@ export default function ArticulationPage() {
 
     // Phase 6 Step 4 — GPT 후속 코칭. 학습 흐름이 끊기지 않도록 실패 시 정적 폴백.
     // 라우트가 항상 line 을 채워주므로 200 외 응답에서도 발화는 시도한다.
+    clearHint = armProcessingHint(); // coach-line 대기 동안 침묵 메우기
     try {
       const res = await fetch("/api/coach-line", {
         method: "POST",
@@ -234,11 +248,22 @@ export default function ArticulationPage() {
         }),
       });
       const data = (await res.json()) as { line?: string };
+      clearHint();
       if (data.line) await speak(data.line);
     } catch (err) {
+      clearHint();
       console.warn("[Articulation] coach-line 실패, 정적 멘트로 대체:", err);
       await speak("잘 들었어요. 다음 질문으로 함께 가볼게요.");
     }
+
+    // 답한 뒤 다음에 무엇을 누를지 음성으로 분명히 안내 — 화면을 못 보는 학습자가
+    // 멈추지 않고 다음 단계로 갈 수 있게. (화면 텍스트 안내의 청각 보강)
+    const lastQuestion = index === QUESTIONS.length - 1;
+    await speak(
+      lastQuestion
+        ? "이제 분석 보러 가기 버튼을 두 번 두드리면 결과를 들려드려요."
+        : "다음 질문으로 가려면, 화면 아래 다음 질문 버튼을 두 번 두드리세요.",
+    );
 
     setStatusSync("idle");
   }, [index, setArticulationAnswer, setStatusSync, speak]);
