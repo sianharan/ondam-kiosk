@@ -235,11 +235,11 @@ export function AutoDemo({
         <div>
           <h2
             id="auto-demo-title"
-            className="text-2xl font-bold text-primary md:text-3xl"
+            className="text-card-body font-bold text-primary"
           >
             도담이 보여드리는 시연
           </h2>
-          <p className="mt-1 text-base text-foreground/70 md:text-lg">
+          <p className="mt-1 text-support text-foreground/70">
             지금은 도담이 먼저 아메리카노 주문 과정을 보여드릴게요. 편하게
             들어주세요.
           </p>
@@ -248,7 +248,7 @@ export function AutoDemo({
           type="button"
           onClick={handleSkip}
           aria-label="시연 건너뛰고 직접 해보기로 이동"
-          className="shrink-0 rounded-xl bg-foreground/10 px-4 py-2 text-base font-semibold text-foreground hover:bg-foreground/15 focus-visible:ring-4 focus-visible:ring-accent focus-visible:outline-none md:text-lg"
+          className="shrink-0 rounded-xl bg-secondary px-4 py-2 text-support font-semibold text-secondary-foreground hover:bg-secondary/80 focus-visible:ring-4 focus-visible:ring-primary focus-visible:outline-none"
         >
           건너뛰기
         </button>
@@ -264,7 +264,7 @@ export function AutoDemo({
               key={step.key}
               className={cn(
                 "flex items-center gap-3 rounded-xl px-3 py-2",
-                isCurrent && "bg-accent/15 ring-1 ring-accent/40",
+                isCurrent && "bg-primary/10 ring-1 ring-primary/30",
                 isPast && "opacity-60",
               )}
               aria-current={isCurrent ? "step" : undefined}
@@ -276,7 +276,7 @@ export function AutoDemo({
                   isPast
                     ? "bg-primary text-primary-foreground"
                     : isCurrent
-                      ? "bg-accent text-accent-foreground"
+                      ? "bg-primary text-primary-foreground"
                       : "bg-foreground/10 text-foreground/60",
                 )}
               >
@@ -284,19 +284,19 @@ export function AutoDemo({
               </span>
               <span
                 className={cn(
-                  "text-lg md:text-xl",
+                  "text-support",
                   isCurrent ? "font-semibold text-foreground" : "text-foreground/70",
                 )}
               >
                 {step.label}
               </span>
               {isCurrent && stepStatus === "speaking" && (
-                <span className="ml-auto text-sm text-accent md:text-base">
+                <span className="ml-auto text-support text-primary">
                   안내 중…
                 </span>
               )}
               {isCurrent && stepStatus === "waiting" && (
-                <span className="ml-auto text-sm text-foreground/50 md:text-base">
+                <span className="ml-auto text-support text-foreground/50">
                   잠시 후 진행…
                 </span>
               )}
@@ -311,7 +311,7 @@ export function AutoDemo({
         role="status"
         aria-live="polite"
       >
-        <span className="text-base font-semibold text-accent">도담</span>
+        <span className="text-support font-semibold text-primary">도담</span>
         <p className="mt-1 text-xl leading-snug text-foreground md:text-2xl">
           {currentStep?.narration}
         </p>

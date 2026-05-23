@@ -26,7 +26,7 @@ export interface ModeBannerProps {
   headline: string;
   /** 부가 안내 (선택) */
   detail?: string;
-  /** Tailwind 배경 — accent/10 (기본) 또는 primary/10 */
+  /** 배경 톤 — 현재는 모두 primary 계열로 통일됨 (강조=진남 원칙). 호환용으로 prop 유지. */
   tone?: "accent" | "primary";
   /** Phase 4-A — 도움 수준 1~5. 생략하면 도트 미표시 (이전 호환) */
   helpLevel?: HelpLevel;
@@ -36,7 +36,7 @@ export function ModeBanner({
   eyebrow,
   headline,
   detail,
-  tone = "accent",
+  // tone 은 호환용으로 받기만 하고 무시 — 모든 배너가 primary 계열로 통일됨.
   helpLevel,
 }: ModeBannerProps) {
   const ariaSummary = [
@@ -52,21 +52,16 @@ export function ModeBanner({
       role="note"
       aria-label={ariaSummary}
       className={cn(
-        "mb-6 flex flex-col gap-2 rounded-2xl p-5 ring-1 md:p-6",
-        tone === "accent"
-          ? "bg-accent/10 ring-accent/30"
-          : "bg-primary/5 ring-primary/20",
+        "mb-6 flex flex-col gap-2 rounded-2xl bg-primary/5 p-5 ring-1 ring-primary/20 md:p-6",
       )}
     >
-      <span className="text-base font-bold uppercase tracking-wider text-accent md:text-lg">
+      <span className="text-support font-bold uppercase tracking-wider text-primary">
         {eyebrow}
       </span>
-      <p className="text-xl font-semibold text-foreground md:text-2xl">
+      <p className="text-card-body font-semibold text-foreground">
         {headline}
       </p>
-      {detail && (
-        <p className="text-lg text-foreground/75 md:text-xl">{detail}</p>
-      )}
+      {detail && <p className="text-support text-foreground/75">{detail}</p>}
       {helpLevel && <HelpLevelMeter helpLevel={helpLevel} />}
     </aside>
   );
@@ -85,7 +80,7 @@ function HelpLevelMeter({ helpLevel }: { helpLevel: HelpLevel }) {
             key={dot}
             className={cn(
               "h-2.5 w-2.5 rounded-full",
-              dot <= helpLevel ? "bg-accent" : "bg-foreground/20",
+              dot <= helpLevel ? "bg-primary" : "bg-foreground/20",
             )}
           />
         ))}

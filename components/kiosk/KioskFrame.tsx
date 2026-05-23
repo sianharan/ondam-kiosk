@@ -69,7 +69,7 @@ export function KioskFrame({
         <header className="flex items-center justify-between gap-3 bg-primary px-6 py-5 text-primary-foreground md:px-8 md:py-6">
           <div className="flex items-center gap-3">
             <span
-              className="text-2xl font-bold tracking-tight md:text-3xl"
+              className="text-screen-title tracking-tight"
               aria-label="온담 카페 로고"
             >
               온담 카페
@@ -85,7 +85,7 @@ export function KioskFrame({
             <div
               aria-live="polite"
               aria-atomic="true"
-              className="text-right text-xl font-semibold md:text-2xl"
+              className="text-screen-title text-right"
             >
               {showStep && (
                 <span aria-label={`전체 ${totalSteps}단계 중 ${currentStep}단계`}>
@@ -106,18 +106,7 @@ export function KioskFrame({
         >
           {children}
         </main>
-
-        {/* ── 푸터: 도담 호출 (Phase 2-B 에서는 비활성) ──────── */}
-        <footer className="flex items-center justify-center border-t border-foreground/10 bg-muted/60 px-6 py-5 md:px-8">
-          <button
-            type="button"
-            disabled
-            aria-label="도담 호출 (음성 인터페이스는 Phase 3 에서 활성화)"
-            className="rounded-xl bg-background px-6 py-3 text-lg font-medium text-foreground/60 ring-1 ring-foreground/15 disabled:cursor-not-allowed"
-          >
-            도움이 필요하면 도담을 불러주세요
-          </button>
-        </footer>
+        {/* 양방향 음성 도움은 floating MicButton 이 담당 — 죽은 도담 호출 푸터 제거 (Phase 2-B 잔재) */}
       </div>
 
       {/* Phase 5 카페 BGM — currentMode 기반으로 자동 트랙 선택.
