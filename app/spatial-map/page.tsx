@@ -16,31 +16,22 @@ import { VoiceButton } from "@/components/voice/VoiceButton";
 import { useRequireLearningSession } from "@/lib/interaction/useRequireLearningSession";
 import { VOICE_SCRIPTS } from "@/lib/tts/voiceScripts";
 
+// 핵심 3개로 압축. 카테고리·메뉴목록·결제/장바구니·스피커·카드투입구의 세부 위치는
+// 오른쪽 KioskDiagram(SVG) 에 모두 그려져 있으므로 중복 텍스트 박스를 줄였다.
+// (저시력 사용자용으로 박스 자체는 화면에 그대로 두되 글씨만 키운다.)
 const STRUCTURE_ITEMS: { area: string; description: string }[] = [
   {
-    area: "전체",
-    description: "이 키오스크는 가슴 높이의 화면이에요.",
+    area: "전체 위치",
+    description: "이 키오스크는 가슴 높이의 화면이에요. 화면 하나로 주문이 끝나요.",
   },
   {
-    area: "화면 위쪽",
+    area: "화면 3분할",
     description:
-      "메뉴 카테고리 네 개(커피·에이드·티·디저트)가 가로로 놓여 있어요.",
-  },
-  {
-    area: "화면 가운데",
-    description: "선택한 카테고리의 메뉴 목록이 카드 형태로 보여요.",
-  },
-  {
-    area: "화면 아래쪽",
-    description: "장바구니와 결제 안내가 차례대로 나와요.",
+      "화면은 위·가운데·아래 세 칸이에요. 위는 메뉴 종류, 가운데는 메뉴 목록, 아래는 장바구니와 결제예요.",
   },
   {
     area: "카드 투입구",
     description: "화면 아래 오른쪽에 있어요. 카드를 길게 밀어 넣어주세요.",
-  },
-  {
-    area: "스피커",
-    description: "화면 위쪽 양옆에 있어요. 안내 음성은 여기서 들려요.",
   },
 ];
 
@@ -74,25 +65,28 @@ export default function SpatialMapPage() {
           {/* VoiceCoach — 마운트 시 4단 순차 발화 (1초 간격) */}
           <VoiceCoach message={SPATIAL_SEQUENCE} sequenceGapMs={1000} />
 
-          <div className="grid gap-6 md:grid-cols-[1fr_auto] md:items-start">
-            {/* ── 텍스트 안내 ─────────────────────────── */}
-            <ul className="flex flex-col gap-4">
+          <div className="grid gap-6 md:grid-cols-[1fr_auto] md:items-center">
+            {/* ── 텍스트 안내 (저시력 사용자용 시각 채널) ──────────────
+                내용이 SPATIAL_SEQUENCE 음성과 같은 정보라 스크린리더에서는
+                중복 낭독을 막기 위해 aria-hidden. 전맹 사용자는 VoiceCoach 로 듣고,
+                저시력 사용자는 이 박스를 눈으로 읽는다. (화면에서 지우는 게 아님) */}
+            <ul className="flex flex-col gap-4" aria-hidden="true">
               {STRUCTURE_ITEMS.map((item) => (
                 <li
                   key={item.area}
                   className="flex flex-col gap-1 rounded-2xl bg-background p-5 shadow-sm ring-1 ring-foreground/15"
                 >
-                  <span className="text-lg font-bold text-accent md:text-xl">
+                  <span className="text-lg font-bold text-primary md:text-xl">
                     {item.area}
                   </span>
-                  <span className="text-xl text-foreground md:text-2xl">
+                  <span className="text-card-body text-foreground">
                     {item.description}
                   </span>
                 </li>
               ))}
             </ul>
 
-            {/* ── SVG 다이어그램 ──────────────────────── */}
+            {/* ── SVG 다이어그램 — 텍스트를 줄인 만큼 크게 ─────────── */}
             <KioskDiagram />
           </div>
 
@@ -121,7 +115,7 @@ function KioskDiagram() {
         viewBox="0 0 200 320"
         role="img"
         aria-labelledby="kiosk-diagram-title"
-        className="h-72 w-44 md:h-80 md:w-48"
+        className="h-80 w-52 md:h-[30rem] md:w-80"
       >
         <title id="kiosk-diagram-title">
           키오스크 측면도 — 상단 스피커, 중앙 화면 3영역, 우하단 카드 투입구
