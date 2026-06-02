@@ -1311,7 +1311,7 @@ docs/KS_X_9211_2025_체크리스트.md 작성:
 8. Lave, J., & Wenger, E. (1991). *Situated Learning: Legitimate Peripheral Participation.*
 9. Miller, G. A. (1956). The magical number seven, plus or minus two. *Psychological Review.*
 10. 이문오·김보미·신준영 (2026). 키오스크로 통하는 하루: 중증 발달장애인 키오스크 교육 실증 연구. *디지털콘텐츠학회논문지, 27(1).*
-11. Kim. 8주차 상황학습이론 강의자료 (연세대).
+11. 상황학습이론 강의자료, 8주차 (2026).
 12. Web Content Accessibility Guidelines (WCAG) 2.1.
 
 ### 13.3 관련 KS 표준
