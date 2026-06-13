@@ -14,6 +14,7 @@
 import * as React from "react";
 
 import { ttsManager } from "@/lib/tts/fallbackTTS";
+import { useVoiceAnnounce } from "@/lib/tts/useVoiceAnnounce";
 import { useVoiceStore } from "@/stores/voiceStore";
 import { cn } from "@/lib/utils";
 
@@ -35,6 +36,10 @@ export function StopSpeakingButton({ className }: StopSpeakingButtonProps) {
     setCurrentText(null);
   }, [setSpeaking, setCurrentText]);
 
+  // 키보드 Tab 포커스 안내. ⚠ 이 버튼은 발화 중에만 떠 있어, interrupt 발화는
+  // 진행 중이던 안내를 끊는다 — 멈춤 버튼의 본질(말 멈추기)과 방향이 같아 허용한다.
+  const { onFocus } = useVoiceAnnounce();
+
   // ESC 단축키 — 시각 사용자 보조용
   React.useEffect(() => {
     if (!isSpeaking) return;
@@ -51,6 +56,7 @@ export function StopSpeakingButton({ className }: StopSpeakingButtonProps) {
     <button
       type="button"
       onClick={handleStop}
+      onFocus={onFocus}
       aria-label={STOP_LABEL}
       title="멈추기 (ESC)"
       className={cn(

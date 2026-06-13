@@ -14,6 +14,7 @@
 import * as React from "react";
 
 import { ttsManager } from "@/lib/tts/fallbackTTS";
+import { useVoiceAnnounce } from "@/lib/tts/useVoiceAnnounce";
 import { VOICE_SCRIPTS } from "@/lib/tts/voiceScripts";
 import { useVoiceStore } from "@/stores/voiceStore";
 import { cn } from "@/lib/utils";
@@ -35,6 +36,10 @@ export function TimeoutWarning({
   onClose,
 }: TimeoutWarningProps) {
   const isEnabled = useVoiceStore((s) => s.isEnabled);
+
+  // 키보드 Tab 포커스 시 버튼 안내. 모달 진입 경고 발화 직후 사용자가 Tab 으로
+  // 버튼을 훑을 때 어느 선택지인지 즉시 들려준다. (early return 위에서 호출 — 훅 순서 보장)
+  const { onFocus } = useVoiceAnnounce();
 
   // 모달이 열리는 순간 nova 음성으로 경고 발화
   React.useEffect(() => {
@@ -96,6 +101,7 @@ export function TimeoutWarning({
           <button
             type="button"
             onClick={handleProceed}
+            onFocus={onFocus}
             aria-label="지금 다음 단계로 진행하기"
             className="rounded-2xl bg-muted px-6 py-4 text-xl font-semibold text-foreground ring-1 ring-foreground/15 hover:bg-muted/80 focus-visible:ring-4 focus-visible:ring-accent focus-visible:outline-none md:text-2xl"
           >
@@ -104,6 +110,7 @@ export function TimeoutWarning({
           <button
             type="button"
             onClick={handleExtend}
+            onFocus={onFocus}
             aria-label="시간 60초 연장하기"
             className="rounded-2xl bg-accent px-6 py-4 text-xl font-bold text-accent-foreground shadow-md transition-all hover:-translate-y-0.5 hover:shadow-lg focus-visible:ring-4 focus-visible:ring-primary focus-visible:outline-none md:text-2xl"
           >

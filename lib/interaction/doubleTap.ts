@@ -195,5 +195,32 @@ export function useDoubleTap(handlers: TapHandlers): DoubleTapBindings {
   return { onClick, onKeyDown, onFocus, cleanup };
 }
 
+/**
+ * useFocusAnnounce — 키보드 이동(Tab/화살표)으로 버튼에 포커스가 도착하면
+ * 그 요소의 aria-label 을 발화한다. 마우스/터치 포커스와 마운트 자동 포커스는
+ * modality 게이트로 무시한다(useDoubleTap.onFocus 와 동일 정책).
+ *
+ * useDoubleTap 을 쓰지 않는 단순 버튼(멈추기·음성설정 등)에 "포커스 안내"만 붙일 때 사용.
+ * 한 핸들러를 여러 버튼(.map)에 재사용할 수 있도록 라벨이 아닌 currentTarget 의
+ * aria-label 을 읽는다. 실제 발화(voiceStore 설정 반영)는 호출부가 speak 로 주입한다
+ * — 이 모듈은 TTS/스토어에 의존하지 않는다.
+ */
+export function useFocusAnnounce(
+  speak: (label: string) => void,
+): (e: React.FocusEvent<HTMLElement>) => void {
+  const speakRef = React.useRef(speak);
+  React.useEffect(() => {
+    speakRef.current = speak;
+  }, [speak]);
+  React.useEffect(() => {
+    ensureModalityListeners();
+  }, []);
+  return React.useCallback((e: React.FocusEvent<HTMLElement>) => {
+    if (!lastInputWasKeyboard) return;
+    const label = e.currentTarget.getAttribute("aria-label");
+    if (label) speakRef.current(label);
+  }, []);
+}
+
 /** 컴포넌트 외부(예: 이벤트 핸들러 내부)에서 더블탭 윈도우를 알아야 할 때. */
 export const DOUBLE_TAP_WINDOW = DOUBLE_TAP_WINDOW_MS;

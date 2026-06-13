@@ -34,6 +34,7 @@ import {
 } from "@/lib/stt/webSpeechFallback";
 import { whisperService } from "@/lib/stt/whisperService";
 import { ttsManager } from "@/lib/tts/fallbackTTS";
+import { useVoiceAnnounce } from "@/lib/tts/useVoiceAnnounce";
 import { cn } from "@/lib/utils";
 import { useLearningStore } from "@/stores/learningStore";
 import { VOLUME_TO_AUDIO, useVoiceStore } from "@/stores/voiceStore";
@@ -527,6 +528,13 @@ function RecordButton({
           ? "답변을 정리하고 있어요."
           : "음성 답변 마이크 버튼이에요. 두 번 두드리면 녹음이 시작돼요.";
 
+  // 단일 탭 안내 + 키보드 포커스 안내. 다른 버튼(VoiceButton·카드)과 동일하게
+  // "짚으면(한 번 탭/Tab 포커스) 안내, 두 번이면 실행" 리듬을 맞춘다.
+  // ⚠ 녹음/처리 중에는 발화하지 않는다 — interrupt 발화가 마이크에 섞이는 것을 막기 위함.
+  //   idle 안내가 끝나기 전 더블탭으로 녹음에 들어가도 startRecording 이 ttsManager.stop()
+  //   을 먼저 호출하므로 안내 음성이 녹음에 들어가지 않는다.
+  const { speak, onFocus: announceFocus } = useVoiceAnnounce();
+
   // VoiceButton 의 단일/더블 패턴을 그대로 따른다 — 한 번 두드리면 안내, 두 번이면 실행.
   // 단, 녹음 중에는 한 번만 두드려도 종료하는 게 학습자 친화적이라
   // 자체 useDoubleTap 대신 간단한 클릭 카운터를 직접 둔다.
@@ -546,15 +554,19 @@ function RecordButton({
       handleClick();
       return;
     }
+    // 첫 탭 — 버튼 안내 발화(idle 일 때만; 위 ⚠ 참고).
+    if (status === "idle") speak(ariaLabel);
     clickTimerRef.current = setTimeout(() => {
       clickCountRef.current = 0;
     }, 350);
-  }, [handleClick, status]);
+  }, [handleClick, speak, ariaLabel, status]);
 
   return (
     <button
       type="button"
       onClick={onClickWithDoubleTap}
+      // 녹음/처리 중 포커스 발화는 마이크 오염 우려가 있어 idle 에서만 안내한다.
+      onFocus={status === "idle" ? announceFocus : undefined}
       disabled={disabled}
       aria-label={ariaLabel}
       aria-pressed={status === "recording"}

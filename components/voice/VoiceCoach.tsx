@@ -20,6 +20,7 @@
 import * as React from "react";
 
 import { ttsManager } from "@/lib/tts/fallbackTTS";
+import { useVoiceAnnounce } from "@/lib/tts/useVoiceAnnounce";
 import {
   VOLUME_TO_AUDIO,
   useVoiceStore,
@@ -160,6 +161,10 @@ export function VoiceCoach({
     if (!isEnabled) handleStop();
   }, [isEnabled, handleStop]);
 
+  // 키보드 Tab 포커스 시 컨트롤(다시 듣기/멈추기) aria-label 안내.
+  // 마우스/터치 포커스·자동 포커스는 게이트로 무시된다.
+  const { onFocus } = useVoiceAnnounce();
+
   return (
     <div
       role="status"
@@ -198,6 +203,7 @@ export function VoiceCoach({
         <button
           type="button"
           onClick={handleReplay}
+          onFocus={onFocus}
           disabled={!isEnabled}
           aria-label="안내 다시 듣기"
           className="rounded-xl bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 focus-visible:ring-4 focus-visible:ring-primary focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40"
@@ -207,6 +213,7 @@ export function VoiceCoach({
         <button
           type="button"
           onClick={handleStop}
+          onFocus={onFocus}
           disabled={!isSpeaking}
           aria-label="안내 멈추기"
           className="rounded-xl bg-foreground/10 px-3 py-2 text-sm font-semibold text-foreground transition-opacity hover:opacity-90 focus-visible:ring-4 focus-visible:ring-primary focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40"

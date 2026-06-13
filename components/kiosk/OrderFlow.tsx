@@ -35,6 +35,7 @@ import {
   PAYMENT_BY_MODE,
   type LearningMode,
 } from "@/lib/kiosk-data/payment";
+import { useVoiceAnnounce } from "@/lib/tts/useVoiceAnnounce";
 import { VOICE_SCRIPTS } from "@/lib/tts/voiceScripts";
 import { useLearningStore } from "@/stores/learningStore";
 import { useOrderStore } from "@/stores/orderStore";
@@ -331,6 +332,8 @@ function ReceiptScreen({
 
 // ── 비정상 진입 복구 ───────────────────────────────────────
 function RecoverNotice({ onRestart }: { onRestart: () => void }) {
+  // 키보드 Tab 포커스 시 버튼 안내(복구 화면에서도 위치를 들려준다).
+  const { onFocus } = useVoiceAnnounce();
   return (
     <section
       className="flex flex-col gap-4 rounded-2xl bg-muted/60 p-6"
@@ -342,6 +345,7 @@ function RecoverNotice({ onRestart }: { onRestart: () => void }) {
       <button
         type="button"
         onClick={onRestart}
+        onFocus={onFocus}
         aria-label="처음으로. 카테고리 선택 화면으로 돌아갑니다"
         className="self-start rounded-xl bg-primary px-6 py-3 text-lg font-medium text-primary-foreground hover:bg-primary/90 focus-visible:ring-4 focus-visible:ring-accent focus-visible:outline-none"
       >

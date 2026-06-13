@@ -14,6 +14,7 @@
 import * as React from "react";
 
 import { ttsManager } from "@/lib/tts/fallbackTTS";
+import { useVoiceAnnounce } from "@/lib/tts/useVoiceAnnounce";
 import { VOICE_SCRIPTS } from "@/lib/tts/voiceScripts";
 import {
   VOICE_DESCRIPTIONS,
@@ -56,6 +57,10 @@ export function VoiceSettingsPanel({ className }: VoiceSettingsPanelProps) {
     ttsManager.setSpeed(speed);
     ttsManager.setVolume(VOLUME_TO_AUDIO[volume]);
   }, [voice, speed, volume]);
+
+  // 키보드 Tab/화살표 포커스 시 각 버튼의 aria-label 을 읽어준다(시각장애인 위치 안내).
+  // 한 핸들러를 모든 버튼에 재사용 — currentTarget 의 aria-label 을 발화한다.
+  const { onFocus: announceFocus } = useVoiceAnnounce();
 
   const handleVoiceChange = (next: VoiceName) => {
     setVoice(next);
@@ -118,6 +123,7 @@ export function VoiceSettingsPanel({ className }: VoiceSettingsPanelProps) {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
+        onFocus={announceFocus}
         aria-expanded={open}
         aria-controls="voice-settings-popover"
         aria-label={open ? "음성 설정 닫기" : "음성 설정 열기"}
@@ -141,6 +147,7 @@ export function VoiceSettingsPanel({ className }: VoiceSettingsPanelProps) {
             <button
               type="button"
               onClick={handleToggle}
+              onFocus={announceFocus}
               role="switch"
               aria-checked={isEnabled}
               aria-label={isEnabled ? "음성 안내 끄기" : "음성 안내 켜기"}
@@ -172,6 +179,7 @@ export function VoiceSettingsPanel({ className }: VoiceSettingsPanelProps) {
             <button
               type="button"
               onClick={handleAmbientToggle}
+              onFocus={announceFocus}
               role="switch"
               aria-checked={ambientEnabled}
               aria-label={
@@ -206,6 +214,7 @@ export function VoiceSettingsPanel({ className }: VoiceSettingsPanelProps) {
                     key={name}
                     type="button"
                     onClick={() => handleVoiceChange(name)}
+                    onFocus={announceFocus}
                     aria-pressed={selected}
                     aria-label={`${meta.label} 음성. ${meta.tone}.`}
                     disabled={!isEnabled}
@@ -246,6 +255,7 @@ export function VoiceSettingsPanel({ className }: VoiceSettingsPanelProps) {
                     key={opt}
                     type="button"
                     onClick={() => handleSpeedChange(opt)}
+                    onFocus={announceFocus}
                     aria-pressed={selected}
                     aria-label={`안내 속도 ${opt}배속`}
                     disabled={!isEnabled}
@@ -276,6 +286,7 @@ export function VoiceSettingsPanel({ className }: VoiceSettingsPanelProps) {
                     key={opt}
                     type="button"
                     onClick={() => handleVolumeChange(opt)}
+                    onFocus={announceFocus}
                     aria-pressed={selected}
                     aria-label={`음량 ${volumePercentLabel(opt)}`}
                     disabled={!isEnabled}

@@ -32,6 +32,7 @@ import * as React from "react";
 import { type DiagramArea } from "@/components/kiosk/KioskDiagram";
 import { getMenuItem, type MenuItem } from "@/lib/kiosk-data/menu";
 import { ttsManager } from "@/lib/tts/fallbackTTS";
+import { useVoiceAnnounce } from "@/lib/tts/useVoiceAnnounce";
 import { cn } from "@/lib/utils";
 import { useOrderStore } from "@/stores/orderStore";
 import { VOLUME_TO_AUDIO, useVoiceStore } from "@/stores/voiceStore";
@@ -292,6 +293,9 @@ export function AutoDemo({
     else onComplete();
   }, [onComplete, onSkip]);
 
+  // 키보드 Tab 으로 [건너뛰기] 에 도달하면 버튼 안내를 발화(키보드 사용 시각장애인 위치 안내).
+  const { onFocus: announceFocus } = useVoiceAnnounce();
+
   if (!americano) {
     return (
       <p className="text-xl text-foreground/70" role="alert">
@@ -326,6 +330,7 @@ export function AutoDemo({
         <button
           type="button"
           onClick={handleSkip}
+          onFocus={announceFocus}
           aria-label="시연 건너뛰고 직접 해보기로 이동"
           className="min-h-12 shrink-0 touch-manipulation rounded-xl bg-secondary px-6 py-3 text-lg font-semibold text-secondary-foreground hover:bg-secondary/80 focus-visible:ring-4 focus-visible:ring-primary focus-visible:outline-none md:text-xl"
         >

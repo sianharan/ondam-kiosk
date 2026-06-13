@@ -72,6 +72,9 @@ const ENTRY_SEQUENCE = [
 // 카드 단일 탭 안내(nova) prefetch 대상 — 모듈 상수라 매 렌더 안정.
 const CATEGORY_VOICE_LABELS = CATEGORIES.map((c) => c.voiceLabel);
 
+// voiceMessage 가 null 일 때 prefetch 훅에 넘길 안정된 빈 배열 (매 렌더 새 배열 방지).
+const EMPTY_LABELS: readonly string[] = [];
+
 export interface CategoryGridProps {
   onSelect: (category: Category) => void;
   /**
@@ -121,6 +124,14 @@ export function CategoryGrid({ onSelect, prependVoice }: CategoryGridProps) {
 
   // 4개 카테고리 카드 단일 탭 안내를 미리 받아 둔다(Tab/단일 탭 즉시 재생).
   usePrefetchVoiceLabels(CATEGORY_VOICE_LABELS);
+
+  // VoiceCoach 가 마운트 즉시 읽을 진입 시퀀스(모드 인트로 + 카테고리 안내)도 미리
+  // 받아 둔다.  prefetch 가 없으면 진입 직후 콜드 fetch 지연으로 첫 재생이 늦어지고,
+  // 특히 자동 전환(AutoDemo → /practice)처럼 직전 사용자 제스처가 없을 때는 늦은
+  // play() 가 자동재생 허용 창을 넘겨 차단돼 도담 안내가 영영 안 들릴 수 있다.
+  // (AutoDemo.tsx 가 같은 이유로 나레이션을 prefetch 하는 것과 동일한 처방.)
+  // 빈 배열/null 은 usePrefetchVoiceLabels 내부 key 가드로 안전하게 건너뛴다.
+  usePrefetchVoiceLabels(voiceMessage ?? EMPTY_LABELS);
 
   return (
     <section className="flex flex-col gap-6">

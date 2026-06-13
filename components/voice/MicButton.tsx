@@ -381,7 +381,7 @@ export function MicButton({
     void startRecording();
   }, [finishRecording, startRecording]);
 
-  const { onClick, onKeyDown } = useDoubleTap({
+  const { onClick, onKeyDown, onFocus } = useDoubleTap({
     onSingleTap: handleSingleTap,
     onDoubleTap: handleDoubleTap,
   });
@@ -402,6 +402,7 @@ export function MicButton({
       type="button"
       onClick={onClick}
       onKeyDown={onKeyDown}
+      onFocus={onFocus}
       aria-label={ariaLabel}
       aria-live="polite"
       aria-pressed={status === "recording"}
