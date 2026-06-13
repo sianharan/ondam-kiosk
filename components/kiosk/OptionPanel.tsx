@@ -165,14 +165,17 @@ export function OptionPanel({ onComplete }: OptionPanelProps) {
 
       {/* ── 온도 선택 ─────────────────────────────────────── */}
       {showTemperature && (
-        <fieldset className="rounded-2xl bg-background p-6 shadow-sm ring-1 ring-foreground/15">
-          <legend className="px-2 text-xl font-bold text-foreground md:text-2xl">
+        // fieldset 을 flex 컨테이너로 두면 <legend> 가 네이티브의 "테두리 위 걸침"
+        // 특수 렌더링을 잃고 카드 안쪽 일반 흐름으로 들어온다 — 섹션 제목이 둥근 라인
+        // 밖으로 튀어나와 보이던 문제 해결(세 섹션 동일, 크로스 브라우저 안정).
+        <fieldset className="flex flex-col gap-4 rounded-2xl bg-background p-6 shadow-sm ring-1 ring-foreground/15">
+          <legend className="text-xl font-bold text-foreground md:text-2xl">
             온도
           </legend>
           <RadioGroup
             value={selectedTemperature ?? ""}
             onValueChange={(v) => selectTemperature(v as Temperature)}
-            className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2"
+            className="grid grid-cols-1 gap-3 md:grid-cols-2"
           >
             <OptionTile
               value="hot"
@@ -194,14 +197,14 @@ export function OptionPanel({ onComplete }: OptionPanelProps) {
 
       {/* ── 사이즈 선택 ───────────────────────────────────── */}
       {showSize && (
-        <fieldset className="rounded-2xl bg-background p-6 shadow-sm ring-1 ring-foreground/15">
-          <legend className="px-2 text-xl font-bold text-foreground md:text-2xl">
+        <fieldset className="flex flex-col gap-4 rounded-2xl bg-background p-6 shadow-sm ring-1 ring-foreground/15">
+          <legend className="text-xl font-bold text-foreground md:text-2xl">
             사이즈
           </legend>
           <RadioGroup
             value={selectedSize}
             onValueChange={(v) => selectSize(v as SizeKey)}
-            className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2"
+            className="grid grid-cols-1 gap-3 md:grid-cols-2"
           >
             {(Object.keys(SIZE_OPTIONS) as SizeKey[]).map((key) => {
               const opt = SIZE_OPTIONS[key];
@@ -226,11 +229,11 @@ export function OptionPanel({ onComplete }: OptionPanelProps) {
 
       {/* ── 추가 옵션 (Checkbox) ───────────────────────────── */}
       {showExtras && (
-        <fieldset className="rounded-2xl bg-background p-6 shadow-sm ring-1 ring-foreground/15">
-          <legend className="px-2 text-xl font-bold text-foreground md:text-2xl">
+        <fieldset className="flex flex-col gap-4 rounded-2xl bg-background p-6 shadow-sm ring-1 ring-foreground/15">
+          <legend className="text-xl font-bold text-foreground md:text-2xl">
             추가
           </legend>
-          <div className="mt-3 flex flex-col gap-3">
+          <div className="flex flex-col gap-3">
             {(Object.keys(EXTRA_OPTIONS) as ExtraKey[]).map((key) => {
               const opt = EXTRA_OPTIONS[key];
               const isChecked = selectedExtras.includes(key);
