@@ -59,7 +59,7 @@ const SYSTEM_PROMPT = `당신은 '도담'입니다. 시각장애인 학습자에
  */
 const CONTEXT_HINTS: Record<string, string> = {
   "mode-select":
-    "학습자는 디스플레이 모드(세로형/가로형) 선택 화면. 모드 차이와 선택 방법 안내.",
+    "학습자는 디스플레이 모드(세로 화면/가로 화면) 선택 화면. 모드 차이와 선택 방법 안내.",
   tutorial:
     "학습자는 Tutorial 단계 (Modeling). 도담이 아메리카노 주문을 시연 중. 학습자는 흐름을 듣기만 함.",
   practice:

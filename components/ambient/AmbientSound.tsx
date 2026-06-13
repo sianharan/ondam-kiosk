@@ -158,7 +158,12 @@ export function AmbientSound({ mode }: AmbientSoundProps) {
         src: [src],
         loop: true,
         volume: 0,
-        html5: false,
+        // html5: true — HTMLAudioElement 로 "스트리밍" 재생.  false 면 Web Audio 가
+        // mp3 전체를 메모리에 디코드하는데, 모드 전환(특히 challenge=medium /
+        // real-guided=loud 처럼 새 트랙을 처음 로드할 때) 그 디코드가 메인 스레드에
+        // 부하를 줘 전환이 무거워진다.  BGM 은 길게 한 트랙만 루프하므로 스트리밍이
+        // 적합하고, 전환 직후 첫 재생이 디코드 완료를 기다리지 않아 가볍게 시작된다.
+        html5: true,
         preload: true,
         onloaderror: (_, err) => {
           console.warn(

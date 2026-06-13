@@ -148,8 +148,8 @@ function ModeSelectStage({
           어떤 키오스크로 연습할까요?
         </h2>
         <p className="max-w-xl text-xl leading-relaxed text-foreground/75 md:text-2xl">
-          한국 매장에서 자주 볼 수 있는 두 가지 형태 중에서 골라주세요.
-          어떤 형태든 같은 흐름으로 배워요.
+          세로 화면은 대부분의 매장에서, 가로 화면은 테이블에 앉아서 쓰는
+          형태예요. 어떤 형태든 같은 흐름으로 배워요.
         </p>
       </header>
 
@@ -179,18 +179,18 @@ function ModeSelectStage({
       >
         <ModeCard
           mode="vertical"
-          title="세로형 키오스크"
-          subtitle="카페 카운터형"
-          description="모바일 키오스크와 비슷한 세로 화면이에요. 위에서 아래로 한 화면씩 넘어가요."
+          title="세로 화면 키오스크"
+          subtitle="대부분의 매장에서"
+          description="매장 입구·카페 카운터에서 자주 만나는 형태예요. 위에서 아래로 한 화면씩 넘어가요."
           voiceLabel={VOICE_SCRIPTS.welcome.modeSelect.vertical}
           onActivate={() => onSelect("vertical")}
           diagram={<VerticalDiagram />}
         />
         <ModeCard
           mode="horizontal"
-          title="가로형 키오스크"
-          subtitle="매장 입구형 · 푸드코트형"
-          description="큰 매장에서 보는 넓은 가로 화면이에요. 좌우로 영역이 나뉘어 있어요."
+          title="가로 화면 키오스크"
+          subtitle="테이블에 앉아서"
+          description="테이블 오더나 좌석 부착형에서 만나는 형태예요. 좌우로 영역이 나뉘어 있어요."
           voiceLabel={VOICE_SCRIPTS.welcome.modeSelect.horizontal}
           onActivate={() => onSelect("horizontal")}
           diagram={<HorizontalDiagram />}
@@ -303,7 +303,7 @@ function VerticalDiagram() {
       viewBox="0 0 80 110"
       className="h-28 w-auto md:h-32"
       role="img"
-      aria-label="세로형 키오스크 미리보기"
+      aria-label="세로 화면 키오스크 미리보기"
     >
       {/* 베이스 */}
       <rect
@@ -379,7 +379,7 @@ function HorizontalDiagram() {
       viewBox="0 0 130 90"
       className="h-28 w-auto md:h-32"
       role="img"
-      aria-label="가로형 키오스크 미리보기"
+      aria-label="가로 화면 키오스크 미리보기"
     >
       {/* 베이스 */}
       <rect

@@ -68,6 +68,15 @@ export function VoiceCoach({
     [message],
   );
 
+  // 발화 재시작은 "내용"이 바뀔 때만. 거의 모든 호출부가 인라인/계산 배열을 넘겨
+  // 매 렌더 message 참조가 새로 오는데, 내용이 같으면 재생을 끊지 않는다.
+  // (참조에 의존하면 부모 리렌더마다 stop→재발화로 isSpeaking 이 플랩하며
+  //  리렌더 폭풍 + 오디오 끊김이 발생한다. 예: PaymentDialog 진행률 100ms tick.)
+  const messageKey = lines.join("|");
+  // effect 가 messageKey 에만 반응하므로, 같은 내용의 최신 배열을 발화에 쓰도록 ref 로 보관.
+  const linesRef = React.useRef(lines);
+  linesRef.current = lines;
+
   const playSequence = React.useCallback(
     async (seq: string[]) => {
       if (!seq.length) return;
@@ -131,7 +140,7 @@ export function VoiceCoach({
     if (!isEnabled) return;
 
     ttsManager.stop();
-    playSequence(lines);
+    playSequence(linesRef.current);
 
     return () => {
       generationRef.current += 1;
@@ -139,8 +148,9 @@ export function VoiceCoach({
       setSpeaking(false);
       setCurrentText(null);
     };
+    // messageKey(내용 서명)에만 반응 — 배열 참조 변화로 인한 발화 재시작 폭풍 방지.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lines, autoStart, isEnabled]);
+  }, [messageKey, autoStart, isEnabled]);
 
   const handleReplay = React.useCallback(() => {
     if (!isEnabled) return;
