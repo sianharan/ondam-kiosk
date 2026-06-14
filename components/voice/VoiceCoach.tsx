@@ -98,15 +98,17 @@ export function VoiceCoach({
           try {
             await ttsManager.speak(seq[i]);
           } catch (err) {
-            // 자동 마운트 발화에서 가장 흔한 실패: 첫 사용자 제스처 전 브라우저가
-            // speechSynthesis 를 차단해 "not-allowed" 를 던지는 경우.  사용자가
-            // 화면을 한 번이라도 만지면 다음 발화부터 정상 동작하므로 UI 를
-            // 크래시시키지 않고 시퀀스만 조용히 끊는다.  KS X 9211 5.2.2 d) 의
-            // 청각 대체는 화면 텍스트로도 동시에 노출되어 있어 정보 손실 없음.
+            // 한 줄 발화 실패의 흔한 원인: 자동재생 차단(not-allowed) 또는 모바일에서
+            // 다른 오디오(BGM 등)가 순간적으로 채널을 빼앗는 경우.  ⚠ 과거에는 여기서
+            // break 로 시퀀스 전체를 끊었는데, 그러면 한 줄(예: "에이드")이 밀리면
+            // 그 뒤 줄(티·디저트)까지 모두 침묵해 버린다.  실패한 줄만 건너뛰고 다음
+            // 줄은 계속 시도하도록 continue 로 바꿔, 일시적 실패가 안내 전체를
+            // 무너뜨리지 않게 한다.  KS X 9211 5.2.2 d) 의 청각 대체는 화면 텍스트로도
+            // 동시에 노출되어 있어 한 줄을 건너뛰어도 정보 손실은 없다.
             if (typeof console !== "undefined") {
-              console.warn("[VoiceCoach] TTS 발화 실패, 음성 안내 건너뜀:", err);
+              console.warn("[VoiceCoach] TTS 발화 실패, 이 줄만 건너뜀:", err);
             }
-            break;
+            continue;
           }
           if (generationRef.current !== myGeneration) return;
           if (i < seq.length - 1 && sequenceGapMs > 0) {

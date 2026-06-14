@@ -158,12 +158,16 @@ export function AmbientSound({ mode }: AmbientSoundProps) {
         src: [src],
         loop: true,
         volume: 0,
-        // html5: true — HTMLAudioElement 로 "스트리밍" 재생.  false 면 Web Audio 가
-        // mp3 전체를 메모리에 디코드하는데, 모드 전환(특히 challenge=medium /
-        // real-guided=loud 처럼 새 트랙을 처음 로드할 때) 그 디코드가 메인 스레드에
-        // 부하를 줘 전환이 무거워진다.  BGM 은 길게 한 트랙만 루프하므로 스트리밍이
-        // 적합하고, 전환 직후 첫 재생이 디코드 완료를 기다리지 않아 가볍게 시작된다.
-        html5: true,
+        // html5: false — Web Audio(AudioContext) 로 재생.  ⚠ true(HTMLAudioElement
+        // 스트리밍)로 두면 도담 음성(TTS 도 HTMLAudioElement)과 같은 오디오 경로를
+        // 공유한다.  데스크톱은 동시 채널이 넉넉해 문제없지만, 모바일·키오스크
+        // 브라우저는 동시 재생 채널이 사실상 1개라 버퍼링이 끝난 BGM 이 음성 안내
+        // 시퀀스 도중 재생되며 TTS 오디오를 밀어내 음성이 중간부터 끊긴다
+        // (예: 카테고리 안내가 "에이드"부터 무음).  BGM 을 Web Audio 로 두면 TTS 와
+        // 경로가 분리돼 절대 충돌하지 않는다.  전환 시 mp3 디코드 부하는 BGM 트랙이
+        // 셋뿐이고 모드 전환도 드물어 무시할 만하다 — 접근성 키오스크에서 음성
+        // 명료성이 전환 매끄러움보다 우선이다.
+        html5: false,
         preload: true,
         onloaderror: (_, err) => {
           console.warn(
